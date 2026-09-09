@@ -22,12 +22,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
     private final ShopRepository shopRepository;
     private final ProductMapper productMapper;
 
@@ -56,13 +59,23 @@ public class ProductService {
                 Sort.by(direction, criteria.getSortBy())
         );
 
+        // Lấy tất cả ID danh mục con cháu nếu có truyền categoryId
+        List<Long> categoryIds = null;
+        if (criteria.getCategoryId() != null) {
+            categoryIds = categoryService.getAllDescendantCategoryIds(criteria.getCategoryId());
+        }
+
         var spec = ProductSpecification.filter(
                 criteria.getKeyword(),
-                criteria.getCategoryId(),
+                categoryIds,
                 criteria.getShopId(),
-                criteria.getStatus()
+                criteria.getStatus(),
+                criteria.getMinPrice(),
+                criteria.getMaxPrice(),
+                criteria.getMinRating()
         );
 
+        // productRepository.findAll với @EntityGraph(attributePaths = {"category", "shop"}) giải quyết N+1 query
         Page<Product> page = productRepository.findAll(spec, pageable);
         Page<ProductResponse> dtoPage = page.map(productMapper::toResponse);
         return PageResponse.from(dtoPage);

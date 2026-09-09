@@ -31,5 +31,9 @@ public class ProductRequest {
 
     private String mainImageUrl;
 
+    private java.math.BigDecimal price;
+
+    private java.math.BigDecimal rating;
+
     private ProductStatus status;
 }

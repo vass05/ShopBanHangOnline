@@ -23,6 +23,10 @@ public class CategoryResponse {
     private Integer displayOrder;
     private Long parentId;
     private String parentName;
+
+    @Builder.Default
+    private java.util.List<CategoryResponse> children = new java.util.ArrayList<>();
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

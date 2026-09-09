@@ -86,9 +86,17 @@ public class Order extends BaseEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items = new ArrayList<>();
+    private List<OrderItem> orderItems = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PaymentTransaction> transactions = new ArrayList<>();
+
+    public List<OrderItem> getItems() {
+        return orderItems;
+    }
+
+    public void setItems(List<OrderItem> items) {
+        this.orderItems = items;
+    }
 }

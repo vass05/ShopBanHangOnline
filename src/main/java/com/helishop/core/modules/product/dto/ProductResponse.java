@@ -25,6 +25,8 @@ public class ProductResponse {
     private String slug;
     private String description;
     private String mainImageUrl;
+    private java.math.BigDecimal price;
+    private java.math.BigDecimal rating;
     private ProductStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

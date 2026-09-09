@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +30,9 @@ import java.util.List;
     indexes = {
         @Index(name = "idx_product_category_id", columnList = "category_id"),
         @Index(name = "idx_product_shop_id", columnList = "shop_id"),
-        @Index(name = "idx_product_slug", columnList = "slug")
+        @Index(name = "idx_product_slug", columnList = "slug"),
+        @Index(name = "idx_product_price", columnList = "price"),
+        @Index(name = "idx_product_rating", columnList = "rating")
     }
 )
 @Getter
@@ -58,6 +61,12 @@ public class Product extends BaseEntity {
 
     @Column(name = "main_image_url", length = 500)
     private String mainImageUrl;
+
+    @Column(name = "price", precision = 15, scale = 2)
+    private BigDecimal price;
+
+    @Column(name = "rating", precision = 3, scale = 2)
+    private BigDecimal rating;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
