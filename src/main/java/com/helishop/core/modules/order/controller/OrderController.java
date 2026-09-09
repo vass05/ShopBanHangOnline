@@ -1,5 +1,6 @@
 package com.helishop.core.modules.order.controller;
 
+import com.helishop.core.common.constants.OrderStatus;
 import com.helishop.core.common.response.ApiResponse;
 import com.helishop.core.modules.order.dto.CheckoutRequest;
 import com.helishop.core.modules.order.dto.OrderResponse;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +34,7 @@ public class OrderController {
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Tiến hành đặt hàng và giữ tồn kho SKU (Dành cho Khách hàng - Optimistic Locking)")
+    @Operation(summary = "Tiến hành đặt hàng và khóa tồn kho chống âm kho (Pessimistic Locking - PESSIMISTIC_WRITE)")
     public ApiResponse<OrderResponse> checkout(@RequestParam Long customerId,
                                               @Valid @RequestBody CheckoutRequest request) {
         return ApiResponse.success(orderService.checkout(customerId, request), "Đặt hàng thành công");
@@ -57,5 +59,13 @@ public class OrderController {
     @Operation(summary = "Lấy danh sách đơn hàng theo khách hàng")
     public ApiResponse<List<OrderResponse>> getOrdersByCustomer(@PathVariable Long customerId) {
         return ApiResponse.success(orderService.getByCustomerId(customerId));
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Cập nhật trạng thái đơn hàng (Tự động hoàn kho khi CANCELLED hoặc RETURNED)")
+    public ApiResponse<OrderResponse> updateOrderStatus(@PathVariable Long id,
+                                                        @RequestParam OrderStatus status) {
+        return ApiResponse.success(orderService.updateOrderStatus(id, status), "Cập nhật trạng thái đơn hàng thành công");
     }
 }

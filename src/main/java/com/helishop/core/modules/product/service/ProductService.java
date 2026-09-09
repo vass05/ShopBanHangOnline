@@ -15,6 +15,9 @@ import com.helishop.core.modules.product.repository.ProductSpecification;
 import com.helishop.core.modules.user.entity.Shop;
 import com.helishop.core.modules.user.repository.ShopRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -34,8 +38,10 @@ public class ProductService {
     private final ShopRepository shopRepository;
     private final ProductMapper productMapper;
 
+    @Cacheable(value = "products", key = "#id")
     @Transactional(readOnly = true)
     public ProductResponse getById(Long id) {
+        log.info("Querying product from DB for ID: {}", id);
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
         return productMapper.toResponse(product);
@@ -95,5 +101,30 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
         return productMapper.toResponse(savedProduct);
+    }
+
+    @Transactional
+    @CacheEvict(value = "products", key = "#id")
+    public ProductResponse updateProduct(Long id, ProductRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        if (request.getName() != null) product.setName(request.getName());
+        if (request.getDescription() != null) product.setDescription(request.getDescription());
+        if (request.getPrice() != null) product.setPrice(request.getPrice());
+        if (request.getRating() != null) product.setRating(request.getRating());
+        if (request.getStockQuantity() != null) product.setStockQuantity(request.getStockQuantity());
+        if (request.getMainImageUrl() != null) product.setMainImageUrl(request.getMainImageUrl());
+        if (request.getStatus() != null) product.setStatus(request.getStatus());
+
+        if (request.getCategoryId() != null && !request.getCategoryId().equals(product.getCategory().getId())) {
+            Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Danh mục không tồn tại"));
+            product.setCategory(category);
+        }
+
+        Product updatedProduct = productRepository.save(product);
+        log.info("Updated product ID '{}' and evicted from Redis cache", id);
+        return productMapper.toResponse(updatedProduct);
     }
 }

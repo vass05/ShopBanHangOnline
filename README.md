@@ -69,26 +69,63 @@ docker compose up -d
 - **MapStruct 1.5.x**: Tự động sinh mã nguồn mapper với `componentModel = "spring"`:
   - `ProductMapper`, `CategoryMapper`, `ProductSkuMapper`, `UserMapper`.
 
+### 4. Sprint 3: Security & Token Architecture
+- **Stateless RBAC**: Phân quyền chi tiết `ROLE_CUSTOMER`, `ROLE_SELLER`, `ROLE_ADMIN`.
+- **JWT & Redis Refresh Token**: Access Token (HMAC-SHA256, 15 phút) và Refresh Token (7 ngày) lưu trữ trong Redis.
+- **SecurityFilterChain**: Public xem sản phẩm; Seller tạo/cập nhật hàng; Customer checkout đơn hàng.
+
+### 5. Sprint 4: Catalog & Dynamic Query Engine
+- **JPA Specification**: Lọc đa tiêu chí động theo khoảng giá (`price`), từ khóa (`name`), danh mục con cháu, trạng thái, shop và số sao đánh giá (`rating`).
+- **Cây danh mục đệ quy**: Tự động tìm kiếm bao gồm tất cả các nhánh danh mục con cháu.
+- **Trị dứt điểm N+1 Query**: Áp dụng `@EntityGraph(attributePaths = {"category", "shop", "skus", "images"})` tải dữ liệu chỉ với 1 câu SQL JOIN.
+
+### 6. Sprint 5: Order Engine, Concurrency Locking & Cache
+- **Pessimistic Locking (`PESSIMISTIC_WRITE`)**:
+  - `ProductRepository.findByIdWithLock(id)` và `ProductSkuRepository.findByIdWithLock(id)` ngăn chặn triệt để race condition và overselling trong Flash Sale.
+  - Luồng `checkoutOrder()` nguyên tử (@Transactional): Khóa tồn kho $\rightarrow$ Kiểm tra tồn kho $\rightarrow$ Trừ tồn kho $\rightarrow$ Lưu Order và OrderItem (chụp snapshot tên, giá, biến thể lúc mua).
+- **Quản lý trạng thái & Hoàn tồn kho (@Transactional)**:
+  - Khi đơn hàng chuyển sang `CANCELLED` hoặc `RETURNED`, hệ thống tự động hoàn kho lại cho SKU và Product.
+- **Redis Cache**:
+  - `@Cacheable(value = "products", key = "#id")`: Tối ưu hóa API xem chi tiết sản phẩm, giảm tải truy vấn DB.
+  - `@CacheEvict(value = "products", key = "#id")`: Tự động xóa cache khi Seller cập nhật sản phẩm.
+  - `@Cacheable(value = "categories", key = "'tree'")`: Cache cấu trúc cây danh mục đa tầng.
+
 ---
 
 ## 🧪 Kiểm thử và Chạy ứng dụng
 
-### 1. Chạy bài test Validation & Custom Exceptions (Sprint 2)
+### 1. Kiểm thử Validation & Custom Exceptions (Sprint 2)
 ```powershell
 .\mvnw.cmd test -Dtest=ValidationAndExceptionIntegrationTest
 ```
 
-### 2. Chạy bài test MapStruct Mappers (Sprint 2)
+### 2. Kiểm thử MapStruct Mappers (Sprint 2)
 ```powershell
 .\mvnw.cmd test -Dtest=MapperUnitTest
 ```
 
-### 3. Chạy toàn bộ Test Suite
+### 3. Kiểm thử Khóa bi quan chống âm kho (Sprint 5)
+```powershell
+.\mvnw.cmd test -Dtest=PessimisticLockingIntegrationTest
+```
+
+### 4. Kiểm thử Cập nhật trạng thái đơn hàng & Hoàn tồn kho (Sprint 5)
+```powershell
+.\mvnw.cmd test -Dtest=OrderStatusAndReturnIntegrationTest
+```
+
+### 5. Kiểm thử Redis Cache @Cacheable & @CacheEvict (Sprint 5)
+```powershell
+.\mvnw.cmd test -Dtest=RedisCachingTest
+```
+
+### 6. Chạy toàn bộ Test Suite (45+ tests)
 ```powershell
 .\mvnw.cmd test
 ```
 
-### 4. Khởi chạy Server
+### 7. Khởi chạy Server
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
+

@@ -35,5 +35,7 @@ public class ProductRequest {
 
     private java.math.BigDecimal rating;
 
+    private Integer stockQuantity;
+
     private ProductStatus status;
 }

@@ -68,6 +68,10 @@ public class Product extends BaseEntity {
     @Column(name = "rating", precision = 3, scale = 2)
     private BigDecimal rating;
 
+    @Builder.Default
+    @Column(name = "stock_quantity")
+    private Integer stockQuantity = 0;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private ProductStatus status;

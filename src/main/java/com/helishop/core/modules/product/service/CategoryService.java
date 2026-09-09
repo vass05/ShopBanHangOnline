@@ -7,6 +7,7 @@ import com.helishop.core.modules.product.mapper.CategoryMapper;
 import com.helishop.core.modules.product.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,6 +70,7 @@ public class CategoryService {
     /**
      * Lấy danh sách cây danh mục phân cấp đa tầng (Category Tree)
      */
+    @Cacheable(value = "categories", key = "'tree'")
     @Transactional(readOnly = true)
     public List<CategoryResponse> getCategoryTree() {
         List<Category> rootCategories = categoryRepository.findByParentIsNull();
