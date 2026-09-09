@@ -1,5 +1,6 @@
 package com.helishop.core.config;
 
+import com.helishop.core.security.CustomAccessDeniedHandler;
 import com.helishop.core.security.CustomEntryPoint;
 import com.helishop.core.security.JwtFilter;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final CustomEntryPoint customEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",
@@ -49,11 +51,26 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(customEntryPoint))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // 1. Endpoints công khai
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**", "/api/v1/categories/**").permitAll()
+
+                        // 2. Phân quyền Người bán (SELLER) & Quản trị viên (ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasAnyRole("SELLER", "ADMIN")
+
+                        // 3. Phân quyền Khách hàng (CUSTOMER) checkout đặt hàng
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders/checkout").hasRole("CUSTOMER")
+                        .requestMatchers("/api/v1/orders/**").authenticated()
+
+                        // 4. Các yêu cầu còn lại bắt buộc đăng nhập
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

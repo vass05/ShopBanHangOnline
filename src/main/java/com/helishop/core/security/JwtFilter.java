@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,12 +34,14 @@ public class JwtFilter extends OncePerRequestFilter {
             String jwt = parseJwt(request);
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUsernameFromJwtToken(jwt);
+                String role = jwtUtils.getRoleFromJwtToken(jwt);
 
-                var claims = jwtUtils.parseClaims(jwt);
-                String role = claims.get("role", String.class);
-                List<SimpleGrantedAuthority> authorities = role != null
-                        ? List.of(new SimpleGrantedAuthority(role))
-                        : Collections.emptyList();
+                List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                if (StringUtils.hasText(role)) {
+                    // Chuẩn hóa role luôn có tiền tố ROLE_ để tương thích hasRole() và hasAuthority()
+                    String normalizedRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                    authorities.add(new SimpleGrantedAuthority(normalizedRole));
+                }
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
@@ -47,7 +50,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            log.error("Cannot set user authentication: {}", e.getMessage());
+            log.error("Không thể thiết lập xác thực người dùng: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

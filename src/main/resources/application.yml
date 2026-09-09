@@ -45,4 +45,7 @@ logging:
 app:
   jwt:
     secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
-    expiration-ms: 86400000 # 24 hours
+    access-token-expiration-ms: 900000 # 15 minutes (15 * 60 * 1000)
+    refresh-token-expiration-sec: 604800 # 7 days (7 * 24 * 60 * 60)
+    expiration-ms: 900000 # fallback compatibility
+

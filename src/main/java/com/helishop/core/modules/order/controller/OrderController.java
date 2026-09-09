@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,25 +31,29 @@ public class OrderController {
 
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Tiến hành đặt hàng và giữ tồn kho SKU (Optimistic Locking)")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Tiến hành đặt hàng và giữ tồn kho SKU (Dành cho Khách hàng - Optimistic Locking)")
     public ApiResponse<OrderResponse> checkout(@RequestParam Long customerId,
                                               @Valid @RequestBody CheckoutRequest request) {
         return ApiResponse.success(orderService.checkout(customerId, request), "Đặt hàng thành công");
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Xem chi tiết đơn hàng theo ID")
     public ApiResponse<OrderResponse> getOrderById(@PathVariable Long id) {
         return ApiResponse.success(orderService.getById(id));
     }
 
     @GetMapping("/code/{orderCode}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Xem chi tiết đơn hàng theo mã Order Code")
     public ApiResponse<OrderResponse> getOrderByCode(@PathVariable String orderCode) {
         return ApiResponse.success(orderService.getByOrderCode(orderCode));
     }
 
     @GetMapping("/customer/{customerId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Lấy danh sách đơn hàng theo khách hàng")
     public ApiResponse<List<OrderResponse>> getOrdersByCustomer(@PathVariable Long customerId) {
         return ApiResponse.success(orderService.getByCustomerId(customerId));

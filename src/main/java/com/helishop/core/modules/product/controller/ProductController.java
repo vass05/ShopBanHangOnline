@@ -48,7 +48,7 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ROLE_SELLER', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(summary = "Thêm mới sản phẩm (Dành cho Người bán / Quản trị viên)")
     public ApiResponse<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
         return ApiResponse.success(productService.createProduct(request), "Tạo sản phẩm thành công");
