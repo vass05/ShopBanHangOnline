@@ -3,23 +3,24 @@ import { cn } from "@/lib/utils";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "shopee" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  variant?: "default" | "ocean" | "shopee" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   size?: "default" | "sm" | "lg" | "icon";
   isLoading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", isLoading, children, disabled, ...props }, ref) => {
-    const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]";
+    const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0284C7] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]";
 
     const variantStyles = {
-      default: "bg-slate-900 text-slate-50 hover:bg-slate-800 shadow-sm",
-      shopee: "bg-gradient-to-r from-[#EE4D2D] to-[#F53D2D] text-white hover:opacity-95 shadow-md shadow-orange-500/20 font-semibold",
+      default: "bg-[#0284C7] text-white hover:bg-[#0369A1] shadow-sm font-medium",
+      ocean: "bg-gradient-to-r from-[#0284C7] to-[#0369A1] text-white hover:opacity-95 shadow-md shadow-sky-600/25 font-semibold",
+      shopee: "bg-gradient-to-r from-[#0284C7] to-[#0369A1] text-white hover:opacity-95 shadow-md shadow-sky-600/25 font-semibold",
       destructive: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
-      outline: "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 text-slate-700",
-      secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
+      outline: "border border-slate-200 bg-white hover:bg-sky-50 hover:text-[#0284C7] hover:border-sky-200 text-slate-700",
+      secondary: "bg-sky-50 text-[#0284C7] hover:bg-sky-100 font-medium",
       ghost: "hover:bg-slate-100 hover:text-slate-900 text-slate-700",
-      link: "text-primary underline-offset-4 hover:underline",
+      link: "text-[#0284C7] underline-offset-4 hover:underline",
     };
 
     const sizeStyles = {

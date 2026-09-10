@@ -13,7 +13,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 13 88% 55%; /* Shopee Orange #EE4D2D */
+    /* HeliShop Ocean Blue #0284C7 */
+    --primary: 201 96% 40%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -22,17 +23,17 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 14 100% 97%;
-    --accent-foreground: 13 88% 55%;
+    --accent: 204 100% 97%;
+    --accent-foreground: 201 96% 40%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 13 88% 55%;
+    --ring: 201 96% 40%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -42,27 +43,12 @@
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 13 88% 55%;
+    --primary: 201 96% 40%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 13 88% 55%;
+    --ring: 201 96% 40%;
   }
 }
 
@@ -71,32 +57,47 @@
     @apply border-border;
   }
   body {
-    @apply bg-slate-50 text-foreground font-sans antialiased;
+    @apply bg-[#F5F5FA] text-slate-800 font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* Custom modern animations */
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(0.98); }
+/* HeliShop Custom Brand Utilities */
+.ocean-gradient {
+  background: linear-gradient(135deg, #0284C7 0%, #0369A1 60%, #075985 100%);
 }
 
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s ease-in-out infinite;
+.ocean-gradient-light {
+  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
 }
 
-/* Glassmorphism utility */
+.ocean-banner-gradient {
+  background: linear-gradient(90deg, #0284C7 0%, #0369A1 50%, #0C4A6E 100%);
+}
+
+/* Glassmorphism */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.90);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(224, 242, 254, 0.8);
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 10px 30px -10px rgba(238, 77, 45, 0.08);
+/* Animation utilities */
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 1.5s ease-in-out infinite;
+}
+
+/* Hide scrollbar for clean horizontal scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

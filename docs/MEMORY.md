@@ -7,10 +7,11 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
 - **Giai đoạn đang thi công**: **Project 2: Shopee E-Commerce Integration & Automation**
-- **Sprint hiện tại**: Hoàn thành **Sprint 4 (Frontend Core - React 18, Tailwind CSS, Zustand, TanStack Query & Axios failedQueue Silent Refresh)**. Chuẩn bị bước vào **Sprint 5 (Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine)**.
+- **Sprint hiện tại**: Hoàn thành **Sprint 5 (Giao diện Toàn diện Chuẩn Shopee - Màu chủ đạo HeliShop Xanh Biển Ocean Blue `#0284C7`)**. Chuẩn bị bước vào **Sprint 6 (Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine)**.
 - **Nhánh Git**: `main` (đồng bộ hoàn toàn với `https://github.com/vass05/ShopBanHangOnline.git`).
 - **Backend Tests**: **98 bài kiểm thử - 100% PASSED**.
-- **Frontend Build**: **Vite Production Bundle Built Successfully (0 TypeScript errors)**.
+- **Frontend Build**: **Vite Production Bundle Built Successfully (0 TypeScript errors, 1704 modules)**.
+- **Tone màu thương hiệu**: Ocean Blue (`#0284C7`, `#0369A1`, `#0EA5E9`), nền xám mềm (`#F5F5FA`), phối viền sạch sẽ. Mọi thành phần đều tuân thủ màu sắc đặc trưng của HeliShop.
 
 ---
 

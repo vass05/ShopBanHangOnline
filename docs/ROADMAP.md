@@ -40,8 +40,8 @@ graph TD
 | **Sprint 2** | **Cổng thanh toán VNPAY Sandbox, Ký số HMAC-SHA512 & Idempotent Webhook IPN** | 5 ngày | ✅ **Hoàn thành** | Commit `5b5bddb` (Đã push lên GitHub) |
 | **Sprint 3** | **Async Email Worker, RabbitMQ Consumer, Retry x3 & Media Upload Cloudinary 1:1** | 4 ngày | ✅ **Hoàn thành** | Commit `4816bc8` (Đã push lên GitHub) |
 | **Sprint 4** | **Frontend Core - React 18, Tailwind, Zustand & Axios failedQueue Silent Refresh** | 5 ngày | ✅ **Hoàn thành** | React 18, Vite, Shadcn UI, failedQueue Interceptor |
-| **Sprint 5** | **Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine** | 3–4 ngày | ⏳ *Kế tiếp* | Xử lý Dead Letter Messages & Alerting |
-| **Sprint 6** | **Shopee Cart UI Tích hợp, Quản lý Biến thể SKU Đa thuộc tính & Checkout** | 5–6 ngày | 📋 Chưa bắt đầu | Giao diện chuẩn Shopee phân nhóm Shop & VNPAY |
+| **Sprint 5** | **Giao diện Toàn diện Chuẩn Shopee (Màu chủ đạo HeliShop Xanh Biển Ocean Blue)** | 5–6 ngày | ✅ **Hoàn thành** | Header Autocomplete, PDP 2 cấp SKU, Cart phân nhóm Shop, Sticky Checkout, VNPAY & 6 Tab Đơn hàng |
+| **Sprint 6** | **Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine** | 4 ngày | ⏳ *Kế tiếp* | Xử lý Dead Letter Messages & Alerting |
 
 ---
 

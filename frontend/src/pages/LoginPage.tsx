@@ -54,18 +54,18 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-orange-50/40 to-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-sky-50/40 to-slate-100 p-4">
       <div className="w-full max-w-md">
-        {/* Shopee Brand Header */}
+        {/* HeliShop Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#EE4D2D] to-[#FF7337] shadow-lg shadow-orange-500/30 text-white mb-3">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0284C7] to-[#0EA5E9] shadow-lg shadow-sky-500/30 text-white mb-3">
             <ShoppingBag className="w-8 h-8" />
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            Heli<span className="text-[#EE4D2D]">Shop</span> Core
+            Heli<span className="text-[#0284C7]">Shop</span> Core
           </h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">
-            Shopee E-Commerce Architecture & Automation
+            Sàn Thương Mại Điện Tử HeliShop - Trải Nghiệm Mua Sắm Số 1
           </p>
         </div>
 
@@ -121,7 +121,7 @@ export const LoginPage: React.FC = () => {
                   <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     Mật khẩu
                   </label>
-                  <span className="text-xs text-[#EE4D2D] hover:underline cursor-pointer">
+                  <span className="text-xs text-[#0284C7] hover:underline cursor-pointer">
                     Quên mật khẩu?
                   </span>
                 </div>
@@ -142,7 +142,7 @@ export const LoginPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleAutoFill("customer@helishop.com")}
-                    className="text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 hover:border-orange-400 hover:bg-orange-50 text-slate-700 hover:text-[#EE4D2D] transition-colors text-left flex items-center gap-1.5"
+                    className="text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                     <span>Customer</span>
@@ -150,9 +150,9 @@ export const LoginPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleAutoFill("seller@helishop.com")}
-                    className="text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 hover:border-orange-400 hover:bg-orange-50 text-slate-700 hover:text-[#EE4D2D] transition-colors text-left flex items-center gap-1.5"
+                    className="text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 text-orange-500" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
                     <span>Seller</span>
                   </button>
                 </div>
@@ -162,15 +162,15 @@ export const LoginPage: React.FC = () => {
             <CardFooter className="flex flex-col gap-3 pt-2">
               <Button
                 type="submit"
-                variant="shopee"
-                className="w-full text-base py-5"
+                variant="default"
+                className="w-full text-base py-5 bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md shadow-sky-600/20"
                 isLoading={loading}
               >
                 Đăng Nhập
               </Button>
               <p className="text-xs text-center text-slate-500">
                 Chưa có tài khoản?{" "}
-                <span className="text-[#EE4D2D] font-semibold cursor-pointer hover:underline">
+                <span className="text-[#0284C7] font-semibold cursor-pointer hover:underline">
                   Đăng ký ngay
                 </span>
               </p>

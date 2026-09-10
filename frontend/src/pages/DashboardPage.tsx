@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
 import { api, registerInterceptorLogger } from "@/lib/api";
@@ -136,20 +136,28 @@ export const DashboardPage: React.FC = () => {
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-[#EE4D2D] to-[#FF7337] text-white shadow-md shadow-orange-500/20">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0284C7] to-[#0EA5E9] text-white shadow-md shadow-sky-500/20">
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
               <span className="text-xl font-black tracking-tight text-slate-900">
-                Heli<span className="text-[#EE4D2D]">Shop</span>
+                Heli<span className="text-[#0284C7]">Shop</span>
               </span>
-              <span className="ml-2 text-xs py-0.5 px-2 rounded bg-orange-100 text-[#EE4D2D] font-bold">
-                Sprint 4 Core
+              <span className="ml-2 text-xs py-0.5 px-2 rounded bg-sky-100 text-[#0284C7] font-bold">
+                Dev Console
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-lg border border-sky-200 transition-colors flex items-center gap-1.5"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-sky-600" />
+              <span>Về Sàn HeliShop</span>
+            </Link>
+
             <div className="flex items-center gap-3 border-r border-slate-200 pr-4">
               <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold text-sm">
                 {user?.fullName?.charAt(0) || "U"}
@@ -160,7 +168,7 @@ export const DashboardPage: React.FC = () => {
                 </p>
                 <p className="text-xs text-slate-500">{user?.email}</p>
               </div>
-              <Badge variant="shopee" className="capitalize">
+              <Badge variant="ocean" className="capitalize">
                 {user?.role?.replace("ROLE_", "").toLowerCase()}
               </Badge>
             </div>
@@ -176,17 +184,17 @@ export const DashboardPage: React.FC = () => {
       {/* Main Content Body */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Banner Section */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-[#FF7337] text-xs font-semibold mb-3 border border-orange-500/30">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 text-[#38BDF8] text-xs font-semibold mb-3 border border-sky-500/30">
               <Zap className="w-3.5 h-3.5" />
-              Shopee Silent Refresh Token Engine
+              HeliShop Silent Refresh Token Engine
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Axios Interceptor & failedQueue Control Center
             </h1>
             <p className="text-slate-300 text-sm mt-2 max-w-2xl leading-relaxed">
-              Giải pháp ngăn chặn triệt để hiện tượng spam request refresh token khi nhiều API đồng thời trả về HTTP 401. Hàng đợi <code className="text-orange-300 bg-black/30 px-1 py-0.5 rounded font-mono">failedQueue</code> gom và giữ các request, chờ duy nhất 1 lần refresh thành công rồi tái thực thi tự động.
+              Giải pháp ngăn chặn triệt để hiện tượng spam request refresh token khi nhiều API đồng thời trả về HTTP 401. Hàng đợi <code className="text-sky-300 bg-black/30 px-1 py-0.5 rounded font-mono">failedQueue</code> gom và giữ các request, chờ duy nhất 1 lần refresh thành công rồi tái thực thi tự động.
             </p>
           </div>
 
@@ -201,7 +209,7 @@ export const DashboardPage: React.FC = () => {
             </Button>
 
             <Button
-              variant="shopee"
+              variant="ocean"
               onClick={handleTestParallelRequests}
               isLoading={testingParallel}
             >
@@ -219,7 +227,7 @@ export const DashboardPage: React.FC = () => {
               <CardHeader className="pb-3 border-b border-slate-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Database className="w-5 h-5 text-[#EE4D2D]" />
+                    <Database className="w-5 h-5 text-[#0284C7]" />
                     <CardTitle className="text-lg">Zustand State & Tokens</CardTitle>
                   </div>
                   {isCorrupted ? (
