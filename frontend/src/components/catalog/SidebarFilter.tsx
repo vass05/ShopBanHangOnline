@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Category } from "@/types";
 import { Filter, Star, Check, ChevronDown, ChevronRight, RotateCcw } from "lucide-react";
 
@@ -25,7 +25,27 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
 }) => {
   const [minPrice, setMinPrice] = useState(priceRange.min);
   const [maxPrice, setMaxPrice] = useState(priceRange.max);
-  const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({ 1: true, 2: true });
+  const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({ 1: true, 2: true, 3: true, 4: true, 5: true });
+
+  // Sync price inputs when priceRange is reset externally
+  useEffect(() => {
+    setMinPrice(priceRange.min);
+    setMaxPrice(priceRange.max);
+  }, [priceRange.min, priceRange.max]);
+
+  // Auto-expand category if selected category is a child or root
+  useEffect(() => {
+    if (!selectedCategoryId) return;
+    for (const cat of categories) {
+      if (
+        cat.id === selectedCategoryId ||
+        cat.children?.some((sub) => sub.id === selectedCategoryId)
+      ) {
+        setExpandedCategories((prev) => ({ ...prev, [cat.id]: true }));
+        break;
+      }
+    }
+  }, [selectedCategoryId, categories]);
 
   const toggleCategoryExpand = (id: number) => {
     setExpandedCategories((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -73,7 +93,8 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
           {categories.map((cat) => {
             const hasChildren = cat.children && cat.children.length > 0;
             const isSelected = selectedCategoryId === cat.id;
-            const isExpanded = expandedCategories[cat.id];
+            const isChildSelected = cat.children?.some((c) => c.id === selectedCategoryId);
+            const isExpanded = !!expandedCategories[cat.id];
 
             return (
               <div key={cat.id} className="space-y-1">
@@ -81,10 +102,15 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                   className={`px-2 py-1.5 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-colors ${
                     isSelected
                       ? "bg-sky-50 text-[#0284C7] font-bold"
+                      : isChildSelected
+                      ? "bg-sky-50/50 text-[#0284C7] font-semibold"
                       : "hover:bg-slate-50 text-slate-700"
                   }`}
                 >
-                  <span onClick={() => onSelectCategory(cat.id)} className="flex-1">
+                  <span
+                    onClick={() => onSelectCategory(isSelected ? null : cat.id)}
+                    className="flex-1 cursor-pointer select-none"
+                  >
                     {cat.name}
                   </span>
                   {hasChildren && (
@@ -94,9 +120,10 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                         e.stopPropagation();
                         toggleCategoryExpand(cat.id);
                       }}
-                      className="p-1 text-slate-400 hover:text-slate-600"
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
+                      aria-label="Thu gọn hoặc mở rộng danh mục"
                     >
-                      {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                     </button>
                   )}
                 </div>
@@ -109,15 +136,15 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                       return (
                         <div
                           key={sub.id}
-                          onClick={() => onSelectCategory(sub.id)}
-                          className={`px-2 py-1 rounded-lg cursor-pointer text-xs transition-colors flex items-center justify-between ${
+                          onClick={() => onSelectCategory(isSubSelected ? null : sub.id)}
+                          className={`px-2 py-1.5 rounded-lg cursor-pointer text-xs transition-colors flex items-center justify-between ${
                             isSubSelected
                               ? "bg-sky-50 text-[#0284C7] font-bold"
                               : "hover:bg-slate-50 text-slate-600"
                           }`}
                         >
                           <span>{sub.name}</span>
-                          {isSubSelected && <Check className="w-3 h-3" />}
+                          {isSubSelected && <Check className="w-3.5 h-3.5 text-[#0284C7]" />}
                         </div>
                       );
                     })}
