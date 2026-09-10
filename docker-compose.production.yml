@@ -1,0 +1,163 @@
+# ==============================================================================
+# HeliShop Core E-Commerce - Full Ecosystem Production Docker Compose
+# Services:
+#   1. frontend: React 18 + Vite SPA served via Nginx with Reverse Proxy (Port 80/443)
+#   2. backend: Spring Boot 3 / Temurin 21 JRE Alpine (Port 8080)
+#   3. mysql: MySQL 8.0 utf8mb4 (Port 3307:3306)
+#   4. redis: Redis 7 AOF Persistent (Port 6379)
+#   5. rabbitmq: RabbitMQ 3.13 Management with DLQ (Port 5672, 15672)
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. FRONTEND: React 18 / Vite + Nginx Reverse Proxy
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: helishop_prod_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - helishop_prod_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ----------------------------------------------------------------------------
+  # 2. BACKEND: Spring Boot 3.3.5 / Java 21 Core API
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: helishop_prod_backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eshop_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=eshop_user
+      - SPRING_DATASOURCE_PASSWORD=eshop_secret
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - helishop_prod_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/v3/api-docs"]
+      interval: 20s
+      timeout: 5s
+      start_period: 45s
+      retries: 3
+
+  # ----------------------------------------------------------------------------
+  # 3. DATABASE: MySQL 8.0 (Source of Truth)
+  # ----------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: helishop_prod_mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: eshop_db
+      MYSQL_USER: eshop_user
+      MYSQL_PASSWORD: eshop_secret
+      MYSQL_ROOT_PASSWORD: root_secret
+      TZ: Asia/Ho_Chi_Minh
+    command: >
+      mysqld
+      --default-time-zone=+07:00
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - eshop_prod_mysql_data:/var/lib/mysql
+    networks:
+      - helishop_prod_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 4. CACHE / CART: Redis 7 Alpine with AOF Persistent
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: helishop_prod_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - eshop_prod_redis_data:/data
+    networks:
+      - helishop_prod_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 5. MESSAGE BROKER: RabbitMQ 3.13 Management with DLQ
+  # ----------------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: helishop_prod_rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - eshop_prod_rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - helishop_prod_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ------------------------------------------------------------------------------
+# NETWORKS & VOLUMES CONFIGURATION
+# ------------------------------------------------------------------------------
+networks:
+  helishop_prod_network:
+    name: helishop_prod_network
+    driver: bridge
+
+volumes:
+  eshop_prod_mysql_data:
+    name: eshop_prod_mysql_data
+    driver: local
+  eshop_prod_redis_data:
+    name: eshop_prod_redis_data
+    driver: local
+  eshop_prod_rabbitmq_data:
+    name: eshop_prod_rabbitmq_data
+    driver: local
