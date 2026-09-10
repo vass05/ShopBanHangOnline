@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { formatVND } from "@/lib/formatters";
+import { HeliShopLogo } from "./HeliShopLogo";
 import {
   ShoppingBag,
   Search,
@@ -173,19 +174,7 @@ export const Header: React.FC = () => {
       <div className="ocean-gradient text-white py-3.5 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 lg:gap-8">
           {/* Logo Brand */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-11 h-11 rounded-2xl bg-white text-[#0284C7] flex items-center justify-center shadow-lg shadow-sky-900/30 group-hover:scale-105 transition-transform">
-              <ShoppingBag className="w-6 h-6 stroke-[2.5]" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm">
-                Heli<span className="text-sky-200">Shop</span>
-              </span>
-              <span className="bg-sky-400/30 text-sky-100 text-[10px] font-bold px-1.5 py-0.5 rounded border border-sky-300/40">
-                Mall
-              </span>
-            </div>
-          </Link>
+          <HeliShopLogo size="md" variant="on-dark" showBadge badgeText="Mall" />
 
           {/* Large Central Search with Autocomplete */}
           <div className="flex-1 max-w-2xl relative" ref={searchRef}>

@@ -58,8 +58,8 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-md">
         {/* HeliShop Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0284C7] to-[#0EA5E9] shadow-lg shadow-sky-500/30 text-white mb-3">
-            <ShoppingBag className="w-8 h-8" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-xl shadow-sky-500/20 p-2 ring-2 ring-sky-100 mb-3 hover:scale-105 transition-transform">
+            <img src="/images/logo.png" alt="HeliShop Logo" className="w-full h-full object-cover rounded-2xl" />
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
             Heli<span className="text-[#0284C7]">Shop</span> Core

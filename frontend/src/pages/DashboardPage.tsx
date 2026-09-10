@@ -6,6 +6,7 @@ import { api, registerInterceptorLogger } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { HeliShopLogo } from "@/components/layout/HeliShopLogo";
 import {
   ShoppingBag,
   LogOut,
@@ -135,19 +136,7 @@ export const DashboardPage: React.FC = () => {
       {/* Top Header Navbar */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0284C7] to-[#0EA5E9] text-white shadow-md shadow-sky-500/20">
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-xl font-black tracking-tight text-slate-900">
-                Heli<span className="text-[#0284C7]">Shop</span>
-              </span>
-              <span className="ml-2 text-xs py-0.5 px-2 rounded bg-sky-100 text-[#0284C7] font-bold">
-                Dev Console
-              </span>
-            </div>
-          </div>
+          <HeliShopLogo size="sm" variant="on-light" showBadge badgeText="Dev Console" />
 
           <div className="flex items-center gap-4">
             <Link
