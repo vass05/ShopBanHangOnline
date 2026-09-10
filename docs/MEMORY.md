@@ -38,6 +38,7 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ### 3.1. Cổng Dịch Vụ
 - **Application Backend**: `http://localhost:8080`
+- **Frontend Web Application**: `http://localhost:5173` (React 18 + Vite)
 - **Swagger Documentation**: `http://localhost:8080/swagger-ui/index.html`
 - **MySQL Database**: `localhost:3307` (user: `eshop_user`, pass: `eshop_secret`, db: `eshop_db`)
 - **Redis Server**: `localhost:6379`
