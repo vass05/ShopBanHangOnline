@@ -7,9 +7,9 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
 - **Giai đoạn đang thi công**: **Project 2: Shopee E-Commerce Integration & Automation**
-- **Sprint hiện tại**: Hoàn thành **Sprint 1** (`fe4d48c`). Chuẩn bị bước vào **Sprint 2**.
+- **Sprint hiện tại**: Hoàn thành **Sprint 2 (VNPAY Payment Gateway & Idempotent Webhook IPN)**. Chuẩn bị bước vào **Sprint 3 (Async Email Worker)**.
 - **Nhánh Git**: `main` (đồng bộ hoàn toàn với `https://github.com/vass05/ShopBanHangOnline.git`).
-- **Tổng số Unit & Integration Tests**: **74 bài kiểm thử - 100% PASSED**.
+- **Tổng số Unit & Integration Tests**: **89 bài kiểm thử - 100% PASSED**.
 
 ---
 
@@ -69,11 +69,15 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 - **Vấn đề**: Mockito 5 mặc định strict stubbing. Nếu stub `stringRedisTemplate.opsForHash()` trong `@BeforeEach` nhưng test case gọi `clearCart()` (chỉ gọi `delete()`), Mockito sẽ ném lỗi `UnnecessaryStubbingException`.
 - **Giải pháp**: Sử dụng `lenient().when(stringRedisTemplate.opsForHash()).thenReturn(hashOperations);`.
 
+### 6. Định dạng phản hồi VNPAY IPN Webhook Server-to-Server
+- **Vấn đề**: VNPAY IPN yêu cầu định dạng JSON chính xác `{"RspCode":"00","Message":"Confirm Success"}` với trường viết hoa `RspCode` và `Message`. Nếu bọc trong `ApiResponse<T>` chuẩn của hệ thống, máy chủ VNPAY sẽ báo lỗi không nhận dạng được và liên tục gọi lại.
+- **Giải pháp**: Tạo DTO `VnPayIpnResponse` với `@JsonProperty("RspCode")` và `@JsonProperty("Message")`, trả về trực tiếp từ controller `/api/v1/payments/vnpay-ipn`.
+
 ---
 
-## 📋 5. SẴN SÀNG CHO SPRINT TIẾP THEO: SPRINT 2
+## 📋 5. SẴN SÀNG CHO SPRINT TIẾP THEO: SPRINT 3
 - **Mục tiêu chính**:
-  1. Xây dựng `OrderEventPublisher` bắn sự kiện khi thanh toán hoặc tạo đơn hàng (`order.paid.email`).
-  2. Xây dựng Async Email Worker với `@RabbitListener` lắng nghe queue `order.email.queue`.
-  3. Cấu hình cơ chế Retry 3 lần kèm Exponential Backoff.
-  4. Sau 3 lần thất bại, message tự động chuyển hướng qua Dead Letter Exchange `order.dlx.exchange` tới `order.email.dlq`.
+  1. Xây dựng Async Email Worker với `@RabbitListener` lắng nghe queue `order.email.queue`.
+  2. Cấu hình cơ chế Retry 3 lần kèm Exponential Backoff khi worker gặp lỗi.
+  3. Sau 3 lần thất bại, message tự động chuyển hướng qua Dead Letter Exchange `order.dlx.exchange` tới `order.email.dlq`.
+  4. Tạo template email HTML responsive xác nhận đơn hàng và hóa đơn thanh toán.

@@ -55,3 +55,10 @@ app:
     refresh-token-expiration-sec: 604800 # 7 days (7 * 24 * 60 * 60)
     expiration-ms: 900000 # fallback compatibility
 
+  vnpay:
+    tmn-code: ${VNP_TMN_CODE:HELI0001}
+    hash-secret: ${VNP_HASH_SECRET:404E635266556A586E3272357538782F}
+    pay-url: ${VNP_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+    return-url: ${VNP_RETURN_URL:http://localhost:8080/api/v1/payments/vnpay-return}
+    ipn-url: ${VNP_IPN_URL:http://localhost:8080/api/v1/payments/vnpay-ipn}
+
