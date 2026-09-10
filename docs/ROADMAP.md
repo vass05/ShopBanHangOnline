@@ -38,10 +38,10 @@ graph TD
 | :---: | :--- | :---: | :---: | :--- |
 | **Sprint 1** | **Hạ tầng RabbitMQ 3.13, Redis AOF Persistent, Redis Cart Engine Shopee** | 4–5 ngày | ✅ **Hoàn thành** | Commit `fe4d48c` (Đã push lên GitHub) |
 | **Sprint 2** | **Cổng thanh toán VNPAY Sandbox, Ký số HMAC-SHA512 & Idempotent Webhook IPN** | 5 ngày | ✅ **Hoàn thành** | Commit `5b5bddb` (Đã push lên GitHub) |
-| **Sprint 3** | **Async Email Worker, RabbitMQ Consumer, Retry x3 & Media Upload Cloudinary 1:1** | 4 ngày | ✅ **Hoàn thành** | Thymeleaf invoice, AMQP DLQ, Cloudinary 800x800 |
-| **Sprint 4** | **Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine** | 3–4 ngày | ⏳ *Kế tiếp* | Xử lý Dead Letter Messages & Alerting |
-| **Sprint 5** | **Quản lý Biến thể SKU đa thuộc tính & Danh mục chuẩn Shopee** | 4–5 ngày | 📋 Chưa bắt đầu | Biến thể sản phẩm 2 cấp (Màu/Size), SKU Matrix |
-| **Sprint 6** | **Giao diện React 18 + Vite Frontend, Silent Refresh Token & Shopee Cart UI** | 5–6 ngày | 📋 Chưa bắt đầu | Giao diện chuẩn Shopee phân nhóm Shop |
+| **Sprint 3** | **Async Email Worker, RabbitMQ Consumer, Retry x3 & Media Upload Cloudinary 1:1** | 4 ngày | ✅ **Hoàn thành** | Commit `4816bc8` (Đã push lên GitHub) |
+| **Sprint 4** | **Frontend Core - React 18, Tailwind, Zustand & Axios failedQueue Silent Refresh** | 5 ngày | ✅ **Hoàn thành** | React 18, Vite, Shadcn UI, failedQueue Interceptor |
+| **Sprint 5** | **Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine** | 3–4 ngày | ⏳ *Kế tiếp* | Xử lý Dead Letter Messages & Alerting |
+| **Sprint 6** | **Shopee Cart UI Tích hợp, Quản lý Biến thể SKU Đa thuộc tính & Checkout** | 5–6 ngày | 📋 Chưa bắt đầu | Giao diện chuẩn Shopee phân nhóm Shop & VNPAY |
 
 ---
 

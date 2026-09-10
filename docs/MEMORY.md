@@ -7,9 +7,10 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
 - **Giai đoạn đang thi công**: **Project 2: Shopee E-Commerce Integration & Automation**
-- **Sprint hiện tại**: Hoàn thành **Sprint 3 (Async Email Worker, RabbitMQ Retry/DLQ, Media Upload Cloudinary 1:1)**. Chuẩn bị bước vào **Sprint 4 (Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine)**.
+- **Sprint hiện tại**: Hoàn thành **Sprint 4 (Frontend Core - React 18, Tailwind CSS, Zustand, TanStack Query & Axios failedQueue Silent Refresh)**. Chuẩn bị bước vào **Sprint 5 (Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine)**.
 - **Nhánh Git**: `main` (đồng bộ hoàn toàn với `https://github.com/vass05/ShopBanHangOnline.git`).
-- **Tổng số Unit & Integration Tests**: **98 bài kiểm thử - 100% PASSED**.
+- **Backend Tests**: **98 bài kiểm thử - 100% PASSED**.
+- **Frontend Build**: **Vite Production Bundle Built Successfully (0 TypeScript errors)**.
 
 ---
 
@@ -17,15 +18,19 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 | Thành phần | Công nghệ / Thư viện | Phiên bản | Ghi chú cấu hình |
 | :--- | :--- | :---: | :--- |
-| **Ngôn ngữ** | Java | 21 (Temurin / OpenJDK) | Cú pháp Pattern Matching, Record, Virtual Threads ready |
-| **Framework** | Spring Boot | 3.3.5 | Spring Security 6, Spring Data JPA, Spring AMQP |
+| **Backend Java** | OpenJDK / Temurin | 21 | Pattern Matching, Record, Virtual Threads ready |
+| **Backend Framework** | Spring Boot | 3.3.5 | Spring Security 6, Spring Data JPA, Spring AMQP |
+| **Frontend UI** | React | 18.3.1 | Vite 5.4.9, TypeScript 5.6.3 |
+| **Styling** | Tailwind CSS | 3.4.14 | Shopee Orange Theme `#EE4D2D`, Glassmorphism, Inter Font |
+| **State Management** | Zustand | 5.0.0 | Persist middleware, LocalStorage sync |
+| **Server State / Cache** | TanStack Query | 5.59.16 | StaleTime 5m, GC 15m |
+| **HTTP Client** | Axios | 1.7.7 | Request/Response Interceptor với hàng đợi `failedQueue` |
+| **Icons** | Lucide React | 0.453.0 | Icon pack hiện đại |
 | **Cơ sở dữ liệu** | MySQL | 8.0 | Port 3307 (Host) -> 3306 (Container), utf8mb4 |
 | **Bộ nhớ đệm / Giỏ hàng** | Redis | 7-alpine | Port 6379, AOF Persistent (`appendonly yes`) |
 | **Message Broker** | RabbitMQ | 3.13-management | Port 5672 (AMQP), 15672 (Management UI) |
 | **Tài liệu API** | Springdoc OpenAPI (Swagger 3) | 2.6.0 | UI: `http://localhost:8080/swagger-ui/index.html` |
 | **Xác thực** | JJWT (io.jsonwebtoken) | 0.12.6 | Access Token (15 phút), Refresh Token (7 ngày) |
-| **Object Mapper** | MapStruct | 1.5.5.Final | Lombok binding 0.2.0 |
-| **Lombok** | Project Lombok | 1.18.34 | Cần gán cứng `<lombok.version>1.18.34</lombok.version>` |
 
 ---
 
@@ -81,11 +86,20 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 - **Vấn đề**: Các test case chạy bằng `@ExtendWith(MockitoExtension.class)` không khởi tạo Spring Context, dẫn đến các trường có `@Value` bị null nếu không được gán qua reflection.
 - **Giải pháp**: Luôn gán giá trị mặc định trực tiếp lúc khai báo trường trong class (ví dụ: `private String senderEmail = "helishop.system@gmail.com";`).
 
+### 9. Cấu hình CORS Backend & Vite Proxy
+- **Vấn đề**: Khi chạy frontend Vite trên `http://localhost:5173`, nếu Spring Security chặn CORS với `AbstractHttpConfigurer::disable` thì trình duyệt sẽ chặn toàn bộ các request preflight `OPTIONS`.
+- **Giải pháp**: Cấu hình `CorsConfigurationSource` cho phép `allowedOriginPatterns("*")`, methods, headers `*` và `allowCredentials(true)` trong `SecurityConfig.java`, đồng thời thiết lập Vite proxy forwarding `/api` trực tiếp về `http://localhost:8080`.
+
+### 10. Chống Race Condition Refresh Token với failedQueue
+- **Vấn đề**: Khi Access Token hết hạn, nếu trang web cùng lúc bắn ra 5-10 request song song (ví dụ: lấy thông tin user, giỏ hàng, thông báo, danh mục), tất cả các request này đều nhận mã 401. Nếu không có cơ chế hàng đợi, cả 10 request sẽ đồng thời gọi `POST /auth/refresh-token`, dẫn tới việc Refresh Token bị thu hồi hoặc vi phạm tính toàn vẹn phiên làm việc.
+- **Giải pháp**: Sử dụng cờ `isRefreshing` và mảng `failedQueue`. Request đầu tiên nhận 401 sẽ bật cờ và đi refresh token. Các request nhận 401 sau đó sẽ được gom vào Promise resolve/reject trong `failedQueue`. Sau khi nhận được `newAccessToken`, hàm `processQueue(null, newAccessToken)` giải phóng toàn bộ hàng đợi và retry lại tất cả các request ban đầu một cách êm ái (silent).
+
 ---
 
-## 📋 5. SẴN SÀNG CHO SPRINT TIẾP THEO: SPRINT 4
+## 📋 5. SẴN SÀNG CHO SPRINT TIẾP THEO: SPRINT 5
 - **Mục tiêu chính**:
   1. Hủy đơn hàng và cơ chế hoàn trả số lượng tồn kho nguyên tử (Atomic Stock Compensation).
   2. Dead Letter Alerting Engine: Xử lý và cảnh báo các message rơi vào `order.email.dlq` hoặc queue DLQ khác.
   3. Quản lý trạng thái đơn hàng (PENDING -> PROCESSING -> SHIPPED -> DELIVERED / CANCELLED).
+
 
