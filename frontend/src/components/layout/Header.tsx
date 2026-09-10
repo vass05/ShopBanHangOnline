@@ -38,10 +38,12 @@ export const Header: React.FC = () => {
   const SUGGESTIONS = [
     "iPhone 16 Pro Max 256GB Titan",
     "Tai nghe Sony WH-1000XM5",
-    "Bàn phím cơ NuPhy Air75",
-    "Chuột Logitech MX Master 3S",
-    "Áo thun Teelab Oversize 260GSM",
-    "Nồi chiên không dầu Philips XXL",
+    "Bàn phím cơ NuPhy Air75 V2",
+    "MacBook Pro 14 M3 Pro",
+    "Áo Polo Coolmate ExCool",
+    "Chuột Logitech G Pro X Superlight 2",
+    "Củ sạc Anker Prime 67W GaN",
+    "Màn hình Dell UltraSharp 2K",
   ];
 
   // Close dropdowns on outside click
@@ -133,14 +135,6 @@ export const Header: React.FC = () => {
                       <Package className="w-4 h-4 text-sky-600" />
                       <span>Đơn mua của tôi</span>
                     </Link>
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-sky-50 hover:text-[#0284C7] transition-colors"
-                    >
-                      <Sliders className="w-4 h-4 text-amber-500" />
-                      <span>Trình test Token (Sprint 4)</span>
-                    </Link>
                     <button
                       onClick={() => {
                         setShowUserMenu(false);
@@ -224,10 +218,11 @@ export const Header: React.FC = () => {
             {/* Quick hot search keywords underneath */}
             <div className="hidden sm:flex items-center gap-3 text-xs text-sky-100 mt-1.5 pl-1 overflow-x-auto no-scrollbar whitespace-nowrap">
               <span onClick={() => handleSelectSuggestion("iPhone 16 Pro Max")} className="hover:text-white cursor-pointer">iPhone 16</span>
-              <span onClick={() => handleSelectSuggestion("Tai nghe Sony")} className="hover:text-white cursor-pointer">Tai nghe Sony</span>
-              <span onClick={() => handleSelectSuggestion("NuPhy Air75")} className="hover:text-white cursor-pointer">Bàn phím cơ</span>
-              <span onClick={() => handleSelectSuggestion("Logitech MX")} className="hover:text-white cursor-pointer">Chuột MX Master</span>
-              <span onClick={() => handleSelectSuggestion("Teelab")} className="hover:text-white cursor-pointer">Áo thun Teelab</span>
+              <span onClick={() => handleSelectSuggestion("Sony WH-1000XM5")} className="hover:text-white cursor-pointer">Tai nghe Sony</span>
+              <span onClick={() => handleSelectSuggestion("NuPhy Air75 V2")} className="hover:text-white cursor-pointer">Bàn phím NuPhy</span>
+              <span onClick={() => handleSelectSuggestion("MacBook Pro")} className="hover:text-white cursor-pointer">MacBook Pro</span>
+              <span onClick={() => handleSelectSuggestion("Logitech G Pro")} className="hover:text-white cursor-pointer">Chuột Logitech</span>
+              <span onClick={() => handleSelectSuggestion("Coolmate ExCool")} className="hover:text-white cursor-pointer">Áo Polo Coolmate</span>
             </div>
           </div>
 

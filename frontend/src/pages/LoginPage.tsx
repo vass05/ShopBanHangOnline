@@ -12,8 +12,8 @@ export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { setAuth, isAuthenticated } = useAuthStore();
 
-  const [email, setEmail] = useState("vuvietanh@gmail.com");
-  const [password, setPassword] = useState("Password123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -21,7 +21,7 @@ export const LoginPage: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated && !isExpired) {
-      navigate("/dashboard");
+      navigate("/");
     }
   }, [isAuthenticated, isExpired, navigate]);
 
@@ -39,18 +39,13 @@ export const LoginPage: React.FC = () => {
       };
 
       setAuth({ user, accessToken, refreshToken });
-      navigate("/dashboard");
+      navigate("/");
     } catch (err: any) {
       const msg = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
       setErrorMessage(msg);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAutoFill = (fillEmail: string) => {
-    setEmail(fillEmail);
-    setPassword("Password123!");
   };
 
   return (
@@ -97,7 +92,7 @@ export const LoginPage: React.FC = () => {
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
             <CardDescription>
-              Hỗ trợ đăng nhập bằng Gmail hoặc Số điện thoại
+              Nhập Gmail hoặc Số điện thoại để truy cập tài khoản mua sắm
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
@@ -133,40 +128,6 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-              </div>
-
-              {/* Quick autofill sample accounts */}
-              <div className="pt-2 border-t border-slate-100">
-                <p className="text-xs text-slate-500 mb-2 font-medium">Tài khoản kiểm thử nhanh (1-Click Fill):</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleAutoFill("vuvietanh@gmail.com")}
-                    className="text-xs py-1.5 px-2 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
-                    title="Vũ Viết Anh (Gmail)"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span className="truncate">Viết Anh (Gmail)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAutoFill("0988889999")}
-                    className="text-xs py-1.5 px-2 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
-                    title="Vũ Viết Anh (Số điện thoại)"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-                    <span className="truncate">SĐT (0988)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAutoFill("seller.apple@gmail.com")}
-                    className="text-xs py-1.5 px-2 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
-                    title="Chủ Shop Apple"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span className="truncate">Shop Apple</span>
-                  </button>
-                </div>
               </div>
             </CardContent>
 

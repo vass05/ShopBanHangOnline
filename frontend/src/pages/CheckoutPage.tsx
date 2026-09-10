@@ -375,8 +375,8 @@ export const CheckoutPage: React.FC = () => {
                   VNPAY
                 </div>
                 <div>
-                  <h5 className="font-bold text-slate-900 text-sm">VNPAY Sandbox Gateway</h5>
-                  <p className="text-[11px] text-slate-500">Quét mã QR, Thẻ ATM nội địa, Visa/Master</p>
+                  <h5 className="font-bold text-slate-900 text-sm">Cổng Thanh Toán Trực Tuyến VNPAY-QR</h5>
+                  <p className="text-[11px] text-slate-500">Quét mã QR, Thẻ ATM nội địa, Visa / Mastercard / JCB</p>
                 </div>
               </div>
               {paymentMethod === "VNPAY" && (

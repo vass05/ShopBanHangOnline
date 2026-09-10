@@ -112,7 +112,7 @@ export const HomePage: React.FC = () => {
       id: 2,
       title: "Lễ Hội Thanh Toán VNPAY",
       subtitle: "Nhập mã VNPAY100K giảm ngay 10% - Áp dụng toàn sàn cho mọi đơn hàng",
-      badge: "VNPAY SANDBOX READY",
+      badge: "ƯU ĐÃI ĐỘC QUYỀN VNPAY-QR",
       bgColor: "from-[#0369A1] via-[#0284C7] to-[#0EA5E9]",
       tag: "Hoàn Tiền 100K",
     },
@@ -292,34 +292,6 @@ export const HomePage: React.FC = () => {
 
           {/* Right Product Grid & Sorting Toolbar (9 cols) */}
           <div className="lg:col-span-9 space-y-4">
-            {/* Live Database Connection Indicator */}
-            <div className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
-              isBackendConnected
-                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                : "bg-sky-50 border-sky-200 text-sky-900"
-            }`}>
-              <div className="flex items-center gap-2.5">
-                <span className="relative flex h-3 w-3">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    isBackendConnected ? "bg-emerald-400" : "bg-sky-400"
-                  }`} />
-                  <span className={`relative inline-flex rounded-full h-3 w-3 ${
-                    isBackendConnected ? "bg-emerald-500" : "bg-[#0284C7]"
-                  }`} />
-                </span>
-                <span className="text-xs font-semibold">
-                  {isBackendConnected
-                    ? `🟢 Đã kết nối Live Backend & MySQL: Đang hiển thị ${totalDbProducts} sản phẩm thực tế từ Database`
-                    : "ℹ️ Chế độ Demo Frontend: Hiển thị sản phẩm chuẩn Shopee (Sẽ tự động đồng bộ khi khởi động Backend MySQL)"}
-                </span>
-              </div>
-              <div className="hidden sm:flex items-center gap-2 text-xs">
-                <span className="font-mono px-2 py-0.5 rounded bg-white/80 border border-slate-200 text-slate-700 font-medium">
-                  {isBackendConnected ? "REST API /api/v1/products" : "AUTO-FALLBACK MOCK"}
-                </span>
-              </div>
-            </div>
-
             {/* Sorting Toolbar (Shopee-style) */}
             <div className="bg-slate-100/90 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 border border-slate-200/80">
               <div className="flex items-center gap-2 flex-wrap">
