@@ -18,4 +18,7 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM ProductSku s WHERE s.id = :id")
     Optional<ProductSku> findByIdWithLock(@Param("id") Long id);
+
+    @Query("SELECT s FROM ProductSku s JOIN FETCH s.product p JOIN FETCH p.shop sh WHERE s.id = :id")
+    Optional<ProductSku> findByIdWithProductAndShop(@Param("id") Long id);
 }

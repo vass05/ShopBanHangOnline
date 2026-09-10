@@ -70,7 +70,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/orders/checkout").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/orders/**").authenticated()
 
-                        // 4. Các yêu cầu còn lại bắt buộc đăng nhập
+                        // 4. Phân quyền Giỏ hàng
+                        .requestMatchers("/api/v1/cart/**").authenticated()
+
+                        // 5. Các yêu cầu còn lại bắt buộc đăng nhập
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

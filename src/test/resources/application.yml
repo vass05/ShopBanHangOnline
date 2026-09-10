@@ -13,3 +13,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
