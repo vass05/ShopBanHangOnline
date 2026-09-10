@@ -122,8 +122,10 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 ---
 
 ## 📋 5. BÀN GIAO & VẬN HÀNH HỆ THỐNG
-- Toàn bộ backend và frontend đã hoàn tất kiểm thử tự động và đẩy lên remote GitHub `origin/main`.
-- Frontend tự động phát hiện backend: Nếu backend chạy, hiển thị trực tiếp dữ liệu từ MySQL Database qua REST API `/api/v1/products`; nếu backend chưa khởi động, tự động chuyển sang chế độ Demo Mock Data an toàn mà không gây gián đoạn trải nghiệm người dùng.
+- **Loại bỏ hoàn toàn mockData**: Tệp `frontend/src/data/mockData.ts` đã được xóa bỏ hoàn toàn. Frontend hiện kết nối 100% trực tiếp với cơ sở dữ liệu MySQL 8.0 thông qua hệ thống REST APIs của Spring Boot (`/api/v1/products`, `/api/v1/categories/tree`, `/api/v1/orders`).
+- **Giao diện khi Backend chưa bật / chưa nạp data**: Hiển thị bảng thông báo trạng thái kết nối máy chủ rõ ràng kèm hướng dẫn khởi động Spring Boot và nạp `seed-data.sql`, tích hợp nút "Thử kết nối lại" (Retry).
+- **Trạng thái giỏ hàng & Đơn hàng**: Khởi tạo ban đầu sạch sẽ (rỗng), chỉ hiển thị các sản phẩm và đơn hàng thực tế do người dùng thêm hoặc đặt hàng qua API.
+- **Tình trạng kiểm thử**: 100% kiểm thử Backend (103/103 tests) và đóng gói Frontend (`vite build`) đạt chuẩn tuyệt đối. Toàn bộ mã nguồn đã đồng bộ với GitHub `origin/main`.
 
 
 
