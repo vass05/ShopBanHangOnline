@@ -95,14 +95,28 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ### 10. Chống Race Condition Refresh Token với failedQueue
 - **Vấn đề**: Khi Access Token hết hạn, nếu trang web cùng lúc bắn ra 5-10 request song song (ví dụ: lấy thông tin user, giỏ hàng, thông báo, danh mục), tất cả các request này đều nhận mã 401. Nếu không có cơ chế hàng đợi, cả 10 request sẽ đồng thời gọi `POST /auth/refresh-token`, dẫn tới việc Refresh Token bị thu hồi hoặc vi phạm tính toàn vẹn phiên làm việc.
-- **Giải pháp**: Sử dụng cờ `isRefreshing` và mảng `failedQueue`. Request đầu tiên nhận 401 sẽ bật cờ và đi refresh token. Các request nhận 401 sau đó sẽ được gom vào Promise resolve/reject trong `failedQueue`. Sau khi nhận được `newAccessToken`, hàm `processQueue(null, newAccessToken)` giải phóng toàn bộ hàng đợi và retry lại tất cả các request ban đầu một cách êm ái (silent).
+### 11. Cơ chế Nạp dữ liệu mẫu (Database Seeding) & Chống xung đột Test
+- **Vấn đề**: Sau khi dựng backend, cơ sở dữ liệu trống dẫn đến việc kiểm thử giao diện frontend gặp khó khăn nếu không có sẵn tài khoản, sản phẩm, biến thể SKU và danh mục. Đồng thời, `DatabaseSeeder` không được phép tự động chạy trong quá trình chạy bộ test tự động (vì các bài test dùng H2 in-memory với bảng sạch).
+- **Giải pháp**:
+  1. Tạo `DatabaseSeeder.java` sử dụng `@ConditionalOnProperty(name = "app.seeder.enabled", havingValue = "true", matchIfMissing = true)`.
+  2. Cấu hình `app.seeder.enabled: false` trong `src/test/resources/application.yml` để tắt seeder khi chạy `./mvnw test`, đảm bảo 103 test cases độc lập tuyệt đối.
+  3. Cung cấp file SQL dự phòng `backend/src/main/resources/seed-data.sql` chuẩn MySQL 8.0 để có thể import thủ công qua MySQL Workbench / DBeaver bất cứ lúc nào.
+  4. Phân bổ mỗi Shop một tài khoản chủ shop (Owner) riêng biệt (`seller.sony`, `seller.nuphy`, `seller.coolmate`) để tránh vi phạm ràng buộc Unique Index trên cột `shops.owner_id`.
+
+### 12. Tài khoản kiểm thử mặc định hệ thống
+- **Quản trị viên (ADMIN)**: `admin@helishop.com` / `Password123!`
+- **Khách hàng (CUSTOMER)**: `customer@helishop.com` / `Password123!` (Đã gán sẵn địa chỉ nhận hàng: 72 Lê Thánh Tôn, Bến Nghé, Quận 1, TP. HCM)
+- **Người bán Apple (SELLER)**: `seller@helishop.com` / `Password123!`
+- **Người bán Sony (SELLER)**: `seller.sony@helishop.com` / `Password123!`
+- **Người bán NuPhy (SELLER)**: `seller.nuphy@helishop.com` / `Password123!`
+- **Người bán Coolmate (SELLER)**: `seller.coolmate@helishop.com` / `Password123!`
+- **Vouchers có sẵn**: `HELI50K` (giảm 50.000₫), `HELI100K` (giảm 100.000₫), `VNPAY10` (giảm 10%).
 
 ---
 
-## 📋 5. SẴN SÀNG CHO SPRINT TIẾP THEO: SPRINT 5
-- **Mục tiêu chính**:
-  1. Hủy đơn hàng và cơ chế hoàn trả số lượng tồn kho nguyên tử (Atomic Stock Compensation).
-  2. Dead Letter Alerting Engine: Xử lý và cảnh báo các message rơi vào `order.email.dlq` hoặc queue DLQ khác.
-  3. Quản lý trạng thái đơn hàng (PENDING -> PROCESSING -> SHIPPED -> DELIVERED / CANCELLED).
+## 📋 5. BÀN GIAO & VẬN HÀNH HỆ THỐNG
+- Toàn bộ backend và frontend đã hoàn tất kiểm thử tự động và đẩy lên remote GitHub `origin/main`.
+- Frontend tự động phát hiện backend: Nếu backend chạy, hiển thị trực tiếp dữ liệu từ MySQL Database qua REST API `/api/v1/products`; nếu backend chưa khởi động, tự động chuyển sang chế độ Demo Mock Data an toàn mà không gây gián đoạn trải nghiệm người dùng.
+
 
 
