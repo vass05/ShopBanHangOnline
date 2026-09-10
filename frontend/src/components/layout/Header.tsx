@@ -177,17 +177,12 @@ export const Header: React.FC = () => {
             <div className="w-11 h-11 rounded-2xl bg-white text-[#0284C7] flex items-center justify-center shadow-lg shadow-sky-900/30 group-hover:scale-105 transition-transform">
               <ShoppingBag className="w-6 h-6 stroke-[2.5]" />
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                <span className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm">
-                  Heli<span className="text-sky-200">Shop</span>
-                </span>
-                <span className="bg-sky-400/30 text-sky-100 text-[10px] font-bold px-1.5 py-0.5 rounded border border-sky-300/40">
-                  Mall
-                </span>
-              </div>
-              <span className="text-[10px] text-sky-100 font-medium tracking-wide -mt-1 hidden sm:block">
-                Sàn TMĐT Xanh Biển Thông Minh
+            <div className="flex items-center gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm">
+                Heli<span className="text-sky-200">Shop</span>
+              </span>
+              <span className="bg-sky-400/30 text-sky-100 text-[10px] font-bold px-1.5 py-0.5 rounded border border-sky-300/40">
+                Mall
               </span>
             </div>
           </Link>
