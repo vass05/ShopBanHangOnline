@@ -32,6 +32,8 @@ spring:
             enable: false
 
 app:
+  seeder:
+    enabled: false
   cloudinary:
     cloud-name: test-cloud
     api-key: test-key

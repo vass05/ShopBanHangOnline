@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { SidebarFilter } from "@/components/catalog/SidebarFilter";
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/data/mockData";
+import { Product, Category } from "@/types";
+import { api } from "@/lib/api";
 import {
   Sparkles,
   ChevronLeft,
@@ -19,11 +21,74 @@ import {
   Shirt,
   Tv,
   Watch,
+  Database,
 } from "lucide-react";
 
 export const HomePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const searchKeyword = searchParams.get("q") || "";
+
+  // Live Backend State
+  const [liveProducts, setLiveProducts] = useState<Product[] | null>(null);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+  const [totalDbProducts, setTotalDbProducts] = useState<number>(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    api
+      .get("/products?size=50")
+      .then((res) => {
+        if (!isMounted) return;
+        const pageData = res.data?.data;
+        if (pageData && Array.isArray(pageData.content) && pageData.content.length > 0) {
+          const mapped: Product[] = pageData.content.map((p: any) => {
+            const fallback = MOCK_PRODUCTS.find((m) => m.id === p.id || m.slug === p.slug);
+            return {
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              description: p.description || fallback?.description || "",
+              price: Number(p.price) || 0,
+              originalPrice: fallback?.originalPrice || Number(p.price) * 1.15,
+              rating: Number(p.rating) || 5.0,
+              reviewCount: fallback?.reviewCount || 48,
+              soldCount: fallback?.soldCount || 125,
+              category: {
+                id: p.categoryId || 1,
+                name: p.categoryName || "Danh mục",
+                slug: p.categoryName
+                  ? p.categoryName.toLowerCase().replace(/\s+/g, "-")
+                  : "danh-muc",
+              },
+              shop: {
+                id: p.shopId || 1,
+                shopName: p.shopName || "Gian Hàng Chính Hãng",
+                avatarUrl: fallback?.shop?.avatarUrl,
+                rating: 4.9,
+                responseRate: "99%",
+                joinedTime: "2 năm trước",
+              },
+              isFavorite: true,
+              isMall: true,
+              images: fallback?.images || [
+                { id: 1, imageUrl: p.mainImageUrl, isThumbnail: true, displayOrder: 1 },
+              ],
+              productSkus: fallback?.productSkus || [],
+            };
+          });
+          setLiveProducts(mapped);
+          setTotalDbProducts(pageData.totalElements || mapped.length);
+          setIsBackendConnected(true);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsBackendConnected(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Filter States
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
@@ -61,9 +126,12 @@ export const HomePage: React.FC = () => {
     },
   ];
 
+  // Effective products list (live MySQL DB or fallback mock)
+  const currentProducts = liveProducts && liveProducts.length > 0 ? liveProducts : MOCK_PRODUCTS;
+
   // Filtering & Sorting
   const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter((product) => {
+    return currentProducts.filter((product) => {
       // Keyword filter
       if (searchKeyword && !product.name.toLowerCase().includes(searchKeyword.toLowerCase())) {
         return false;
@@ -89,7 +157,7 @@ export const HomePage: React.FC = () => {
       if (sortBy === "price-desc") return b.price - a.price;
       return b.rating - a.rating; // default: popular
     });
-  }, [searchKeyword, selectedCategoryId, priceRange, selectedRating, sortBy]);
+  }, [currentProducts, searchKeyword, selectedCategoryId, priceRange, selectedRating, sortBy]);
 
   const handleResetFilters = () => {
     setSelectedCategoryId(null);
@@ -224,6 +292,34 @@ export const HomePage: React.FC = () => {
 
           {/* Right Product Grid & Sorting Toolbar (9 cols) */}
           <div className="lg:col-span-9 space-y-4">
+            {/* Live Database Connection Indicator */}
+            <div className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+              isBackendConnected
+                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                : "bg-sky-50 border-sky-200 text-sky-900"
+            }`}>
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-3 w-3">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isBackendConnected ? "bg-emerald-400" : "bg-sky-400"
+                  }`} />
+                  <span className={`relative inline-flex rounded-full h-3 w-3 ${
+                    isBackendConnected ? "bg-emerald-500" : "bg-[#0284C7]"
+                  }`} />
+                </span>
+                <span className="text-xs font-semibold">
+                  {isBackendConnected
+                    ? `🟢 Đã kết nối Live Backend & MySQL: Đang hiển thị ${totalDbProducts} sản phẩm thực tế từ Database`
+                    : "ℹ️ Chế độ Demo Frontend: Hiển thị sản phẩm chuẩn Shopee (Sẽ tự động đồng bộ khi khởi động Backend MySQL)"}
+                </span>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 text-xs">
+                <span className="font-mono px-2 py-0.5 rounded bg-white/80 border border-slate-200 text-slate-700 font-medium">
+                  {isBackendConnected ? "REST API /api/v1/products" : "AUTO-FALLBACK MOCK"}
+                </span>
+              </div>
+            </div>
+
             {/* Sorting Toolbar (Shopee-style) */}
             <div className="bg-slate-100/90 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 border border-slate-200/80">
               <div className="flex items-center gap-2 flex-wrap">
