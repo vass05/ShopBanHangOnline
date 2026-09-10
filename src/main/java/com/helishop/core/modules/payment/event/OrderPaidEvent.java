@@ -27,6 +27,7 @@ public class OrderPaidEvent implements Serializable {
     private String paymentGateway;
     private String transactionCode;
     private LocalDateTime paidAt;
+    private String shippingAddress;
     private List<PaidItemDto> items;
 
     @Data

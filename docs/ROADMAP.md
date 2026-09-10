@@ -37,10 +37,10 @@ graph TD
 | Sprint | Nội dung thực hiện | Thời lượng | Trạng thái | Commit / Ghi chú |
 | :---: | :--- | :---: | :---: | :--- |
 | **Sprint 1** | **Hạ tầng RabbitMQ 3.13, Redis AOF Persistent, Redis Cart Engine Shopee** | 4–5 ngày | ✅ **Hoàn thành** | Commit `fe4d48c` (Đã push lên GitHub) |
-| **Sprint 2** | **Cổng thanh toán VNPAY Sandbox, Ký số HMAC-SHA512 & Idempotent Webhook IPN** | 5 ngày | ✅ **Hoàn thành** | Đạt 100% 5 bước xử lý IPN & RabbitMQ event |
-| **Sprint 3** | **Async Email Worker, RabbitMQ Consumer, Retry x3 & Dead Letter Queue (DLQ)** | 4–5 ngày | ⏳ *Kế tiếp* | Lắng nghe `order.email.queue` gửi hóa đơn |
-| **Sprint 4** | **Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine** | 3–4 ngày | 📋 Chưa bắt đầu | Xử lý Dead Letter Messages & Alerting |
-| **Sprint 5** | **Cloudinary / AWS S3 Media Upload & Quản lý Biến thể SKU đa thuộc tính** | 4–5 ngày | 📋 Chưa bắt đầu | Upload đa ảnh sản phẩm & SKU Variant |
+| **Sprint 2** | **Cổng thanh toán VNPAY Sandbox, Ký số HMAC-SHA512 & Idempotent Webhook IPN** | 5 ngày | ✅ **Hoàn thành** | Commit `5b5bddb` (Đã push lên GitHub) |
+| **Sprint 3** | **Async Email Worker, RabbitMQ Consumer, Retry x3 & Media Upload Cloudinary 1:1** | 4 ngày | ✅ **Hoàn thành** | Thymeleaf invoice, AMQP DLQ, Cloudinary 800x800 |
+| **Sprint 4** | **Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine** | 3–4 ngày | ⏳ *Kế tiếp* | Xử lý Dead Letter Messages & Alerting |
+| **Sprint 5** | **Quản lý Biến thể SKU đa thuộc tính & Danh mục chuẩn Shopee** | 4–5 ngày | 📋 Chưa bắt đầu | Biến thể sản phẩm 2 cấp (Màu/Size), SKU Matrix |
 | **Sprint 6** | **Giao diện React 18 + Vite Frontend, Silent Refresh Token & Shopee Cart UI** | 5–6 ngày | 📋 Chưa bắt đầu | Giao diện chuẩn Shopee phân nhóm Shop |
 
 ---

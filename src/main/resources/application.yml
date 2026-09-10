@@ -36,11 +36,32 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
 
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:helishop.system@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:helishop_secret_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST:localhost}
     port: ${SPRING_RABBITMQ_PORT:5672}
     username: ${SPRING_RABBITMQ_USERNAME:guest}
     password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 2000ms
+          max-interval: 8000ms
+          multiplier: 2
+          max-attempts: 3
+        default-requeue-rejected: false # Đẩy vào DLQ sau khi vượt quá 3 lần retry!
 
 logging:
   level:
@@ -61,4 +82,9 @@ app:
     pay-url: ${VNP_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
     return-url: ${VNP_RETURN_URL:http://localhost:8080/api/v1/payments/vnpay-return}
     ipn-url: ${VNP_IPN_URL:http://localhost:8080/api/v1/payments/vnpay-ipn}
+
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:helishop}
+    api-key: ${CLOUDINARY_API_KEY:123456789012345}
+    api-secret: ${CLOUDINARY_API_SECRET:secret_cloudinary_key}
 

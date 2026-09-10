@@ -18,3 +18,22 @@ spring:
     listener:
       simple:
         auto-startup: false
+
+  mail:
+    host: localhost
+    port: 1025
+    username: helishop.system@gmail.com
+    password: testpassword
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+app:
+  cloudinary:
+    cloud-name: test-cloud
+    api-key: test-key
+    api-secret: test-secret
+

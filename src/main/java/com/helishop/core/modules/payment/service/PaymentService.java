@@ -279,6 +279,7 @@ public class PaymentService {
                 .paymentGateway("VNPAY")
                 .transactionCode(transactionCode)
                 .paidAt(paidAt)
+                .shippingAddress(order.getShippingAddressSnapshot())
                 .items(items)
                 .build();
 

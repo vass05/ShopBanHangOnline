@@ -7,9 +7,9 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
 - **Giai đoạn đang thi công**: **Project 2: Shopee E-Commerce Integration & Automation**
-- **Sprint hiện tại**: Hoàn thành **Sprint 2 (VNPAY Payment Gateway & Idempotent Webhook IPN)**. Chuẩn bị bước vào **Sprint 3 (Async Email Worker)**.
+- **Sprint hiện tại**: Hoàn thành **Sprint 3 (Async Email Worker, RabbitMQ Retry/DLQ, Media Upload Cloudinary 1:1)**. Chuẩn bị bước vào **Sprint 4 (Hủy đơn hàng, Hoàn trả kho nguyên tử & Dead Letter Alerting Engine)**.
 - **Nhánh Git**: `main` (đồng bộ hoàn toàn với `https://github.com/vass05/ShopBanHangOnline.git`).
-- **Tổng số Unit & Integration Tests**: **89 bài kiểm thử - 100% PASSED**.
+- **Tổng số Unit & Integration Tests**: **98 bài kiểm thử - 100% PASSED**.
 
 ---
 
@@ -73,11 +73,19 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 - **Vấn đề**: VNPAY IPN yêu cầu định dạng JSON chính xác `{"RspCode":"00","Message":"Confirm Success"}` với trường viết hoa `RspCode` và `Message`. Nếu bọc trong `ApiResponse<T>` chuẩn của hệ thống, máy chủ VNPAY sẽ báo lỗi không nhận dạng được và liên tục gọi lại.
 - **Giải pháp**: Tạo DTO `VnPayIpnResponse` với `@JsonProperty("RspCode")` và `@JsonProperty("Message")`, trả về trực tiếp từ controller `/api/v1/payments/vnpay-ipn`.
 
+### 7. Spring Boot MailSenderAutoConfiguration trong môi trường Test
+- **Vấn đề**: `MailSenderAutoConfiguration` chỉ tạo bean `JavaMailSender` khi thuộc tính `spring.mail.host` tồn tại. Nếu `src/test/resources/application.yml` thiếu `spring.mail.host`, toàn bộ `@SpringBootTest` quét qua `EmailService` sẽ gặp lỗi `UnsatisfiedDependencyException`.
+- **Giải pháp**: Định nghĩa `spring.mail.host: localhost` trong `src/test/resources/application.yml`.
+
+### 8. Biến @Value trong Mockito Unit Test thuần túy
+- **Vấn đề**: Các test case chạy bằng `@ExtendWith(MockitoExtension.class)` không khởi tạo Spring Context, dẫn đến các trường có `@Value` bị null nếu không được gán qua reflection.
+- **Giải pháp**: Luôn gán giá trị mặc định trực tiếp lúc khai báo trường trong class (ví dụ: `private String senderEmail = "helishop.system@gmail.com";`).
+
 ---
 
-## 📋 5. SẴN SÀNG CHO SPRINT TIẾP THEO: SPRINT 3
+## 📋 5. SẴN SÀNG CHO SPRINT TIẾP THEO: SPRINT 4
 - **Mục tiêu chính**:
-  1. Xây dựng Async Email Worker với `@RabbitListener` lắng nghe queue `order.email.queue`.
-  2. Cấu hình cơ chế Retry 3 lần kèm Exponential Backoff khi worker gặp lỗi.
-  3. Sau 3 lần thất bại, message tự động chuyển hướng qua Dead Letter Exchange `order.dlx.exchange` tới `order.email.dlq`.
-  4. Tạo template email HTML responsive xác nhận đơn hàng và hóa đơn thanh toán.
+  1. Hủy đơn hàng và cơ chế hoàn trả số lượng tồn kho nguyên tử (Atomic Stock Compensation).
+  2. Dead Letter Alerting Engine: Xử lý và cảnh báo các message rơi vào `order.email.dlq` hoặc queue DLQ khác.
+  3. Quản lý trạng thái đơn hàng (PENDING -> PROCESSING -> SHIPPED -> DELIVERED / CANCELLED).
+
