@@ -12,7 +12,7 @@ export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { setAuth, isAuthenticated } = useAuthStore();
 
-  const [email, setEmail] = useState("customer@helishop.com");
+  const [email, setEmail] = useState("vuvietanh@gmail.com");
   const [password, setPassword] = useState("Password123!");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -97,18 +97,18 @@ export const LoginPage: React.FC = () => {
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
             <CardDescription>
-              Nhập thông tin tài khoản hoặc chọn tài khoản mẫu bên dưới
+              Hỗ trợ đăng nhập bằng Gmail hoặc Số điện thoại
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Địa chỉ Email
+                  Gmail hoặc Số điện thoại
                 </label>
                 <Input
-                  type="email"
-                  placeholder="name@example.com"
+                  type="text"
+                  placeholder="vuvietanh@gmail.com hoặc 0988889999"
                   icon={<Mail className="w-4 h-4" />}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -137,23 +137,34 @@ export const LoginPage: React.FC = () => {
 
               {/* Quick autofill sample accounts */}
               <div className="pt-2 border-t border-slate-100">
-                <p className="text-xs text-slate-500 mb-2 font-medium">Tài khoản kiểm thử nhanh (Demo):</p>
-                <div className="grid grid-cols-2 gap-2">
+                <p className="text-xs text-slate-500 mb-2 font-medium">Tài khoản kiểm thử nhanh (1-Click Fill):</p>
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() => handleAutoFill("customer@helishop.com")}
-                    className="text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
+                    onClick={() => handleAutoFill("vuvietanh@gmail.com")}
+                    className="text-xs py-1.5 px-2 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
+                    title="Vũ Viết Anh (Gmail)"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>Customer</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span className="truncate">Viết Anh (Gmail)</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleAutoFill("seller@helishop.com")}
-                    className="text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
+                    onClick={() => handleAutoFill("0988889999")}
+                    className="text-xs py-1.5 px-2 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
+                    title="Vũ Viết Anh (Số điện thoại)"
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
-                    <span>Seller</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+                    <span className="truncate">SĐT (0988)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAutoFill("seller.apple@gmail.com")}
+                    className="text-xs py-1.5 px-2 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 hover:text-[#0284C7] transition-colors text-left flex items-center gap-1.5"
+                    title="Chủ Shop Apple"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                    <span className="truncate">Shop Apple</span>
                   </button>
                 </div>
               </div>

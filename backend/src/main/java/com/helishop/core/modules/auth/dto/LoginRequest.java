@@ -17,10 +17,10 @@ import lombok.Setter;
 @Schema(description = "Thông tin đăng nhập hệ thống")
 public class LoginRequest {
 
-    @Schema(description = "Email đăng nhập", example = "customer@gmail.com", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không đúng định dạng")
+    @Schema(description = "Email hoặc Số điện thoại đăng nhập", example = "vuvietanh@gmail.com hoặc 0988889999", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = "Email hoặc Số điện thoại không được để trống")
     private String email;
+
 
     @Schema(description = "Mật khẩu", example = "123456", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Mật khẩu không được để trống")

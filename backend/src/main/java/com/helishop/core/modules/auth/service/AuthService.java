@@ -30,7 +30,11 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new AppException(ErrorCode.USER_EXISTED);
+            throw new AppException(ErrorCode.USER_EXISTED, "Địa chỉ Gmail này đã được sử dụng. Mỗi tài khoản Gmail chỉ được đăng ký duy nhất 1 tài khoản.");
+        }
+
+        if (request.getPhone() != null && !request.getPhone().isBlank() && userRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.USER_EXISTED, "Số điện thoại này đã được liên kết với một tài khoản khác.");
         }
 
         UserRole role = request.getRole() != null ? request.getRole() : UserRole.ROLE_CUSTOMER;
@@ -74,8 +78,10 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        String identifier = request.getEmail().trim();
+        User user = userRepository.findByEmail(identifier)
+                .or(() -> userRepository.findByPhone(identifier))
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED, "Tài khoản (Email hoặc Số điện thoại) không tồn tại trên hệ thống"));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.UNAUTHENTICATED, "Tài khoản hiện đang bị khóa hoặc chưa kích hoạt");

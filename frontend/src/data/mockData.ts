@@ -253,12 +253,12 @@ export const MOCK_PRODUCTS: Product[] = [
 
 export const MOCK_ADDRESS: Address = {
   id: 1,
-  receiverName: "Nguyễn Văn Hùng",
-  phone: "0988 765 432",
-  detailAddress: "Tầng 12, Tòa nhà Landmark 81, 720A Điện Biên Phủ",
-  ward: "Phường 22",
-  district: "Quận Bình Thạnh",
-  province: "TP. Hồ Chí Minh",
+  receiverName: "Vũ Viết Anh",
+  phone: "0988 889 999",
+  detailAddress: "Thôn Tốt Động",
+  ward: "Xã Quảng Bị",
+  district: "Huyện Chương Mỹ",
+  province: "TP. Hà Nội",
   isDefault: true,
 };
 

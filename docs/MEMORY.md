@@ -95,28 +95,36 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ### 10. Chống Race Condition Refresh Token với failedQueue
 - **Vấn đề**: Khi Access Token hết hạn, nếu trang web cùng lúc bắn ra 5-10 request song song (ví dụ: lấy thông tin user, giỏ hàng, thông báo, danh mục), tất cả các request này đều nhận mã 401. Nếu không có cơ chế hàng đợi, cả 10 request sẽ đồng thời gọi `POST /auth/refresh-token`, dẫn tới việc Refresh Token bị thu hồi hoặc vi phạm tính toàn vẹn phiên làm việc.
-### 11. Cơ chế Nạp dữ liệu mẫu (Database Seeding) & Chống xung đột Test
-- **Vấn đề**: Sau khi dựng backend, cơ sở dữ liệu trống dẫn đến việc kiểm thử giao diện frontend gặp khó khăn nếu không có sẵn tài khoản, sản phẩm, biến thể SKU và danh mục. Đồng thời, `DatabaseSeeder` không được phép tự động chạy trong quá trình chạy bộ test tự động (vì các bài test dùng H2 in-memory với bảng sạch).
-- **Giải pháp**:
-  1. Tạo `DatabaseSeeder.java` sử dụng `@ConditionalOnProperty(name = "app.seeder.enabled", havingValue = "true", matchIfMissing = true)`.
-  2. Cấu hình `app.seeder.enabled: false` trong `src/test/resources/application.yml` để tắt seeder khi chạy `./mvnw test`, đảm bảo 103 test cases độc lập tuyệt đối.
-  3. Cung cấp file SQL dự phòng `backend/src/main/resources/seed-data.sql` chuẩn MySQL 8.0 để có thể import thủ công qua MySQL Workbench / DBeaver bất cứ lúc nào.
-  4. Phân bổ mỗi Shop một tài khoản chủ shop (Owner) riêng biệt (`seller.sony`, `seller.nuphy`, `seller.coolmate`) để tránh vi phạm ràng buộc Unique Index trên cột `shops.owner_id`.
+### 11. Cơ chế Nạp dữ liệu mẫu bằng SQL (Manual Seed Script) & Quy chuẩn Tài khoản
+- **Đặc điểm**: Hệ thống chuyển hẳn sang sử dụng tệp SQL chi tiết [backend/src/main/resources/seed-data.sql](file:///d:/D%E1%BB%B1%20%C3%A1n%20c%C3%A1%20nh%C3%A2n/Web%20b%C3%A1n%20h%C3%A0ng%20online/backend/src/main/resources/seed-data.sql) chuẩn MySQL 8.0, loại bỏ hoàn toàn `DatabaseSeeder.java` để người dùng toàn quyền kiểm soát thời điểm và dữ liệu nạp vào DB.
+- **Ràng buộc đăng ký**:
+  1. Mỗi Gmail chỉ được đăng ký duy nhất 1 tài khoản (ràng buộc `UNIQUE` trên cột `email` và kiểm tra `userRepository.existsByEmail` tại `AuthService.register`).
+  2. Mỗi số điện thoại chỉ liên kết với 1 tài khoản duy nhất (`userRepository.existsByPhone`).
+  3. Hỗ trợ đăng nhập linh hoạt bằng cả Gmail hoặc Số điện thoại (`findByEmail(id).or(() -> findByPhone(id))`).
 
-### 12. Tài khoản kiểm thử mặc định hệ thống
-- **Quản trị viên (ADMIN)**: `admin@helishop.com` / `Password123!`
-- **Khách hàng (CUSTOMER)**: `customer@helishop.com` / `Password123!` (Đã gán sẵn địa chỉ nhận hàng: 72 Lê Thánh Tôn, Bến Nghé, Quận 1, TP. HCM)
-- **Người bán Apple (SELLER)**: `seller@helishop.com` / `Password123!`
-- **Người bán Sony (SELLER)**: `seller.sony@helishop.com` / `Password123!`
-- **Người bán NuPhy (SELLER)**: `seller.nuphy@helishop.com` / `Password123!`
-- **Người bán Coolmate (SELLER)**: `seller.coolmate@helishop.com` / `Password123!`
-- **Vouchers có sẵn**: `HELI50K` (giảm 50.000₫), `HELI100K` (giảm 100.000₫), `VNPAY10` (giảm 10%).
+### 12. Tài khoản kiểm thử chuẩn xác hệ thống
+- **Khách hàng chính (CUSTOMER)**:
+  - **Họ và tên**: `Vũ Viết Anh`
+  - **Gmail**: `vuvietanh@gmail.com`
+  - **Số điện thoại**: `0988889999`
+  - **Mật khẩu**: `Password123!`
+  - **Địa chỉ giao hàng mặc định**: `Thôn Tốt Động, Xã Quảng Bị, Huyện Chương Mỹ, TP. Hà Nội`
+- **Quản trị viên sàn (ADMIN)**: `admin.helishop@gmail.com` (hoặc `0901111111`) / `Password123!`
+- **Người bán hàng Shopee Mall (SELLER)**:
+  - Apple Store: `seller.apple@gmail.com` (hoặc `0902222222`) / `Password123!`
+  - Sony Official: `seller.sony@gmail.com` (hoặc `0903333333`) / `Password123!`
+  - NuPhy Studio: `seller.nuphy@gmail.com` (hoặc `0904444444`) / `Password123!`
+  - Coolmate Store: `seller.coolmate@gmail.com` (hoặc `0905555555`) / `Password123!`
+  - Logitech G Store: `seller.logitech@gmail.com` (hoặc `0906666666`) / `Password123!`
+  - Anker Store: `seller.anker@gmail.com` (hoặc `0907777777`) / `Password123!`
+- **Vouchers có sẵn**: `HELI50K` (giảm 50.000₫), `HELI100K` (giảm 100.000₫), `HELI500K` (giảm 500.000₫), `VNPAY10` (giảm 10%), `FREESHIP` (miễn phí vận chuyển 30.000₫).
 
 ---
 
 ## 📋 5. BÀN GIAO & VẬN HÀNH HỆ THỐNG
 - Toàn bộ backend và frontend đã hoàn tất kiểm thử tự động và đẩy lên remote GitHub `origin/main`.
 - Frontend tự động phát hiện backend: Nếu backend chạy, hiển thị trực tiếp dữ liệu từ MySQL Database qua REST API `/api/v1/products`; nếu backend chưa khởi động, tự động chuyển sang chế độ Demo Mock Data an toàn mà không gây gián đoạn trải nghiệm người dùng.
+
 
 
 
