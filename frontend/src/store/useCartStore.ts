@@ -180,7 +180,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: "helishop-cart-storage",
+      name: "helishop-cart-storage-v2",
       partialize: (state) => ({
         items: state.items,
         selectedSkuIds: state.selectedSkuIds,
@@ -188,3 +188,10 @@ export const useCartStore = create<CartState>()(
     }
   )
 );
+
+// Clear old mock cart data from legacy localStorage key if present
+try {
+  localStorage.removeItem("helishop-cart-storage");
+} catch {
+  // ignore in non-browser environments
+}

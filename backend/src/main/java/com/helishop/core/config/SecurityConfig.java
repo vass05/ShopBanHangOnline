@@ -79,7 +79,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. Endpoints công khai
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**", "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products", "/api/v1/products/**", "/api/v1/categories", "/api/v1/categories/**").permitAll()
 
                         // 2. Phân quyền Người bán (SELLER) & Quản trị viên (ADMIN)
                         .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAnyRole("SELLER", "ADMIN")

@@ -38,7 +38,14 @@ export const useOrderStore = create<OrderState>()(
       },
     }),
     {
-      name: "helishop-orders-storage",
+      name: "helishop-orders-storage-v2",
     }
   )
 );
+
+// Clear old mock orders data from legacy localStorage key if present
+try {
+  localStorage.removeItem("helishop-orders-storage");
+} catch {
+  // ignore in non-browser environments
+}

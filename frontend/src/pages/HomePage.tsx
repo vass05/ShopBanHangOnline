@@ -70,82 +70,88 @@ export const HomePage: React.FC = () => {
       .get("/products?size=50")
       .then((res) => {
         const pageData = res.data?.data;
-        if (pageData && Array.isArray(pageData.content)) {
-          const mapped: Product[] = pageData.content.map((p: any) => {
-            const rawSkus = Array.isArray(p.skus) ? p.skus : [];
-            const rawImages = Array.isArray(p.images) ? p.images : [];
+        const rawItems = Array.isArray(pageData?.items)
+          ? pageData.items
+          : Array.isArray(pageData?.content)
+          ? pageData.content
+          : Array.isArray(pageData)
+          ? pageData
+          : [];
 
-            return {
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              description: p.description || "",
-              price: Number(p.price) || 0,
-              originalPrice: p.price ? Math.round(Number(p.price) * 1.15) : 0,
-              rating: Number(p.rating) || 5.0,
-              reviewCount: 32,
-              soldCount: p.stockQuantity ? Math.max(10, 100 - p.stockQuantity) : 85,
-              category: {
-                id: p.categoryId || 1,
-                name: p.categoryName || "Danh mục",
-                slug: p.categoryName
-                  ? p.categoryName.toLowerCase().replace(/\s+/g, "-")
-                  : "danh-muc",
-              },
-              shop: {
-                id: p.shopId || 1,
-                shopName: p.shopName || "Gian Hàng Chính Hãng",
-                avatarUrl: `https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=100`,
-                rating: 4.9,
-                responseRate: "99%",
-                joinedTime: "2 năm trước",
-              },
-              isFavorite: true,
-              isMall: true,
-              images:
-                rawImages.length > 0
-                  ? rawImages.map((img: any) => ({
-                      id: img.id,
-                      imageUrl: img.imageUrl,
-                      isThumbnail: !!img.isThumbnail,
-                      displayOrder: img.displayOrder || 1,
-                    }))
-                  : [
-                      {
-                        id: 1,
-                        imageUrl:
-                          p.mainImageUrl ||
-                          "https://images.unsplash.com/photo-1511707171634-5f897ff02560?w=800",
-                        isThumbnail: true,
-                        displayOrder: 1,
-                      },
-                    ],
-              productSkus: rawSkus.map((sku: any) => {
-                let parsedAttrs = {};
-                try {
-                  parsedAttrs =
-                    typeof sku.skuAttributes === "string"
-                      ? JSON.parse(sku.skuAttributes)
-                      : sku.skuAttributes || {};
-                } catch {
-                  parsedAttrs = {};
-                }
-                return {
-                  id: sku.id,
-                  skuCode: sku.skuCode,
-                  price: Number(sku.price),
-                  originalPrice: Number(sku.originalPrice) || Number(sku.price) * 1.1,
-                  stockQuantity: sku.stockQuantity,
-                  attributes: parsedAttrs,
-                  imageUrl: sku.skuImageUrl || p.mainImageUrl,
-                };
-              }),
-            };
-          });
+        const mapped: Product[] = rawItems.map((p: any) => {
+          const rawSkus = Array.isArray(p.skus) ? p.skus : [];
+          const rawImages = Array.isArray(p.images) ? p.images : [];
 
-          setProducts(mapped);
-          setIsBackendConnected(true);
-        }
+          return {
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            description: p.description || "",
+            price: Number(p.price) || 0,
+            originalPrice: p.price ? Math.round(Number(p.price) * 1.15) : 0,
+            rating: Number(p.rating) || 5.0,
+            reviewCount: 32,
+            soldCount: p.stockQuantity ? Math.max(10, 100 - p.stockQuantity) : 85,
+            category: {
+              id: p.categoryId || 1,
+              name: p.categoryName || "Danh mục",
+              slug: p.categoryName
+                ? p.categoryName.toLowerCase().replace(/\s+/g, "-")
+                : "danh-muc",
+            },
+            shop: {
+              id: p.shopId || 1,
+              shopName: p.shopName || "Gian Hàng Chính Hãng",
+              avatarUrl: `https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=100`,
+              rating: 4.9,
+              responseRate: "99%",
+              joinedTime: "2 năm trước",
+            },
+            isFavorite: true,
+            isMall: true,
+            images:
+              rawImages.length > 0
+                ? rawImages.map((img: any) => ({
+                    id: img.id,
+                    imageUrl: img.imageUrl,
+                    isThumbnail: !!img.isThumbnail,
+                    displayOrder: img.displayOrder || 1,
+                  }))
+                : [
+                    {
+                      id: 1,
+                      imageUrl:
+                        p.mainImageUrl ||
+                        "https://images.unsplash.com/photo-1511707171634-5f897ff02560?w=800",
+                      isThumbnail: true,
+                      displayOrder: 1,
+                    },
+                  ],
+            productSkus: rawSkus.map((sku: any) => {
+              let parsedAttrs = {};
+              try {
+                parsedAttrs =
+                  typeof sku.skuAttributes === "string"
+                    ? JSON.parse(sku.skuAttributes)
+                    : sku.skuAttributes || {};
+              } catch {
+                parsedAttrs = {};
+              }
+              return {
+                id: sku.id,
+                skuCode: sku.skuCode,
+                price: Number(sku.price),
+                originalPrice: Number(sku.originalPrice) || Number(sku.price) * 1.1,
+                stockQuantity: sku.stockQuantity,
+                attributes: parsedAttrs,
+                imageUrl: sku.skuImageUrl || p.mainImageUrl,
+              };
+            }),
+          };
+        });
+
+        setProducts(mapped);
+        setIsBackendConnected(true);
       })
       .catch((err) => {
         setIsBackendConnected(false);
