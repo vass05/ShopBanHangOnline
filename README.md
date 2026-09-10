@@ -90,6 +90,19 @@ docker compose up -d
   - `@CacheEvict(value = "products", key = "#id")`: Tự động xóa cache khi Seller cập nhật sản phẩm.
   - `@Cacheable(value = "categories", key = "'tree'")`: Cache cấu trúc cây danh mục đa tầng.
 
+### 7. Sprint 6: Dockerize, Swagger OpenAPI & Comprehensive Testing
+- **Multi-Stage Dockerfile**:
+  - Stage 1: Build JAR với `maven:3.9.9-eclipse-temurin-21-alpine`, tối ưu Docker layer caching dependencies.
+  - Stage 2: Runtime image với `eclipse-temurin:21-jre-alpine` (~150MB), non-root user `appuser` (UID 1001), tối ưu cgroup JVM memory flag `-XX:MaxRAMPercentage=75.0`.
+  - Tích hợp full stack trong `docker-compose.yml` (`backend` + `mysql` + `redis` trên `eshop_network`).
+- **Tài liệu hóa 100% Swagger UI (OpenAPI 3.0)**:
+  - Gắn `@Tag`, `@Operation`, `@ApiResponses`/`@ApiResponse` chi tiết mã phản hồi (200, 201, 400, 401, 403, 404, 409) trên toàn bộ 4 Controller: `AuthController`, `ProductController`, `CategoryController`, `OrderController`.
+  - Gắn `@Schema(description, example)` trên 100% các DTOs (Request, Response, Criteria, Base ApiResponse, PageResponse).
+  - Truy cập tài liệu tương tác tại: `http://localhost:8080/swagger-ui/index.html`.
+- **Kiểm thử chuyên sâu (Unit Test & Integration Test)**:
+  - `OrderServiceStockUnitTest`: Kiểm tra trừ kho khi mua hợp lệ, kiểm tra ném ngoại lệ `InsufficientStockException` (HTTP 409) khi mua vượt kho, `ResourceNotFoundException`, `AppException`, và kiểm tra logic tự động hoàn kho khi hủy đơn / hoàn hàng.
+  - `CheckoutFlowIntegrationTest`: Kiểm thử luồng checkout end-to-end qua MockMvc xác thực phân quyền Spring Security (`ROLE_CUSTOMER` 201 Created, `ROLE_SELLER` 403 Forbidden, Unauthenticated 401 Unauthorized, Hết kho 409 Conflict, Sai payload 400 Bad Request).
+
 ---
 
 ## 🧪 Kiểm thử và Chạy ứng dụng
@@ -119,13 +132,31 @@ docker compose up -d
 .\mvnw.cmd test -Dtest=RedisCachingTest
 ```
 
-### 6. Chạy toàn bộ Test Suite (45+ tests)
+### 6. Kiểm thử Unit Test trừ kho & ngoại lệ tồn kho (Sprint 6)
+```powershell
+.\mvnw.cmd test -Dtest=OrderServiceStockUnitTest
+```
+
+### 7. Kiểm thử Integration Test API Checkout (Sprint 6)
+```powershell
+.\mvnw.cmd test -Dtest=CheckoutFlowIntegrationTest
+```
+
+### 8. Chạy toàn bộ Test Suite (57 tests)
 ```powershell
 .\mvnw.cmd test
 ```
 
-### 7. Khởi chạy Server
+### 9. Khởi chạy Server Local
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
+
+### 10. Đóng gói & Khởi chạy Full Stack với Docker Compose (Sprint 6)
+```bash
+docker compose up --build -d
+```
+Truy cập Swagger UI sau khi container chạy:
+`http://localhost:8080/swagger-ui/index.html`
+
 
