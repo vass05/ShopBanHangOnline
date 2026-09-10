@@ -1,26 +1,25 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useCartStore } from "@/store/useCartStore";
-import { MOCK_PRODUCTS } from "@/data/mockData";
 import { formatVND, formatCompact } from "@/lib/formatters";
+import { Product, ProductSku } from "@/types";
+import { api } from "@/lib/api";
 import {
   Star,
   Truck,
-  ShieldCheck,
-  RotateCcw,
   ShoppingCart,
   Zap,
   Check,
   ChevronRight,
   Store,
   MessageSquare,
-  Sparkles,
   Plus,
   Minus,
   Heart,
-  Share2,
+  AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 
 export const ProductDetailPage: React.FC = () => {
@@ -28,16 +27,136 @@ export const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart } = useCartStore();
 
-  const product = useMemo(() => {
-    const found = MOCK_PRODUCTS.find((p) => p.id === Number(id));
-    return found || MOCK_PRODUCTS[0];
-  }, [id]);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Gallery image state
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+  // Quantity state
+  const [quantity, setQuantity] = useState(1);
+  const [isAddedToast, setIsAddedToast] = useState(false);
+
+  // Fetch product from live backend
+  useEffect(() => {
+    if (!id) return;
+    setIsLoading(true);
+    setError(null);
+
+    api
+      .get(`/products/${id}`)
+      .then((res) => {
+        const p = res.data?.data;
+        if (!p) {
+          setError("Không tìm thấy thông tin sản phẩm");
+          return;
+        }
+
+        const rawSkus = Array.isArray(p.skus) ? p.skus : [];
+        const rawImages = Array.isArray(p.images) ? p.images : [];
+
+        const parsedSkus: ProductSku[] =
+          rawSkus.length > 0
+            ? rawSkus.map((s: any) => {
+                let attrs = {};
+                try {
+                  attrs =
+                    typeof s.skuAttributes === "string"
+                      ? JSON.parse(s.skuAttributes)
+                      : s.skuAttributes || {};
+                } catch {
+                  attrs = {};
+                }
+                return {
+                  id: s.id,
+                  skuCode: s.skuCode,
+                  price: Number(s.price),
+                  originalPrice: Number(s.originalPrice) || Math.round(Number(s.price) * 1.15),
+                  stockQuantity: s.stockQuantity,
+                  attributes: attrs,
+                  imageUrl: s.skuImageUrl,
+                };
+              })
+            : [
+                {
+                  id: p.id,
+                  skuCode: `SKU-${p.id}`,
+                  price: Number(p.price) || 0,
+                  originalPrice: Math.round((Number(p.price) || 0) * 1.15),
+                  stockQuantity: p.stockQuantity || 50,
+                  attributes: {},
+                  imageUrl: p.mainImageUrl,
+                },
+              ];
+
+        const mappedImages =
+          rawImages.length > 0
+            ? rawImages.map((img: any) => ({
+                id: img.id,
+                imageUrl: img.imageUrl,
+                isThumbnail: !!img.isThumbnail,
+                displayOrder: img.displayOrder || 1,
+              }))
+            : [
+                {
+                  id: 1,
+                  imageUrl:
+                    p.mainImageUrl ||
+                    "https://images.unsplash.com/photo-1511707171634-5f897ff02560?w=800",
+                  isThumbnail: true,
+                  displayOrder: 1,
+                },
+              ];
+
+        const mappedProduct: Product = {
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          description: p.description || "",
+          price: Number(p.price) || 0,
+          originalPrice: Math.round((Number(p.price) || 0) * 1.15),
+          rating: Number(p.rating) || 5.0,
+          reviewCount: 48,
+          soldCount: p.stockQuantity ? Math.max(10, 100 - p.stockQuantity) : 85,
+          category: {
+            id: p.categoryId || 1,
+            name: p.categoryName || "Danh mục",
+            slug: p.categoryName
+              ? p.categoryName.toLowerCase().replace(/\s+/g, "-")
+              : "danh-muc",
+          },
+          shop: {
+            id: p.shopId || 1,
+            shopName: p.shopName || "Gian Hàng Chính Hãng",
+            avatarUrl: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=100",
+            rating: 4.95,
+            responseRate: "99%",
+            joinedTime: "2 năm trước",
+            productsCount: 65,
+          },
+          isFavorite: true,
+          isMall: true,
+          images: mappedImages,
+          productSkus: parsedSkus,
+        };
+
+        setProduct(mappedProduct);
+      })
+      .catch((err) => {
+        setError(
+          err.response?.data?.message ||
+            "Không thể tải chi tiết sản phẩm từ máy chủ. Vui lòng kiểm tra kết nối Backend."
+        );
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [id]);
+
   // Extract variant attribute types (e.g. ["Màu sắc", "Dung lượng"] or ["Màu sắc", "Size"])
   const attributeKeys = useMemo(() => {
+    if (!product) return [];
     const keysSet = new Set<string>();
     product.productSkus.forEach((sku) => {
       Object.keys(sku.attributes).forEach((k) => keysSet.add(k));
@@ -46,22 +165,21 @@ export const ProductDetailPage: React.FC = () => {
   }, [product]);
 
   // Selected attribute values state
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    if (product.productSkus.length > 0) {
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (product && product.productSkus.length > 0) {
+      const initial: Record<string, string> = {};
       attributeKeys.forEach((key) => {
         initial[key] = product.productSkus[0].attributes[key] || "";
       });
+      setSelectedAttributes(initial);
     }
-    return initial;
-  });
-
-  // Quantity state
-  const [quantity, setQuantity] = useState(1);
-  const [isAddedToast, setIsAddedToast] = useState(false);
+  }, [product, attributeKeys]);
 
   // Find active SKU matching all selected attributes
   const currentSku = useMemo(() => {
+    if (!product || product.productSkus.length === 0) return null;
     return (
       product.productSkus.find((sku) => {
         return attributeKeys.every((key) => sku.attributes[key] === selectedAttributes[key]);
@@ -69,9 +187,9 @@ export const ProductDetailPage: React.FC = () => {
     );
   }, [product, attributeKeys, selectedAttributes]);
 
-  const activePrice = currentSku ? currentSku.price : product.price;
-  const activeOriginalPrice = currentSku?.originalPrice || product.originalPrice;
-  const stockAvailable = currentSku ? currentSku.stockQuantity : 10;
+  const activePrice = currentSku ? currentSku.price : product?.price || 0;
+  const activeOriginalPrice = currentSku?.originalPrice || product?.originalPrice;
+  const stockAvailable = currentSku ? currentSku.stockQuantity : product?.productSkus[0]?.stockQuantity || 10;
 
   const discountPercent =
     activeOriginalPrice && activeOriginalPrice > activePrice
@@ -84,6 +202,8 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handleAddToCart = () => {
+    if (!product || !currentSku) return;
+
     addToCart(
       {
         skuId: currentSku.id,
@@ -94,7 +214,7 @@ export const ProductDetailPage: React.FC = () => {
         price: currentSku.price,
         originalPrice: currentSku.originalPrice,
         stockQuantity: currentSku.stockQuantity,
-        imageUrl: currentSku.imageUrl || product.images[0].imageUrl,
+        imageUrl: currentSku.imageUrl || product.images[0]?.imageUrl || "",
         shopId: product.shop.id,
         shopName: product.shop.shopName,
       },
@@ -109,6 +229,60 @@ export const ProductDetailPage: React.FC = () => {
     handleAddToCart();
     navigate("/checkout");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
+        <Header />
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          <div className="bg-white rounded-2xl p-8 border border-slate-200/80 animate-pulse grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-5 space-y-4">
+              <div className="w-full aspect-square bg-slate-200 rounded-xl" />
+              <div className="flex gap-2">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="w-16 h-16 bg-slate-200 rounded-lg" />
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-7 space-y-4">
+              <div className="h-6 bg-slate-200 rounded w-1/4" />
+              <div className="h-8 bg-slate-200 rounded w-3/4" />
+              <div className="h-16 bg-slate-200 rounded-xl w-full" />
+              <div className="h-10 bg-slate-200 rounded w-1/2" />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !product || !currentSku) {
+    return (
+      <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
+        <Header />
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white rounded-2xl p-12 border border-slate-200/80 text-center max-w-md mx-auto space-y-4 shadow-sm">
+            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto">
+              <AlertCircle className="w-7 h-7" />
+            </div>
+            <h3 className="font-bold text-slate-800 text-lg">Không tìm thấy sản phẩm</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              {error || "Sản phẩm không tồn tại trong cơ sở dữ liệu MySQL hoặc đã bị gỡ khỏi hệ thống."}
+            </p>
+            <button
+              onClick={() => navigate("/")}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Quay lại trang chủ</span>
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
@@ -148,7 +322,7 @@ export const ProductDetailPage: React.FC = () => {
             {/* Main Preview Image with Hover Zoom Effect */}
             <div className="relative w-full pt-[100%] rounded-xl overflow-hidden bg-slate-100 border border-slate-100 group cursor-crosshair">
               <img
-                src={product.images[selectedImageIndex]?.imageUrl || product.images[0].imageUrl}
+                src={product.images[selectedImageIndex]?.imageUrl || product.images[0]?.imageUrl}
                 alt={product.name}
                 className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-125 transition-transform duration-300 ease-out"
               />
@@ -275,6 +449,8 @@ export const ProductDetailPage: React.FC = () => {
                   new Set(product.productSkus.map((sku) => sku.attributes[attrKey]).filter(Boolean))
                 );
 
+                if (values.length === 0) return null;
+
                 return (
                   <div key={attrKey} className="flex items-start gap-3 text-xs">
                     <span className="w-24 text-slate-400 font-medium shrink-0 pt-2">{attrKey}</span>
@@ -397,7 +573,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
             <div>
               <span className="text-slate-400 block">Sản Phẩm</span>
-              <strong className="text-slate-800 text-sm">{product.shop.productsCount}</strong>
+              <strong className="text-slate-800 text-sm">{product.shop.productsCount || 25}</strong>
             </div>
             <div>
               <span className="text-slate-400 block">Tỉ Lệ Phản Hồi</span>
@@ -406,7 +582,7 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Product Specs & Description */}
+        {/* Product Description */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-6">
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider bg-slate-50 p-2.5 rounded-lg">
@@ -429,13 +605,6 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="w-32 text-slate-400 font-medium">Xuất Xứ:</span>
                 <span className="text-slate-800">Chính hãng phân phối tại Việt Nam</span>
               </div>
-              {product.specs &&
-                Object.entries(product.specs).map(([key, val]) => (
-                  <div key={key} className="flex">
-                    <span className="w-32 text-slate-400 font-medium">{key}:</span>
-                    <span className="text-slate-800">{val}</span>
-                  </div>
-                ))}
             </div>
           </div>
 

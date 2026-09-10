@@ -5,9 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { useCartStore } from "@/store/useCartStore";
 import { useOrderStore } from "@/store/useOrderStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { MOCK_ADDRESS, MOCK_VOUCHERS } from "@/data/mockData";
 import { formatVND } from "@/lib/formatters";
-import { Order, OrderItem } from "@/types";
+import { Order, OrderItem, Address, Voucher } from "@/types";
 import { api } from "@/lib/api";
 import {
   MapPin,
@@ -22,6 +21,47 @@ import {
   QrCode,
 } from "lucide-react";
 
+const DEFAULT_ADDRESS: Address = {
+  id: 1,
+  receiverName: "Vũ Viết Anh",
+  phone: "0988889999",
+  detailAddress: "Thôn Tốt Động",
+  ward: "Xã Quảng Bị",
+  district: "Huyện Chương Mỹ",
+  province: "TP. Hà Nội",
+  isDefault: true,
+};
+
+const AVAILABLE_VOUCHERS: Voucher[] = [
+  {
+    id: 1,
+    code: "HELI50K",
+    name: "Giảm 50.000₫ cho đơn hàng từ 200.000₫",
+    discountType: "FIXED_AMOUNT",
+    discountValue: 50000,
+    minOrderValue: 200000,
+    expiryDate: "31/12/2026",
+  },
+  {
+    id: 2,
+    code: "FREESHIP",
+    name: "Miễn phí vận chuyển toàn quốc (Giảm 30.000₫)",
+    discountType: "FIXED_AMOUNT",
+    discountValue: 30000,
+    minOrderValue: 150000,
+    expiryDate: "31/12/2026",
+  },
+  {
+    id: 3,
+    code: "VNPAY100K",
+    name: "Ưu đãi thanh toán VNPAY-QR Giảm 100.000₫",
+    discountType: "FIXED_AMOUNT",
+    discountValue: 100000,
+    minOrderValue: 500000,
+    expiryDate: "31/12/2026",
+  },
+];
+
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -32,7 +72,10 @@ export const CheckoutPage: React.FC = () => {
   const rawSubtotal = getSelectedTotal();
 
   // Address State
-  const [address, setAddress] = useState(MOCK_ADDRESS);
+  const [address, setAddress] = useState<Address>({
+    ...DEFAULT_ADDRESS,
+    receiverName: user?.fullName || DEFAULT_ADDRESS.receiverName,
+  });
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
   // Shipping Method State
@@ -46,7 +89,7 @@ export const CheckoutPage: React.FC = () => {
 
   // Voucher State
   const [voucherCode, setVoucherCode] = useState("HELI50K");
-  const [appliedVoucher, setAppliedVoucher] = useState(MOCK_VOUCHERS[0]);
+  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(AVAILABLE_VOUCHERS[0]);
 
   // Payment Method State
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "VNPAY">("VNPAY");
@@ -70,11 +113,11 @@ export const CheckoutPage: React.FC = () => {
 
   const handleApplyVoucher = (e: React.FormEvent) => {
     e.preventDefault();
-    const found = MOCK_VOUCHERS.find((v) => v.code.toUpperCase() === voucherCode.trim().toUpperCase());
+    const found = AVAILABLE_VOUCHERS.find((v) => v.code.toUpperCase() === voucherCode.trim().toUpperCase());
     if (found) {
       setAppliedVoucher(found);
     } else {
-      alert("Mã voucher không tồn tại!");
+      alert("Mã voucher không tồn tại trên hệ thống!");
     }
   };
 

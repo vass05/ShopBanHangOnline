@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Order, OrderStatus } from "@/types";
-import { MOCK_INITIAL_ORDERS } from "@/data/mockData";
 
 interface OrderState {
   orders: Order[];
@@ -14,7 +13,7 @@ interface OrderState {
 export const useOrderStore = create<OrderState>()(
   persist(
     (set, get) => ({
-      orders: MOCK_INITIAL_ORDERS,
+      orders: [],
 
       addOrder: (newOrder) => {
         set((state) => ({

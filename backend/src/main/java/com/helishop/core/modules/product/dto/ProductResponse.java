@@ -57,6 +57,12 @@ public class ProductResponse {
     @Schema(description = "Trạng thái sản phẩm", example = "ACTIVE")
     private ProductStatus status;
 
+    @Schema(description = "Danh sách biến thể SKU của sản phẩm")
+    private java.util.List<ProductSkuResponse> skus;
+
+    @Schema(description = "Bộ sưu tập hình ảnh chi tiết của sản phẩm")
+    private java.util.List<ProductImageResponse> images;
+
     @Schema(description = "Thời gian tạo sản phẩm")
     private LocalDateTime createdAt;
 

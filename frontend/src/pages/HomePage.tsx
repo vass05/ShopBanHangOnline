@@ -4,7 +4,6 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { SidebarFilter } from "@/components/catalog/SidebarFilter";
-import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/data/mockData";
 import { Product, Category } from "@/types";
 import { api } from "@/lib/api";
 import {
@@ -12,16 +11,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
-  Zap,
-  TrendingUp,
-  Clock,
-  ArrowUpDown,
   Smartphone,
   Laptop,
   Shirt,
   Tv,
   Watch,
-  Database,
+  Headphones,
+  Gamepad2,
+  RefreshCw,
+  ServerOff,
 } from "lucide-react";
 
 export const HomePage: React.FC = () => {
@@ -29,30 +27,64 @@ export const HomePage: React.FC = () => {
   const searchKeyword = searchParams.get("q") || "";
 
   // Live Backend State
-  const [liveProducts, setLiveProducts] = useState<Product[] | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
-  const [totalDbProducts, setTotalDbProducts] = useState<number>(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    api
+  const fetchCatalogData = () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    // 1. Fetch Categories
+    const categoriesPromise = api
+      .get("/categories/tree")
+      .then((res) => {
+        const catData = res.data?.data;
+        if (Array.isArray(catData)) {
+          const mappedCats: Category[] = catData.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            parentId: c.parentId,
+            icon: c.slug,
+            children: Array.isArray(c.children)
+              ? c.children.map((child: any) => ({
+                  id: child.id,
+                  name: child.name,
+                  slug: child.slug,
+                  parentId: child.parentId,
+                }))
+              : [],
+          }));
+          setCategories(mappedCats);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch categories tree:", err?.message);
+      });
+
+    // 2. Fetch Products
+    const productsPromise = api
       .get("/products?size=50")
       .then((res) => {
-        if (!isMounted) return;
         const pageData = res.data?.data;
-        if (pageData && Array.isArray(pageData.content) && pageData.content.length > 0) {
+        if (pageData && Array.isArray(pageData.content)) {
           const mapped: Product[] = pageData.content.map((p: any) => {
-            const fallback = MOCK_PRODUCTS.find((m) => m.id === p.id || m.slug === p.slug);
+            const rawSkus = Array.isArray(p.skus) ? p.skus : [];
+            const rawImages = Array.isArray(p.images) ? p.images : [];
+
             return {
               id: p.id,
               name: p.name,
               slug: p.slug,
-              description: p.description || fallback?.description || "",
+              description: p.description || "",
               price: Number(p.price) || 0,
-              originalPrice: fallback?.originalPrice || Number(p.price) * 1.15,
+              originalPrice: p.price ? Math.round(Number(p.price) * 1.15) : 0,
               rating: Number(p.rating) || 5.0,
-              reviewCount: fallback?.reviewCount || 48,
-              soldCount: fallback?.soldCount || 125,
+              reviewCount: 32,
+              soldCount: p.stockQuantity ? Math.max(10, 100 - p.stockQuantity) : 85,
               category: {
                 id: p.categoryId || 1,
                 name: p.categoryName || "Danh mục",
@@ -63,31 +95,70 @@ export const HomePage: React.FC = () => {
               shop: {
                 id: p.shopId || 1,
                 shopName: p.shopName || "Gian Hàng Chính Hãng",
-                avatarUrl: fallback?.shop?.avatarUrl,
+                avatarUrl: `https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=100`,
                 rating: 4.9,
                 responseRate: "99%",
                 joinedTime: "2 năm trước",
               },
               isFavorite: true,
               isMall: true,
-              images: fallback?.images || [
-                { id: 1, imageUrl: p.mainImageUrl, isThumbnail: true, displayOrder: 1 },
-              ],
-              productSkus: fallback?.productSkus || [],
+              images:
+                rawImages.length > 0
+                  ? rawImages.map((img: any) => ({
+                      id: img.id,
+                      imageUrl: img.imageUrl,
+                      isThumbnail: !!img.isThumbnail,
+                      displayOrder: img.displayOrder || 1,
+                    }))
+                  : [
+                      {
+                        id: 1,
+                        imageUrl:
+                          p.mainImageUrl ||
+                          "https://images.unsplash.com/photo-1511707171634-5f897ff02560?w=800",
+                        isThumbnail: true,
+                        displayOrder: 1,
+                      },
+                    ],
+              productSkus: rawSkus.map((sku: any) => {
+                let parsedAttrs = {};
+                try {
+                  parsedAttrs =
+                    typeof sku.skuAttributes === "string"
+                      ? JSON.parse(sku.skuAttributes)
+                      : sku.skuAttributes || {};
+                } catch {
+                  parsedAttrs = {};
+                }
+                return {
+                  id: sku.id,
+                  skuCode: sku.skuCode,
+                  price: Number(sku.price),
+                  originalPrice: Number(sku.originalPrice) || Number(sku.price) * 1.1,
+                  stockQuantity: sku.stockQuantity,
+                  attributes: parsedAttrs,
+                  imageUrl: sku.skuImageUrl || p.mainImageUrl,
+                };
+              }),
             };
           });
-          setLiveProducts(mapped);
-          setTotalDbProducts(pageData.totalElements || mapped.length);
+
+          setProducts(mapped);
           setIsBackendConnected(true);
         }
       })
-      .catch(() => {
-        if (isMounted) setIsBackendConnected(false);
+      .catch((err) => {
+        setIsBackendConnected(false);
+        setErrorMessage("Không thể kết nối đến Backend Server (http://localhost:8080/api/v1).");
       });
 
-    return () => {
-      isMounted = false;
-    };
+    Promise.allSettled([categoriesPromise, productsPromise]).finally(() => {
+      setIsLoading(false);
+    });
+  };
+
+  useEffect(() => {
+    fetchCatalogData();
   }, []);
 
   // Filter States
@@ -126,38 +197,37 @@ export const HomePage: React.FC = () => {
     },
   ];
 
-  // Effective products list (live MySQL DB or fallback mock)
-  const currentProducts = liveProducts && liveProducts.length > 0 ? liveProducts : MOCK_PRODUCTS;
-
   // Filtering & Sorting
   const filteredProducts = useMemo(() => {
-    return currentProducts.filter((product) => {
-      // Keyword filter
-      if (searchKeyword && !product.name.toLowerCase().includes(searchKeyword.toLowerCase())) {
-        return false;
-      }
-      // Category filter
-      if (selectedCategoryId) {
-        const matchesCategory =
-          product.category.id === selectedCategoryId ||
-          product.category.parentId === selectedCategoryId;
-        if (!matchesCategory) return false;
-      }
-      // Price range filter
-      if (priceRange.min && product.price < Number(priceRange.min)) return false;
-      if (priceRange.max && product.price > Number(priceRange.max)) return false;
-      // Rating filter
-      if (selectedRating && product.rating < selectedRating) return false;
+    return products
+      .filter((product) => {
+        // Keyword filter
+        if (searchKeyword && !product.name.toLowerCase().includes(searchKeyword.toLowerCase())) {
+          return false;
+        }
+        // Category filter
+        if (selectedCategoryId) {
+          const matchesCategory =
+            product.category.id === selectedCategoryId ||
+            product.category.parentId === selectedCategoryId;
+          if (!matchesCategory) return false;
+        }
+        // Price range filter
+        if (priceRange.min && product.price < Number(priceRange.min)) return false;
+        if (priceRange.max && product.price > Number(priceRange.max)) return false;
+        // Rating filter
+        if (selectedRating && product.rating < selectedRating) return false;
 
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === "sales") return b.soldCount - a.soldCount;
-      if (sortBy === "latest") return b.id - a.id;
-      if (sortBy === "price-asc") return a.price - b.price;
-      if (sortBy === "price-desc") return b.price - a.price;
-      return b.rating - a.rating; // default: popular
-    });
-  }, [currentProducts, searchKeyword, selectedCategoryId, priceRange, selectedRating, sortBy]);
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "sales") return b.soldCount - a.soldCount;
+        if (sortBy === "latest") return b.id - a.id;
+        if (sortBy === "price-asc") return a.price - b.price;
+        if (sortBy === "price-desc") return b.price - a.price;
+        return b.rating - a.rating; // default: popular
+      });
+  }, [products, searchKeyword, selectedCategoryId, priceRange, selectedRating, sortBy]);
 
   const handleResetFilters = () => {
     setSelectedCategoryId(null);
@@ -169,10 +239,19 @@ export const HomePage: React.FC = () => {
   const getCategoryIcon = (slug: string) => {
     switch (slug) {
       case "dien-thoai-phu-kien":
+      case "dien-thoai-thong-minh":
         return <Smartphone className="w-5 h-5 text-[#0284C7]" />;
       case "may-tinh-laptop":
+      case "laptop-gaming-do-hoa":
         return <Laptop className="w-5 h-5 text-indigo-600" />;
-      case "thoi-trang":
+      case "thiet-bi-am-thanh":
+      case "tai-nghe-chong-on-hi-res":
+        return <Headphones className="w-5 h-5 text-purple-600" />;
+      case "ban-phim-chuot-gaming":
+      case "ban-phim-co-custom":
+        return <Gamepad2 className="w-5 h-5 text-amber-600" />;
+      case "thoi-trang-nam":
+      case "ao-polo-ao-thun-cong-nghe":
         return <Shirt className="w-5 h-5 text-rose-500" />;
       case "dien-gia-dung":
         return <Tv className="w-5 h-5 text-amber-500" />;
@@ -240,46 +319,48 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* 2. TOP CATEGORIES STRIP */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80">
-          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
-            <Flame className="w-4 h-4 text-[#0284C7]" />
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-800">
-              Danh Mục Nổi Bật
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {MOCK_CATEGORIES.map((cat) => {
-              const isSelected = selectedCategoryId === cat.id;
-              return (
-                <div
-                  key={cat.id}
-                  onClick={() =>
-                    setSelectedCategoryId(isSelected ? null : cat.id)
-                  }
-                  className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all cursor-pointer ${
-                    isSelected
-                      ? "border-[#0284C7] bg-sky-50 shadow-sm"
-                      : "border-slate-100 hover:border-sky-200 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-100">
-                    {getCategoryIcon(cat.slug)}
+        {categories.length > 0 && (
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80">
+            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+              <Flame className="w-4 h-4 text-[#0284C7]" />
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-800">
+                Danh Mục Nổi Bật
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {categories.map((cat) => {
+                const isSelected = selectedCategoryId === cat.id;
+                return (
+                  <div
+                    key={cat.id}
+                    onClick={() =>
+                      setSelectedCategoryId(isSelected ? null : cat.id)
+                    }
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-[#0284C7] bg-sky-50 shadow-sm"
+                        : "border-slate-100 hover:border-sky-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-100">
+                      {getCategoryIcon(cat.slug)}
+                    </div>
+                    <span className="text-xs font-semibold text-slate-700 leading-tight line-clamp-2">
+                      {cat.name}
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold text-slate-700 leading-tight">
-                    {cat.name}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 3. MAIN CATALOG SECTION (2 COLUMNS: SIDEBAR FILTER & PRODUCT GRID) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Sidebar Filter (3 cols) */}
           <div className="lg:col-span-3">
             <SidebarFilter
-              categories={MOCK_CATEGORIES}
+              categories={categories}
               selectedCategoryId={selectedCategoryId}
               onSelectCategory={setSelectedCategoryId}
               priceRange={priceRange}
@@ -365,8 +446,50 @@ export const HomePage: React.FC = () => {
               </div>
             )}
 
-            {/* Products Grid */}
-            {filteredProducts.length === 0 ? (
+            {/* Loading Skeleton */}
+            {isLoading && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                  <div key={n} className="bg-white rounded-xl p-3 border border-slate-200/80 animate-pulse space-y-3">
+                    <div className="w-full aspect-square bg-slate-200 rounded-lg" />
+                    <div className="h-4 bg-slate-200 rounded w-3/4" />
+                    <div className="h-4 bg-slate-200 rounded w-1/2" />
+                    <div className="h-6 bg-slate-200 rounded w-2/3" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Backend Offline / Connection Error Banner */}
+            {!isLoading && !isBackendConnected && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center space-y-4">
+                <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+                  <ServerOff className="w-7 h-7" />
+                </div>
+                <div className="space-y-1 max-w-md mx-auto">
+                  <h4 className="font-bold text-slate-900 text-base">
+                    Chưa kết nối được với Backend Server
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Hệ thống đã loại bỏ hoàn toàn dữ liệu mẫu (mock data). Frontend hiện kết nối trực tiếp đến cơ sở dữ liệu MySQL qua Spring Boot API tại{" "}
+                    <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-800">http://localhost:8080/api/v1</code>.
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Hãy khởi động backend bằng lệnh <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">.\mvnw.cmd spring-boot:run</code> và nạp tệp <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">seed-data.sql</code> vào MySQL.
+                  </p>
+                </div>
+                <button
+                  onClick={fetchCatalogData}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Thử kết nối lại</span>
+                </button>
+              </div>
+            )}
+
+            {/* Empty Products List */}
+            {!isLoading && isBackendConnected && filteredProducts.length === 0 && (
               <div className="bg-white rounded-xl p-12 text-center border border-slate-200/80 space-y-3">
                 <div className="w-16 h-16 rounded-full bg-sky-50 text-[#0284C7] flex items-center justify-center mx-auto">
                   <Sparkles className="w-8 h-8 opacity-40" />
@@ -382,7 +505,10 @@ export const HomePage: React.FC = () => {
                   Xóa tất cả bộ lọc
                 </button>
               </div>
-            ) : (
+            )}
+
+            {/* Products Grid */}
+            {!isLoading && filteredProducts.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />

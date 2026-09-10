@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { CartItem, CartShopGroup } from "@/types";
-import { MOCK_PRODUCTS } from "@/data/mockData";
 
 interface CartState {
   items: CartItem[];
@@ -29,43 +28,11 @@ interface CartState {
   isShopSelected: (shopId: number) => boolean;
 }
 
-// Initial sample cart items for immediate rich visual display
-const INITIAL_CART_ITEMS: CartItem[] = [
-  {
-    skuId: 1001,
-    productId: 1,
-    productName: MOCK_PRODUCTS[0].name,
-    skuCode: MOCK_PRODUCTS[0].productSkus[0].skuCode,
-    attributes: MOCK_PRODUCTS[0].productSkus[0].attributes,
-    price: MOCK_PRODUCTS[0].productSkus[0].price,
-    originalPrice: MOCK_PRODUCTS[0].productSkus[0].originalPrice,
-    quantity: 1,
-    stockQuantity: MOCK_PRODUCTS[0].productSkus[0].stockQuantity,
-    imageUrl: MOCK_PRODUCTS[0].images[0].imageUrl,
-    shopId: MOCK_PRODUCTS[0].shop.id,
-    shopName: MOCK_PRODUCTS[0].shop.shopName,
-  },
-  {
-    skuId: 4001,
-    productId: 4,
-    productName: MOCK_PRODUCTS[3].name,
-    skuCode: MOCK_PRODUCTS[3].productSkus[0].skuCode,
-    attributes: MOCK_PRODUCTS[3].productSkus[0].attributes,
-    price: MOCK_PRODUCTS[3].productSkus[0].price,
-    originalPrice: MOCK_PRODUCTS[3].productSkus[0].originalPrice,
-    quantity: 2,
-    stockQuantity: MOCK_PRODUCTS[3].productSkus[0].stockQuantity,
-    imageUrl: MOCK_PRODUCTS[3].images[0].imageUrl,
-    shopId: MOCK_PRODUCTS[3].shop.id,
-    shopName: MOCK_PRODUCTS[3].shop.shopName,
-  },
-];
-
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
-      items: INITIAL_CART_ITEMS,
-      selectedSkuIds: [1001, 4001],
+      items: [],
+      selectedSkuIds: [],
 
       addToCart: (itemData, quantity) => {
         const { items, selectedSkuIds } = get();
