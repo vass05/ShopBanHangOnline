@@ -20,13 +20,14 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
 @ExtendWith(MockitoExtension.class)
 class ProductSpecificationTest {
 
@@ -57,6 +58,12 @@ class ProductSpecificationTest {
     @Mock
     private Path<Long> pathCategoryId;
 
+    @Mock
+    private Expression<String> lowerExpression;
+
+    @Mock
+    private CriteriaBuilder.In<Long> inClause;
+
     @BeforeEach
     void setUp() {
         when(cb.and(any(Predicate[].class))).thenReturn(mock(Predicate.class));
@@ -82,7 +89,7 @@ class ProductSpecificationTest {
     void shouldCreateLikePredicateForKeyword() {
         when(root.<String>get("name")).thenReturn(pathName);
         when(root.<String>get("description")).thenReturn(pathDescription);
-        when(cb.lower(any())).thenReturn(mock(Expression.class));
+        when(cb.lower(any())).thenReturn(lowerExpression);
         when(cb.like(any(), anyString())).thenReturn(mock(Predicate.class));
         when(cb.or(any(Predicate.class), any(Predicate.class))).thenReturn(mock(Predicate.class));
 
@@ -91,7 +98,7 @@ class ProductSpecificationTest {
         );
 
         spec.toPredicate(root, query, cb);
-        verify(cb, org.mockito.Mockito.times(2)).like(any(), eq("%iphone%"));
+        verify(cb, times(2)).like(any(), eq("%iphone%"));
     }
 
     @Test
@@ -99,8 +106,7 @@ class ProductSpecificationTest {
     void shouldCreateInPredicateForCategoryIds() {
         when(root.get("category")).thenReturn(pathCategory);
         when(pathCategory.<Long>get("id")).thenReturn(pathCategoryId);
-        CriteriaBuilder.In<Long> inClause = mock(CriteriaBuilder.In.class);
-        when(pathCategoryId.in(any(List.class))).thenReturn(inClause);
+        when(pathCategoryId.in(anyList())).thenReturn(inClause);
 
         Specification<Product> spec = ProductSpecification.filter(
                 null, List.of(1L, 2L, 3L), null, null, null, null, null
