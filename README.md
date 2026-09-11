@@ -40,50 +40,105 @@
 
 ---
 
-## Cấu Trúc Dự Án (Project Structure)
+## Cấu Trúc Dự Án Chi Tiết (Project Structure)
 
 ```plaintext
 WebMall/
-├── backend/                            # Spring Boot 3.3.5 Core Backend
+├── backend/                                   # Mã nguồn Backend (Spring Boot 3.3.5 / Java 21)
 │   ├── src/main/java/com/helishop/core/
-│   │   ├── common/                    # BaseEntity, ApiResponse<T>, Global Exception Handler
-│   │   ├── config/                    # Security, Redis, RabbitMQ, OpenAPI Swagger configs
-│   │   ├── security/                  # JWT Filter, UserDetails, Token Provider
-│   │   └── modules/                   # 8 Phân hệ nghiệp vụ độc lập (Domain Modules)
-│   │       ├── auth/                  # Đăng ký, đăng nhập, JWT Refresh Token
-│   │       ├── user/                  # Quản lý hồ sơ người dùng, địa chỉ giao hàng, Shop
-│   │       ├── product/               # Quản lý hàng hóa, biến thể SKU, danh mục đa cấp
-│   │       ├── cart/                  # Giỏ hàng Redis Hash Map, Shopee Multi-shop grouping
-│   │       ├── order/                 # Đơn hàng, khóa bi quan trừ tồn kho, hoàn kho tự động
-│   │       ├── payment/               # Cổng VNPAY Sandbox, chữ ký HMAC-SHA512, Webhook IPN
-│   │       ├── notification/          # RabbitMQ Email Consumer, Retry x3, Dead Letter Queue
-│   │       └── media/                 # Tải lên tệp đa phương tiện (Cloudinary / Local)
+│   │   ├── HeliShopApplication.java          # Điểm khởi chạy ứng dụng Spring Boot
+│   │   ├── common/                           # Thành phần dùng chung toàn hệ thống
+│   │   │   ├── entity/BaseEntity.java        # Thực thể cơ sở (id, createdAt, updatedAt)
+│   │   │   ├── exception/AppException.java   # Xử lý ngoại lệ tập trung & ErrorCode
+│   │   │   └── response/ApiResponse.java     # Chuẩn hóa cấu trúc phản hồi JSON chuẩn
+│   │   ├── config/                           # Cấu hình hạt nhân hệ thống
+│   │   │   ├── SecurityConfig.java           # Spring Security 6 & CORS
+│   │   │   ├── RedisConfig.java              # Cấu hình RedisTemplate & CacheManager
+│   │   │   ├── RabbitMqConfig.java           # Định nghĩa Exchange, Queue, DLQ
+│   │   │   └── OpenApiConfig.java            # Cấu hình tài liệu Swagger UI / OpenAPI 3.0
+│   │   ├── security/                         # Bảo mật phân quyền & JWT
+│   │   │   ├── JwtFilter.java                # Bộ lọc chặn request để giải mã Bearer JWT
+│   │   │   ├── JwtUtils.java                 # Tiện ích sinh & kiểm tra tính hợp lệ của Token
+│   │   │   └── CustomUserDetailsService.java # Nạp thông tin người dùng xác thực
+│   │   └── modules/                          # 8 Phân hệ nghiệp vụ độc lập (Domain Modules)
+│   │       ├── auth/                         # Đăng ký, đăng nhập & JWT Refresh Token
+│   │       │   ├── controller/AuthController.java
+│   │       │   └── service/AuthService.java, RefreshTokenService.java
+│   │       ├── cart/                         # Động cơ giỏ hàng Shopee trên Redis
+│   │       │   ├── controller/CartController.java
+│   │       │   ├── dto/CartItemDto.java, CartShopGroupResponse.java
+│   │       │   └── service/RedisCartService.java (Thao tác Redis Hash & gia hạn TTL 30 ngày)
+│   │       ├── product/                      # Quản lý hàng hóa, biến thể SKU & danh mục
+│   │       │   ├── controller/ProductController.java, CategoryController.java
+│   │       │   ├── entity/Product.java, ProductSku.java, Category.java
+│   │       │   ├── repository/ProductSkuRepository.java (findByIdWithLock - Khóa bi quan)
+│   │       │   └── service/ProductService.java, CategoryService.java
+│   │       ├── order/                        # Đơn hàng, khóa trừ tồn kho & hoàn kho
+│   │       │   ├── controller/OrderController.java
+│   │       │   ├── entity/Order.java, OrderItem.java
+│   │       │   ├── repository/OrderRepository.java
+│   │       │   └── service/OrderService.java (Khóa bi quan trừ kho & hoàn kho tự động)
+│   │       ├── payment/                      # Cổng thanh toán VNPAY & Webhook IPN
+│   │       │   ├── controller/PaymentController.java
+│   │       │   ├── service/PaymentService.java (Tạo URL VNPAY & xác thực chữ ký SHA512)
+│   │       │   └── event/OrderEventPublisher.java (Bắn sự kiện OrderPaidEvent sang RabbitMQ)
+│   │       ├── notification/                 # Xử lý hàng đợi bất đồng bộ & Email
+│   │       │   ├── consumer/OrderEmailConsumer.java (Tiêu thụ tin nhắn gửi mail)
+│   │       │   ├── consumer/OrderDlqConsumer.java (Lưu trữ và giám sát Dead Letter Queue)
+│   │       │   └── service/EmailService.java (Tạo nội dung HTML MimeMessage)
+│   │       ├── user/                         # Người dùng, địa chỉ giao hàng & gian hàng Shop
+│   │       │   ├── controller/UserController.java
+│   │       │   └── entity/User.java, UserAddress.java, Shop.java
+│   │       └── media/                        # Quản lý tải lên tệp đa phương tiện
+│   │           ├── controller/MediaController.java
+│   │           └── service/MediaService.java
 │   ├── src/main/resources/
-│   │   ├── application.yml            # Cấu hình kết nối MySQL, Redis, RabbitMQ, Mail
-│   │   └── seed-data.sql              # Kịch bản nạp dữ liệu mẫu ban đầu
-│   ├── src/test/                      # 103 bài kiểm thử tự động (Unit, Integration, Stress, E2E)
-│   ├── Dockerfile                     # Multi-stage Dockerfile cho Backend (Java 21 JRE)
-│   └── pom.xml                        # Quản lý thư viện phụ thuộc Maven
+│   │   ├── application.yml                   # Cấu hình MySQL, Redis, RabbitMQ, Mail, JWT
+│   │   └── seed-data.sql                     # Kịch bản nạp dữ liệu mẫu ban đầu
+│   ├── src/test/                             # 103 bài kiểm thử tự động toàn diện
+│   │   ├── CartAndStockConcurrencyStressTest # Stress test 200 threads chống âm kho
+│   │   ├── PaymentAndEmailDlqE2ETest.java    # E2E Webhook VNPAY & cơ chế chịu lỗi DLQ
+│   │   ├── PessimisticLockingIntegrationTest # Kiểm thử khóa bi quan dòng PESSIMISTIC_WRITE
+│   │   └── CartServiceIntegrationTest.java   # Kiểm thử động cơ giỏ hàng Redis Hash
+│   ├── Dockerfile                            # Đóng gói container Backend (Eclipse Temurin 21 JRE)
+│   └── pom.xml                               # Quản lý thư viện phụ thuộc Maven
 │
-├── frontend/                           # React 18 + Vite + TypeScript SPA
+├── frontend/                                  # Giao diện người dùng Shopee Mall (React 18 + Vite)
 │   ├── src/
-│   │   ├── components/                # UI Components tái sử dụng (Header, Footer, ProductCard...)
-│   │   ├── pages/                     # Màn hình ứng dụng (Home, PDP, Cart, Checkout, Orders)
-│   │   ├── store/                     # Quản lý State toàn cục với Zustand (Auth, Cart)
-│   │   ├── lib/                       # Axios Interceptor (Silent Refresh Token với failedQueue)
-│   │   ├── types/                     # Định nghĩa TypeScript interfaces cho Domain Models
-│   │   └── index.css                  # Cấu hình Tailwind CSS và bảng màu Ocean Blue
-│   ├── nginx.conf                     # Cấu hình Nginx Reverse Proxy cho môi trường Production
-│   ├── Dockerfile                     # Multi-stage Dockerfile cho Frontend (Node 20 -> Nginx)
-│   └── package.json                   # Khai báo các thư viện NPM
+│   │   ├── App.tsx                           # Khai báo tuyến đường ứng dụng (Routing)
+│   │   ├── index.css                         # Cấu hình Tailwind CSS & theme Ocean Blue (#0284C7)
+│   │   ├── components/                       # UI Components tái sử dụng
+│   │   │   ├── catalog/ProductCard.tsx       # Thẻ sản phẩm chuẩn Shopee (giá, ảnh, đã bán)
+│   │   │   ├── catalog/SidebarFilter.tsx     # Bộ lọc cây danh mục, khoảng giá, rating sao
+│   │   │   ├── layout/Header.tsx, Footer.tsx # Thanh tìm kiếm, điều hướng, giỏ hàng nổi
+│   │   │   └── ui/button.tsx, card.tsx...    # Thư viện component UI cơ bản
+│   │   ├── pages/                            # Các màn hình ứng dụng chính
+│   │   │   ├── HomePage.tsx                  # Trang chủ: Banner, Flash Sale, danh mục, gợi ý
+│   │   │   ├── ProductDetailPage.tsx         # Trang PDP: SKU biến thể 2 chiều, ảnh, tồn kho
+│   │   │   ├── CartPage.tsx                  # Giỏ hàng gom nhóm theo Shop, chọn mua linh hoạt
+│   │   │   ├── CheckoutPage.tsx              # Thanh toán: chọn địa chỉ, COD/VNPAY
+│   │   │   ├── OrdersPage.tsx                # Quản lý đơn hàng: 6 tab trạng thái vòng đời
+│   │   │   └── PaymentResultPage.tsx         # Trang hiển thị kết quả giao dịch từ VNPAY
+│   │   ├── store/                            # Quản lý State toàn cục (Zustand)
+│   │   │   ├── useAuthStore.ts               # Quản lý phiên đăng nhập & thông tin User
+│   │   │   └── useCartStore.ts               # Đồng bộ số lượng & trạng thái giỏ hàng
+│   │   ├── lib/
+│   │   │   ├── api.ts                        # Axios Interceptor (Silent Refresh Token với failedQueue)
+│   │   │   └── formatters.ts                 # Định dạng tiền tệ VNĐ, ngày tháng
+│   │   └── types/index.ts                    # Khai báo TypeScript interfaces (Product, Order, Cart...)
+│   ├── nginx.conf                            # Nginx reverse proxy cho Production (SPA routing & /api/)
+│   ├── Dockerfile                            # Multi-stage Dockerfile cho Frontend (Node 20 -> Nginx)
+│   └── package.json                          # Khai báo các thư viện phụ thuộc NPM
 │
-├── docs/                               # Tài liệu thiết kế, kiến trúc & quản lý dự án
-│   ├── ARCHITECTURE.md                # Thiết kế kiến trúc chi tiết, Sơ đồ Sequence, Luồng checkout
-│   ├── ROADMAP.md                     # Lộ trình và tiến độ qua từng giai đoạn Sprint
-│   └── MEMORY.md                      # Trạng thái kỹ thuật hệ thống và bài học kinh nghiệm
+├── docs/                                      # Bộ tài liệu thiết kế, kiến trúc & quản lý dự án
+│   ├── ARCHITECTURE.md                       # Thiết kế kiến trúc, sơ đồ Sequence & luồng dữ liệu
+│   ├── ROADMAP.md                            # Lộ trình hoàn thiện các Sprint từ 1 đến 6
+│   ├── MEMORY.md                             # Trạng thái kỹ thuật hệ thống & bài học kinh nghiệm
+│   └── sprints/                              # Nhật ký triển khai chi tiết từng Sprint
 │
-├── docker-compose.yml                 # Cấu hình hạ tầng phát triển Local (MySQL, Redis, RabbitMQ)
-└── docker-compose.production.yml      # Cụm triển khai Production 5 container khép kín
+├── docker-compose.yml                        # Môi trường hỗ trợ phát triển Local (MySQL, Redis, RabbitMQ)
+├── docker-compose.production.yml             # Cụm triển khai Production 5 container khép kín
+└── AGENTS.md                                 # Quy tắc phát triển & quy chuẩn Git Commit
 ```
 
 ---
