@@ -7,7 +7,6 @@ import com.helishop.core.common.constants.ShopStatus;
 import com.helishop.core.common.exception.InsufficientStockException;
 import com.helishop.core.modules.auth.service.RefreshTokenService;
 import com.helishop.core.modules.cart.dto.AddToCartRequest;
-import com.helishop.core.modules.cart.dto.CartItemDto;
 import com.helishop.core.modules.cart.dto.CartResponse;
 import com.helishop.core.modules.cart.service.RedisCartService;
 import com.helishop.core.modules.order.dto.CheckoutRequest;

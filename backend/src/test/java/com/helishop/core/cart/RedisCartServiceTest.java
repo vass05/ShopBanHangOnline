@@ -14,7 +14,6 @@ import com.helishop.core.modules.product.entity.Product;
 import com.helishop.core.modules.product.entity.ProductSku;
 import com.helishop.core.modules.product.repository.ProductSkuRepository;
 import com.helishop.core.modules.user.entity.Shop;
-import com.helishop.core.modules.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

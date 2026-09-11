@@ -5,10 +5,8 @@ import com.helishop.core.common.constants.PaymentMethod;
 import com.helishop.core.common.exception.BadRequestException;
 import com.helishop.core.common.exception.InsufficientStockException;
 import com.helishop.core.common.exception.ResourceNotFoundException;
-import com.helishop.core.modules.order.controller.OrderController;
 import com.helishop.core.modules.order.dto.CheckoutRequest;
 import com.helishop.core.modules.order.service.OrderService;
-import com.helishop.core.modules.product.controller.ProductController;
 import com.helishop.core.modules.product.dto.ProductRequest;
 import com.helishop.core.modules.product.service.ProductService;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +18,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
