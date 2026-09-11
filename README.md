@@ -19,18 +19,18 @@
 
 ---
 
-## ⚡ Điểm Sáng Kỹ Thuật (Key Highlights)
+## Điểm Sáng Kỹ Thuật (Key Highlights)
 
-- 🛒 **Redis Cart Engine**: Giỏ hàng lưu trữ trên Redis Hash (`cart:user:{id}`), TTL tự động 30 ngày, gom nhóm đa gian hàng (Shopee Multi-shop).
-- 🔒 **Chống Âm Kho Flash Sale**: Khóa bi quan `PESSIMISTIC_WRITE` (Row-level lock) trên từng SKU, triệt tiêu race condition (đã kiểm thử chịu tải 200 threads).
-- 📬 **Xử Lý Bất Đồng Bộ & DLQ**: RabbitMQ 3.13 gửi email nền, cơ chế retry x3 và chuyển tiếp an toàn vào Dead Letter Queue (`order.email.dlq`).
-- 💳 **Thanh Toán VNPAY Idempotent**: Tích hợp VNPAY Sandbox HMAC-SHA512, Webhook IPN chuẩn Idempotent chống xử lý lặp đơn hàng.
-- 🎨 **Frontend Shopee Mall UI**: React 18, Vite, Tailwind CSS (theme Ocean Blue), Zustand, TanStack Query, Axios Silent Refresh Token.
-- 🚀 **Tối Ưu Truy Vấn & Cache**: Triệt tiêu lỗi N+1 Query với `@EntityGraph`, áp dụng Redis Cache-Aside cho danh mục và sản phẩm.
+- **Redis Cart Engine**: Giỏ hàng lưu trữ trên Redis Hash (`cart:user:{id}`), TTL tự động 30 ngày, gom nhóm đa gian hàng (Shopee Multi-shop).
+- **Chống Âm Kho Flash Sale**: Khóa bi quan `PESSIMISTIC_WRITE` (Row-level lock) trên từng SKU, triệt tiêu race condition (đã kiểm thử chịu tải 200 threads).
+- **Xử Lý Bất Đồng Bộ & DLQ**: RabbitMQ 3.13 gửi email nền, cơ chế retry x3 và chuyển tiếp an toàn vào Dead Letter Queue (`order.email.dlq`).
+- **Thanh Toán VNPAY Idempotent**: Tích hợp VNPAY Sandbox HMAC-SHA512, Webhook IPN chuẩn Idempotent chống xử lý lặp đơn hàng.
+- **Frontend Shopee Mall UI**: React 18, Vite, Tailwind CSS (theme Ocean Blue), Zustand, TanStack Query, Axios Silent Refresh Token.
+- **Tối Ưu Truy Vấn & Cache**: Triệt tiêu lỗi N+1 Query với `@EntityGraph`, áp dụng Redis Cache-Aside cho danh mục và sản phẩm.
 
 ---
 
-## 🛠️ Ngăn Xếp Công Nghệ (Tech Stack)
+## Ngăn Xếp Công Nghệ (Tech Stack)
 
 - **Backend**: Java 21, Spring Boot 3.3.5 (Web, Data JPA, Security, AMQP, Mail), MapStruct, Lombok.
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, TanStack Query, Zustand, Axios.
@@ -40,7 +40,55 @@
 
 ---
 
-## 🚀 Hướng Dẫn Khởi Chạy Nhanh (Quick Start)
+## Cấu Trúc Dự Án (Project Structure)
+
+```plaintext
+WebMall/
+├── backend/                            # Spring Boot 3.3.5 Core Backend
+│   ├── src/main/java/com/helishop/core/
+│   │   ├── common/                    # BaseEntity, ApiResponse<T>, Global Exception Handler
+│   │   ├── config/                    # Security, Redis, RabbitMQ, OpenAPI Swagger configs
+│   │   ├── security/                  # JWT Filter, UserDetails, Token Provider
+│   │   └── modules/                   # 8 Phân hệ nghiệp vụ độc lập (Domain Modules)
+│   │       ├── auth/                  # Đăng ký, đăng nhập, JWT Refresh Token
+│   │       ├── user/                  # Quản lý hồ sơ người dùng, địa chỉ giao hàng, Shop
+│   │       ├── product/               # Quản lý hàng hóa, biến thể SKU, danh mục đa cấp
+│   │       ├── cart/                  # Giỏ hàng Redis Hash Map, Shopee Multi-shop grouping
+│   │       ├── order/                 # Đơn hàng, khóa bi quan trừ tồn kho, hoàn kho tự động
+│   │       ├── payment/               # Cổng VNPAY Sandbox, chữ ký HMAC-SHA512, Webhook IPN
+│   │       ├── notification/          # RabbitMQ Email Consumer, Retry x3, Dead Letter Queue
+│   │       └── media/                 # Tải lên tệp đa phương tiện (Cloudinary / Local)
+│   ├── src/main/resources/
+│   │   ├── application.yml            # Cấu hình kết nối MySQL, Redis, RabbitMQ, Mail
+│   │   └── seed-data.sql              # Kịch bản nạp dữ liệu mẫu ban đầu
+│   ├── src/test/                      # 103 bài kiểm thử tự động (Unit, Integration, Stress, E2E)
+│   ├── Dockerfile                     # Multi-stage Dockerfile cho Backend (Java 21 JRE)
+│   └── pom.xml                        # Quản lý thư viện phụ thuộc Maven
+│
+├── frontend/                           # React 18 + Vite + TypeScript SPA
+│   ├── src/
+│   │   ├── components/                # UI Components tái sử dụng (Header, Footer, ProductCard...)
+│   │   ├── pages/                     # Màn hình ứng dụng (Home, PDP, Cart, Checkout, Orders)
+│   │   ├── store/                     # Quản lý State toàn cục với Zustand (Auth, Cart)
+│   │   ├── lib/                       # Axios Interceptor (Silent Refresh Token với failedQueue)
+│   │   ├── types/                     # Định nghĩa TypeScript interfaces cho Domain Models
+│   │   └── index.css                  # Cấu hình Tailwind CSS và bảng màu Ocean Blue
+│   ├── nginx.conf                     # Cấu hình Nginx Reverse Proxy cho môi trường Production
+│   ├── Dockerfile                     # Multi-stage Dockerfile cho Frontend (Node 20 -> Nginx)
+│   └── package.json                   # Khai báo các thư viện NPM
+│
+├── docs/                               # Tài liệu thiết kế, kiến trúc & quản lý dự án
+│   ├── ARCHITECTURE.md                # Thiết kế kiến trúc chi tiết, Sơ đồ Sequence, Luồng checkout
+│   ├── ROADMAP.md                     # Lộ trình và tiến độ qua từng giai đoạn Sprint
+│   └── MEMORY.md                      # Trạng thái kỹ thuật hệ thống và bài học kinh nghiệm
+│
+├── docker-compose.yml                 # Cấu hình hạ tầng phát triển Local (MySQL, Redis, RabbitMQ)
+└── docker-compose.production.yml      # Cụm triển khai Production 5 container khép kín
+```
+
+---
+
+## Hướng Dẫn Khởi Chạy (Quick Start)
 
 ### Cách 1: Triển khai 1 lệnh với Docker Compose (Khuyên Dùng)
 
@@ -87,7 +135,7 @@ npm run dev
 
 ---
 
-## 🌐 Cổng Dịch Vụ Trọng Yếu (Service Ports)
+## Cổng Dịch Vụ (Service Ports)
 
 | Dịch Vụ | Port | URL / Địa Chỉ | Ghi Chú |
 | :--- | :---: | :--- | :--- |
@@ -100,7 +148,7 @@ npm run dev
 
 ---
 
-## 🧪 Kiểm Thử Hệ Thống (Testing)
+## Kiểm Thử Hệ Thống (Testing)
 
 Dự án sở hữu bộ kiểm thử tự động toàn diện gồm **103 bài kiểm thử (100% Passed)**:
 
@@ -116,30 +164,14 @@ cd backend
 
 ---
 
-## 📁 Cấu Trúc Dự Án (Project Structure)
+## Tài Liệu Tham Khảo
 
-```plaintext
-WebMall/
-├── backend/                   # Spring Boot 3.3.5 Core (REST API, Security, JPA, AMQP)
-├── frontend/                  # React 18 + Vite + Tailwind CSS (Shopee Mall UI)
-├── docs/                      # Tài liệu kỹ thuật chi tiết
-│   ├── ARCHITECTURE.md        # Kiến trúc hệ thống, Sơ đồ Sequence, Luồng checkout
-│   ├── ROADMAP.md             # Lộ trình và tiến độ qua từng Sprint
-│   └── MEMORY.md              # Sổ tay kỹ thuật & bài học kinh nghiệm
-├── docker-compose.yml         # Hạ tầng phát triển local (MySQL, Redis, RabbitMQ)
-└── docker-compose.production.yml # Cụm 5 container production hoàn chỉnh
-```
+- [Kiến Trúc Hệ Thống & Sơ Đồ Luồng (Architecture)](docs/ARCHITECTURE.md)
+- [Lộ Trình Phát Triển & Trạng Thái Sprint (Roadmap)](docs/ROADMAP.md)
+- [Nhật Ký Kỹ Thuật & Bài Học Kinh Nghiệm (Memory)](docs/MEMORY.md)
 
 ---
 
-## 📚 Tài Liệu Tham Khảo Chuyên Sâu
-
-- 📐 [Kiến Trúc Hệ Thống & Sơ Đồ Luồng (Architecture)](docs/ARCHITECTURE.md)
-- 🗺️ [Lộ Trình Phát Triển & Trạng Thái Sprint (Roadmap)](docs/ROADMAP.md)
-- 🧠 [Nhật Ký Kỹ Thuật & Bài Học Kinh Nghiệm (Memory)](docs/MEMORY.md)
-
----
-
-## 📄 Bản Quyền (License)
+## Bản Quyền (License)
 
 Dự án được phân phối theo giấy phép [MIT License](LICENSE).
