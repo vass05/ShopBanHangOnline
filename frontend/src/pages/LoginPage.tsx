@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore, User } from "@/store/useAuthStore";
 import { api } from "@/lib/api";
@@ -16,17 +16,37 @@ import {
   KeyRound,
   Sparkles,
   ArrowLeft,
+  Smartphone,
 } from "lucide-react";
+
+const REMEMBERED_ACCOUNT_KEY = "helishop_remembered_account";
+const REMEMBER_ME_FLAG_KEY = "helishop_remember_me";
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setAuth, isAuthenticated } = useAuthStore();
 
-  const [email, setEmail] = useState("");
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Đọc tài khoản đã ghi nhớ trên thiết bị này từ localStorage
+  const [email, setEmail] = useState(() => {
+    return localStorage.getItem(REMEMBERED_ACCOUNT_KEY) || "";
+  });
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+
+  // Trạng thái checkbox ghi nhớ (mặc định lấy theo cài đặt trước đó hoặc true)
+  const [rememberMe, setRememberMe] = useState(() => {
+    const saved = localStorage.getItem(REMEMBER_ME_FLAG_KEY);
+    return saved !== null ? saved === "true" : true;
+  });
+
+  const [hasRememberedAccount, setHasRememberedAccount] = useState(() => {
+    return !!localStorage.getItem(REMEMBERED_ACCOUNT_KEY);
+  });
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -52,6 +72,36 @@ export const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, isExpired, navigate]);
 
+  // Khi tải trang: nếu đã có tài khoản ghi nhớ thì tự động focus vào ô Mật khẩu
+  useEffect(() => {
+    if (email) {
+      passwordInputRef.current?.focus();
+    } else {
+      emailInputRef.current?.focus();
+    }
+  }, []);
+
+  // Xử lý bật/tắt ghi nhớ tài khoản
+  const handleRememberMeToggle = (checked: boolean) => {
+    setRememberMe(checked);
+    localStorage.setItem(REMEMBER_ME_FLAG_KEY, String(checked));
+    if (!checked) {
+      localStorage.removeItem(REMEMBERED_ACCOUNT_KEY);
+      setHasRememberedAccount(false);
+    } else if (email.trim()) {
+      localStorage.setItem(REMEMBERED_ACCOUNT_KEY, email.trim());
+      setHasRememberedAccount(true);
+    }
+  };
+
+  // Xóa nhanh tài khoản đã ghi nhớ trên thiết bị để đổi tài khoản khác
+  const handleClearRememberedAccount = () => {
+    setEmail("");
+    localStorage.removeItem(REMEMBERED_ACCOUNT_KEY);
+    setHasRememberedAccount(false);
+    emailInputRef.current?.focus();
+  };
+
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +123,18 @@ export const LoginPage: React.FC = () => {
         status: "ACTIVE",
       };
 
-      setAuth({ user, accessToken, refreshToken });
+      // Ghi nhớ tài khoản trên thiết bị này theo lựa chọn của người dùng
+      if (rememberMe) {
+        localStorage.setItem(REMEMBERED_ACCOUNT_KEY, email.trim());
+        localStorage.setItem(REMEMBER_ME_FLAG_KEY, "true");
+        setHasRememberedAccount(true);
+      } else {
+        localStorage.removeItem(REMEMBERED_ACCOUNT_KEY);
+        localStorage.setItem(REMEMBER_ME_FLAG_KEY, "false");
+        setHasRememberedAccount(false);
+      }
+
+      setAuth({ user, accessToken, refreshToken, rememberMe });
       navigate("/");
     } catch (err: any) {
       const msg = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
@@ -242,20 +303,43 @@ export const LoginPage: React.FC = () => {
             <CardContent className="space-y-4">
               {/* Email Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Gmail hoặc Số điện thoại
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    Gmail hoặc Số điện thoại
+                  </label>
+                  {hasRememberedAccount && email && (
+                    <button
+                      type="button"
+                      onClick={handleClearRememberedAccount}
+                      className="text-[11px] text-[#0284C7] hover:underline font-medium cursor-pointer"
+                      title="Xóa tài khoản đã nhớ để đăng nhập bằng tài khoản khác"
+                    >
+                      Đổi tài khoản khác
+                    </button>
+                  )}
+                </div>
                 <Input
+                  ref={emailInputRef}
                   type="text"
                   icon={<Mail className="w-4 h-4" />}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (!e.target.value.trim()) {
+                      setHasRememberedAccount(false);
+                    }
+                  }}
                   autoComplete="username"
                   required
                 />
-                <p className="text-[11px] text-slate-400 pt-0.5">
-                  Có thể đăng nhập bằng Gmail hoặc Số điện thoại (10 số)
-                </p>
+                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+                  <span>Có thể đăng nhập bằng Gmail hoặc Số điện thoại (10 số)</span>
+                  {hasRememberedAccount && email && (
+                    <span className="text-emerald-600 font-medium flex items-center gap-1 shrink-0">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Đã nhớ trên máy này
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Password Input with Show/Hide Toggle */}
@@ -276,6 +360,7 @@ export const LoginPage: React.FC = () => {
                   </button>
                 </div>
                 <Input
+                  ref={passwordInputRef}
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   icon={<Lock className="w-4 h-4" />}
@@ -307,8 +392,8 @@ export const LoginPage: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-[#0284C7] focus:ring-[#0284C7] accent-[#0284C7]"
+                    onChange={(e) => handleRememberMeToggle(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-[#0284C7] focus:ring-[#0284C7] accent-[#0284C7] cursor-pointer"
                   />
                   <span>Ghi nhớ tài khoản trên thiết bị này</span>
                 </label>

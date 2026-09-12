@@ -18,7 +18,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
 
-  setAuth: (payload: { user: User; accessToken: string; refreshToken: string }) => void;
+  setAuth: (payload: { user: User; accessToken: string; refreshToken: string; rememberMe?: boolean }) => void;
   updateUser: (partialUser: Partial<User>) => void;
   updateAccessToken: (newAccessToken: string) => void;
   corruptAccessToken: () => void;
@@ -30,13 +30,22 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      accessToken: localStorage.getItem("accessToken"),
-      refreshToken: localStorage.getItem("refreshToken"),
-      isAuthenticated: !!localStorage.getItem("accessToken"),
+      accessToken: localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken"),
+      refreshToken: localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken"),
+      isAuthenticated: !!(localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken")),
 
-      setAuth: ({ user, accessToken, refreshToken }) => {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
+      setAuth: ({ user, accessToken, refreshToken, rememberMe = true }) => {
+        if (rememberMe) {
+          localStorage.setItem("accessToken", accessToken);
+          localStorage.setItem("refreshToken", refreshToken);
+          sessionStorage.removeItem("accessToken");
+          sessionStorage.removeItem("refreshToken");
+        } else {
+          sessionStorage.setItem("accessToken", accessToken);
+          sessionStorage.setItem("refreshToken", refreshToken);
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+        }
         api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
         set({
@@ -56,7 +65,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateAccessToken: (newAccessToken: string) => {
-        localStorage.setItem("accessToken", newAccessToken);
+        if (localStorage.getItem("refreshToken")) {
+          localStorage.setItem("accessToken", newAccessToken);
+        } else {
+          sessionStorage.setItem("accessToken", newAccessToken);
+        }
         api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
 
         set({
@@ -86,6 +99,8 @@ export const useAuthStore = create<AuthState>()(
         } finally {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
+          sessionStorage.removeItem("accessToken");
+          sessionStorage.removeItem("refreshToken");
           delete api.defaults.headers.common.Authorization;
 
           set({
@@ -100,6 +115,8 @@ export const useAuthStore = create<AuthState>()(
       clearAuth: () => {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        sessionStorage.removeItem("accessToken");
+        sessionStorage.removeItem("refreshToken");
         delete api.defaults.headers.common.Authorization;
 
         set({

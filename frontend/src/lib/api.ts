@@ -56,10 +56,35 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+export const getStoredAccessToken = (): string | null => {
+  return localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+};
+
+export const getStoredRefreshToken = (): string | null => {
+  return localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+};
+
+export const setStoredAccessToken = (token: string) => {
+  if (localStorage.getItem("refreshToken")) {
+    localStorage.setItem("accessToken", token);
+  } else {
+    sessionStorage.setItem("accessToken", token);
+  }
+};
+
+export const clearStoredAuthTokens = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("helishop-auth-storage");
+  sessionStorage.removeItem("accessToken");
+  sessionStorage.removeItem("refreshToken");
+  sessionStorage.removeItem("helishop-auth-storage");
+};
+
 // Request Interceptor: Tự động đính kèm Bearer Token vào headers
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("accessToken");
+    const token = getStoredAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -102,13 +127,17 @@ api.interceptors.response.use(
       notifyLog("REFRESHING", "Kích hoạt luồng làm mới token duy nhất tới /auth/refresh-token");
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
+        const refreshToken = getStoredRefreshToken();
+        if (!refreshToken) {
+          throw new Error("Không tìm thấy refreshToken trong bộ nhớ");
+        }
+
         const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1"}/auth/refresh-token`, {
           refreshToken,
         });
 
         const newAccessToken = data.data.accessToken;
-        localStorage.setItem("accessToken", newAccessToken);
+        setStoredAccessToken(newAccessToken);
 
         api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -122,7 +151,8 @@ api.interceptors.response.use(
       } catch (refreshError) {
         notifyLog("REFRESH_FAILED", "Refresh Token không hợp lệ hoặc đã hết hạn. Chuyển hướng về trang đăng nhập.");
         processQueue(refreshError as Error, null);
-        localStorage.clear();
+        clearStoredAuthTokens();
+        delete api.defaults.headers.common.Authorization;
         window.location.href = "/login?expired=true";
         return Promise.reject(refreshError);
       } finally {
