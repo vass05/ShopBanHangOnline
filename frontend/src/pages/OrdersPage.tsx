@@ -17,6 +17,9 @@ import {
   XCircle,
   AlertCircle,
   ShoppingBag,
+  ArrowLeft,
+  ChevronRight,
+  User as UserIcon,
 } from "lucide-react";
 
 export const OrdersPage: React.FC = () => {
@@ -43,6 +46,14 @@ export const OrdersPage: React.FC = () => {
   const handleCancelOrder = (orderId: number) => {
     if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
       updateOrderStatus(orderId, "CANCELLED");
+    }
+  };
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/profile");
     }
   };
 
@@ -111,11 +122,59 @@ export const OrdersPage: React.FC = () => {
     <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
       <Header />
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+        {/* Top Navigation Bar with Back Button & Breadcrumbs */}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleGoBack}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-200 transition-all shadow-xs cursor-pointer group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-[#0284C7]" />
+              <span>Quay lại</span>
+            </button>
+            <span className="text-slate-300">|</span>
+            <Link to="/" className="hover:text-[#0284C7] transition-colors">
+              Trang chủ
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <Link to="/profile" className="hover:text-[#0284C7] transition-colors">
+              Hồ sơ cá nhân
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-[#0284C7] font-semibold">Đơn mua của tôi</span>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-3">
+            <Link
+              to="/profile"
+              className="inline-flex items-center gap-1 text-slate-600 hover:text-[#0284C7] transition-colors font-medium"
+            >
+              <UserIcon className="w-3.5 h-3.5" />
+              <span>Về hồ sơ</span>
+            </Link>
+            <span className="text-slate-300">•</span>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1 text-[#0284C7] hover:underline font-semibold"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Tiếp tục mua sắm</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Title */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0284C7] flex items-center justify-center">
+            <button
+              onClick={handleGoBack}
+              title="Quay lại"
+              className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-sky-50 hover:text-[#0284C7] text-slate-700 flex items-center justify-center transition-all cursor-pointer group shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+            </button>
+            <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0284C7] flex items-center justify-center shrink-0">
               <Package className="w-5 h-5" />
             </div>
             <div>
@@ -158,13 +217,22 @@ export const OrdersPage: React.FC = () => {
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
               Khi bạn mua sản phẩm từ các Shop, trạng thái đơn hàng sẽ được cập nhật liên tục tại đây.
             </p>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 px-5 py-2 bg-[#0284C7] text-white font-bold rounded-xl text-xs hover:bg-[#0369A1] transition-colors"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Khám phá sản phẩm ngay</span>
-            </Link>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={handleGoBack}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Quay lại</span>
+              </button>
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 px-5 py-2 bg-[#0284C7] text-white font-bold rounded-xl text-xs hover:bg-[#0369A1] transition-colors"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Khám phá sản phẩm ngay</span>
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
