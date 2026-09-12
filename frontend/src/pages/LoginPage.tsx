@@ -12,23 +12,11 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  UserCheck,
   X,
   KeyRound,
-  ArrowLeft,
-  Clock,
   Sparkles,
+  ArrowLeft,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-interface RememberedAccount {
-  email: string;
-  fullName?: string;
-  role?: string;
-  lastLogin: number;
-}
-
-const STORAGE_KEY = "helishop_remembered_accounts";
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,7 +27,6 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [rememberedAccounts, setRememberedAccounts] = useState<RememberedAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -59,42 +46,11 @@ export const LoginPage: React.FC = () => {
 
   const isExpired = searchParams.get("expired") === "true";
 
-  // Load remembered accounts from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed: RememberedAccount[] = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setRememberedAccounts(parsed);
-        }
-      }
-    } catch {
-      // Ignore parse error
-    }
-  }, []);
-
   useEffect(() => {
     if (isAuthenticated && !isExpired) {
       navigate("/");
     }
   }, [isAuthenticated, isExpired, navigate]);
-
-  // Handle remove remembered account
-  const removeRememberedAccount = (accEmail: string) => {
-    const updated = rememberedAccounts.filter((a) => a.email !== accEmail);
-    setRememberedAccounts(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    if (email === accEmail) {
-      setEmail("");
-    }
-  };
-
-  // Clear all remembered accounts
-  const clearAllRemembered = () => {
-    setRememberedAccounts([]);
-    localStorage.removeItem(STORAGE_KEY);
-  };
 
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
@@ -105,29 +61,17 @@ export const LoginPage: React.FC = () => {
 
     try {
       const response = await api.post("/auth/login", { email: email.trim(), password });
-      const { accessToken, refreshToken, user } = response.data.data as {
-        accessToken: string;
-        refreshToken: string;
-        user: User;
+      const data = response.data.data as any;
+      const accessToken = data.accessToken;
+      const refreshToken = data.refreshToken;
+      const user: User = data.user || {
+        id: data.userId || 1,
+        fullName: data.fullName || "Người dùng",
+        email: data.email || email.trim(),
+        phone: data.phone,
+        role: data.role || "ROLE_CUSTOMER",
+        status: "ACTIVE",
       };
-
-      // Save or update remembered accounts
-      if (rememberMe) {
-        const newEntry: RememberedAccount = {
-          email: user.email || email.trim(),
-          fullName: user.fullName,
-          role: user.role,
-          lastLogin: Date.now(),
-        };
-        const filtered = rememberedAccounts.filter((a) => a.email !== newEntry.email);
-        const updated = [newEntry, ...filtered].slice(0, 5); // Keep up to 5
-        setRememberedAccounts(updated);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      } else {
-        const updated = rememberedAccounts.filter((a) => a.email !== email.trim());
-        setRememberedAccounts(updated);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      }
 
       setAuth({ user, accessToken, refreshToken });
       navigate("/");
@@ -215,17 +159,6 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-sky-50/40 to-slate-100 p-4">
       <div className="w-full max-w-md">
-        {/* Back to home navigation */}
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0284C7] transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Quay lại Trang Chủ</span>
-          </Link>
-          <span className="text-xs text-slate-400 font-medium">HeliShop Mall</span>
-        </div>
 
         {/* HeliShop Brand Header */}
         <div className="text-center mb-6">
@@ -307,53 +240,6 @@ export const LoginPage: React.FC = () => {
 
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
-              {/* Remembered Accounts Chips */}
-              {rememberedAccounts.length > 0 && (
-                <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                    <span className="flex items-center gap-1.5 text-slate-700 font-semibold">
-                      <Clock className="w-3.5 h-3.5 text-[#0284C7]" /> Tài khoản đã lưu:
-                    </span>
-                    <button
-                      type="button"
-                      onClick={clearAllRemembered}
-                      className="text-[11px] text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                    >
-                      Xóa tất cả
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {rememberedAccounts.map((acc) => (
-                      <div
-                        key={acc.email}
-                        onClick={() => setEmail(acc.email)}
-                        className={cn(
-                          "group flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border cursor-pointer transition-all",
-                          email === acc.email
-                            ? "bg-sky-50 border-[#0284C7] text-[#0284C7] shadow-sm ring-1 ring-[#0284C7]/20"
-                            : "bg-white border-slate-200 text-slate-700 hover:bg-sky-50/50 hover:border-sky-300"
-                        )}
-                        title={`Bấm để chọn: ${acc.email} ${acc.fullName ? `(${acc.fullName})` : ""}`}
-                      >
-                        <UserCheck className="w-3 h-3 text-[#0284C7] shrink-0" />
-                        <span className="max-w-[150px] truncate">{acc.email}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeRememberedAccount(acc.email);
-                          }}
-                          className="p-0.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors ml-0.5"
-                          title="Xóa tài khoản này khỏi danh sách lưu"
-                        >
-                          <X className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Email Input */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
@@ -368,6 +254,10 @@ export const LoginPage: React.FC = () => {
                   autoComplete="username"
                   required
                 />
+                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
+                  <span className="text-sky-600 font-bold">*</span>
+                  <span>Quy tắc: Nhập địa chỉ Gmail hợp lệ (VD: user@gmail.com) hoặc Số điện thoại 10 số.</span>
+                </p>
               </div>
 
               {/* Password Input with Show/Hide Toggle */}
@@ -411,6 +301,10 @@ export const LoginPage: React.FC = () => {
                   autoComplete="current-password"
                   required
                 />
+                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
+                  <span className="text-sky-600 font-bold">*</span>
+                  <span>Quy tắc: Mật khẩu bảo mật có độ dài tối thiểu từ 6 ký tự trở lên.</span>
+                </p>
               </div>
 
               {/* Remember Me Checkbox */}

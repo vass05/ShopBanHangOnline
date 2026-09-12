@@ -39,21 +39,36 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new AppException(ErrorCode.USER_EXISTED, "Địa chỉ Gmail này đã được sử dụng. Mỗi tài khoản Gmail chỉ được đăng ký duy nhất 1 tài khoản.");
+        boolean hasEmail = request.getEmail() != null && !request.getEmail().trim().isBlank();
+        boolean hasPhone = request.getPhone() != null && !request.getPhone().trim().isBlank();
+
+        if (!hasEmail && !hasPhone) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Vui lòng cung cấp ít nhất một phương thức liên lạc: Địa chỉ Gmail hoặc Số điện thoại");
         }
 
-        if (request.getPhone() != null && !request.getPhone().isBlank() && userRepository.existsByPhone(request.getPhone())) {
+        String finalEmail = hasEmail ? request.getEmail().trim() : null;
+        String finalPhone = hasPhone ? request.getPhone().trim() : null;
+
+        if (hasEmail && userRepository.existsByEmail(finalEmail)) {
+            throw new AppException(ErrorCode.USER_EXISTED, "Địa chỉ Gmail này đã được sử dụng. Vui lòng chọn Gmail khác hoặc đăng nhập.");
+        }
+
+        if (hasPhone && userRepository.existsByPhone(finalPhone)) {
             throw new AppException(ErrorCode.USER_EXISTED, "Số điện thoại này đã được liên kết với một tài khoản khác.");
+        }
+
+        // Nếu đăng ký bằng Số điện thoại mà không nhập Gmail, tạo định danh email hệ thống
+        if (finalEmail == null) {
+            finalEmail = finalPhone + "@phone.helishop.com";
         }
 
         UserRole role = request.getRole() != null ? request.getRole() : UserRole.ROLE_CUSTOMER;
 
         User user = User.builder()
-                .email(request.getEmail())
+                .email(finalEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
-                .phone(request.getPhone())
+                .fullName(request.getFullName().trim())
+                .phone(finalPhone)
                 .role(role)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -82,6 +97,7 @@ public class AuthService {
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
+                .phone(savedUser.getPhone())
                 .role(savedUser.getRole())
                 .build();
     }
@@ -123,6 +139,7 @@ public class AuthService {
                 .userId(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .phone(user.getPhone())
                 .role(user.getRole())
                 .build();
     }
@@ -130,6 +147,10 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         String refreshToken = request.getRefreshToken();
+        if (refreshToken == null || refreshToken.trim().isBlank()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Refresh Token không được để trống");
+        }
+
         String email = refreshTokenService.getEmailFromRefreshToken(refreshToken);
 
         if (email == null) {
@@ -161,6 +182,7 @@ public class AuthService {
                 .userId(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .phone(user.getPhone())
                 .role(user.getRole())
                 .build();
     }

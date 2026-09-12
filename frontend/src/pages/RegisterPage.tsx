@@ -17,8 +17,8 @@ import {
   Eye,
   EyeOff,
   Sparkles,
-  ArrowLeft,
   X,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,7 @@ export const RegisterPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -48,16 +49,33 @@ export const RegisterPage: React.FC = () => {
       setErrorMessage("Vui lòng nhập họ và tên đầy đủ");
       return;
     }
-    if (!email.trim()) {
-      setErrorMessage("Vui lòng nhập địa chỉ Gmail");
+
+    const hasEmail = Boolean(email.trim());
+    const hasPhone = Boolean(phone.trim());
+
+    if (!hasEmail && !hasPhone) {
+      setErrorMessage("Vui lòng cung cấp ít nhất Địa chỉ Gmail hoặc Số điện thoại để đăng ký!");
       return;
     }
+
+    if (hasEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErrorMessage("Địa chỉ Gmail không đúng định dạng (VD: name@gmail.com)!");
+      return;
+    }
+
+    const cleanPhone = phone.trim().replace(/\s+/g, "");
+    if (hasPhone && !/^(0|\+84)[0-9]{9}$/.test(cleanPhone)) {
+      setErrorMessage("Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 số (VD: 0988889999).");
+      return;
+    }
+
     if (password.length < 6) {
       setErrorMessage("Mật khẩu phải có tối thiểu 6 ký tự");
       return;
     }
+
     if (password !== confirmPassword) {
-      setErrorMessage("Mật khẩu xác nhận không khớp");
+      setErrorMessage("Mật khẩu xác nhận không khớp với mật khẩu đã nhập");
       return;
     }
 
@@ -66,19 +84,23 @@ export const RegisterPage: React.FC = () => {
     try {
       const response = await api.post("/auth/register", {
         fullName: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim() || undefined,
+        email: hasEmail ? email.trim() : undefined,
+        phone: hasPhone ? cleanPhone : undefined,
         password,
         role,
       });
 
-      const { accessToken, refreshToken, user } = response.data.data as {
-        accessToken: string;
-        refreshToken: string;
-        user: User;
+      const data = response.data.data as any;
+      const user: User = data.user || {
+        id: data.userId || 1,
+        fullName: data.fullName || fullName.trim(),
+        email: data.email || (hasEmail ? email.trim() : `${cleanPhone}@phone.helishop.com`),
+        phone: data.phone || (hasPhone ? cleanPhone : undefined),
+        role: data.role || role,
+        status: "ACTIVE",
       };
 
-      setAuth({ user, accessToken, refreshToken });
+      setAuth({ user, accessToken: data.accessToken, refreshToken: data.refreshToken });
 
       // If seller, navigate to dashboard, else home
       if (user.role === "ROLE_SELLER") {
@@ -99,18 +121,6 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-sky-50/40 to-slate-100 p-4 py-10">
       <div className="w-full max-w-lg">
-        {/* Back to home navigation */}
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0284C7] transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Quay lại Trang Chủ</span>
-          </Link>
-          <span className="text-xs text-slate-400 font-medium">HeliShop Mall</span>
-        </div>
-
         {/* Brand Header */}
         <div className="text-center mb-6">
           <Link to="/" className="inline-block hover:scale-105 transition-transform">
@@ -227,38 +237,56 @@ export const RegisterPage: React.FC = () => {
                   onChange={(e) => setFullName(e.target.value)}
                   required
                 />
+                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
+                  <span className="text-sky-600 font-bold">*</span>
+                  <span>Chú thích: Nhập đầy đủ họ và tên thật của bạn.</span>
+                </p>
+              </div>
+
+              {/* Account Registration Method Notice */}
+              <div className="p-3 bg-sky-50/70 border border-sky-200/80 rounded-xl flex items-start gap-2.5 text-xs text-sky-800">
+                <Info className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
+                <span>
+                  <strong>Phương thức đăng ký:</strong> Bạn có thể đăng ký bằng <strong>Gmail</strong> hoặc <strong>Số điện thoại</strong> (không bắt buộc cả hai, chỉ cần điền ít nhất 1 trong 2 thông tin).
+                </span>
               </div>
 
               {/* Email */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Địa chỉ Gmail
+                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                  <span>Địa chỉ Gmail</span>
+                  <span className="text-[11px] text-slate-400 font-normal lowercase">Tùy chọn nếu có SĐT</span>
                 </label>
                 <Input
                   type="email"
-                  placeholder="name@gmail.com"
+                  placeholder="name@gmail.com (hoặc để trống nếu dùng SĐT)"
                   icon={<Mail className="w-4 h-4" />}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
                 />
-                <p className="text-[11px] text-slate-400">
-                  Mỗi tài khoản Gmail chỉ được đăng ký duy nhất 1 lần trên sàn.
+                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
+                  <span className="text-sky-600 font-bold">*</span>
+                  <span>Quy tắc: Nhập đúng định dạng Gmail (VD: user@gmail.com).</span>
                 </p>
               </div>
 
               {/* Phone */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Số điện thoại
+                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                  <span>Số điện thoại</span>
+                  <span className="text-[11px] text-slate-400 font-normal lowercase">Tùy chọn nếu có Gmail</span>
                 </label>
                 <Input
                   type="tel"
-                  placeholder="0988889999"
+                  placeholder="0988889999 (hoặc để trống nếu dùng Gmail)"
                   icon={<Phone className="w-4 h-4" />}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
+                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
+                  <span className="text-sky-600 font-bold">*</span>
+                  <span>Quy tắc: Số điện thoại di động gồm 10 chữ số (bắt đầu bằng 0 hoặc +84).</span>
+                </p>
               </div>
 
               {/* Password */}
@@ -289,6 +317,10 @@ export const RegisterPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
+                  <span className="text-sky-600 font-bold">*</span>
+                  <span>Quy tắc: Mật khẩu bảo mật có độ dài tối thiểu từ 6 ký tự trở lên.</span>
+                </p>
               </div>
 
               {/* Confirm Password */}
@@ -297,13 +329,32 @@ export const RegisterPage: React.FC = () => {
                   Xác nhận mật khẩu
                 </label>
                 <Input
-                  type={showPassword ? "text" : "password"}
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="Nhập lại mật khẩu..."
                   icon={<Lock className="w-4 h-4" />}
+                  rightElement={
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer"
+                      title={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4 text-[#0284C7]" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  }
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
+                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
+                  <span className="text-sky-600 font-bold">*</span>
+                  <span>Quy tắc: Nhập lại chính xác mật khẩu đã tạo ở trên.</span>
+                </p>
               </div>
             </CardContent>
 

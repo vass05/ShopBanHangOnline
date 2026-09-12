@@ -64,18 +64,27 @@ const AVAILABLE_VOUCHERS: Voucher[] = [
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const { getSelectedItems, removeSelected, getSelectedTotal } = useCartStore();
   const { addOrder } = useOrderStore();
+
+  // Enforce login on checkout page
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      alert("Bạn bắt buộc phải đăng nhập tài khoản trước khi tiến hành đặt hàng!");
+      navigate("/login?redirect=/checkout");
+    }
+  }, [isAuthenticated, navigate]);
 
   const selectedItems = getSelectedItems();
   const rawSubtotal = getSelectedTotal();
 
   // Address State
-  const [address, setAddress] = useState<Address>({
+  const [address, setAddress] = useState<Address>(() => ({
     ...DEFAULT_ADDRESS,
     receiverName: user?.fullName || DEFAULT_ADDRESS.receiverName,
-  });
+    phone: user?.phone || DEFAULT_ADDRESS.phone,
+  }));
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
   // Shipping Method State
@@ -122,9 +131,37 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
+    if (!isAuthenticated) {
+      alert("Bạn bắt buộc phải đăng nhập tài khoản trước khi đặt hàng!");
+      navigate("/login?redirect=/checkout");
+      return;
+    }
+
     if (selectedItems.length === 0) {
       alert("Chưa có sản phẩm nào được chọn!");
       navigate("/cart");
+      return;
+    }
+
+    // Bắt buộc phải có Họ tên người nhận
+    if (!address.receiverName || !address.receiverName.trim()) {
+      alert("Vui lòng nhập họ và tên người nhận hàng!");
+      setIsEditingAddress(true);
+      return;
+    }
+
+    // Bắt buộc phải có Số điện thoại nhận hàng hợp lệ
+    const cleanPhone = (address.phone || "").trim().replace(/\s+/g, "");
+    if (!cleanPhone || !/^(0|\+84)[0-9]{9}$/.test(cleanPhone)) {
+      alert("Bắt buộc phải có Số điện thoại nhận hàng hợp lệ (10 chữ số) để đặt đơn!");
+      setIsEditingAddress(true);
+      return;
+    }
+
+    // Bắt buộc phải có Địa chỉ nhận hàng chi tiết
+    if (!address.detailAddress || !address.detailAddress.trim()) {
+      alert("Bắt buộc phải có Địa chỉ nhận hàng chi tiết để giao hàng!");
+      setIsEditingAddress(true);
       return;
     }
 
@@ -251,49 +288,90 @@ export const CheckoutPage: React.FC = () => {
 
           {!isEditingAddress ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-700">
-              <div className="space-y-0.5">
-                <span className="font-extrabold text-slate-900 text-sm mr-3">
-                  {address.receiverName} ({address.phone})
-                </span>
-                <span className="text-slate-600">
-                  {address.detailAddress}, {address.ward}, {address.district}, {address.province}
-                </span>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-extrabold text-slate-900 text-sm">
+                    {address.receiverName || "Chưa có tên người nhận"}
+                  </span>
+                  {address.phone && /^(0|\+84)[0-9]{9}$/.test(address.phone.trim().replace(/\s+/g, "")) ? (
+                    <span className="font-bold text-[#0284C7] bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                      📞 {address.phone}
+                    </span>
+                  ) : (
+                    <span className="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                      ⚠️ Cần cập nhật SĐT (Bắt buộc)
+                    </span>
+                  )}
+                  <span className="inline-block border border-[#0284C7] text-[#0284C7] text-[10px] font-bold px-2 py-0.5 rounded">
+                    Mặc định
+                  </span>
+                </div>
+                <p className="text-slate-600">
+                  {address.detailAddress ? (
+                    `${address.detailAddress}, ${address.ward}, ${address.district}, ${address.province}`
+                  ) : (
+                    <span className="text-red-500 font-medium">⚠️ Chưa có địa chỉ giao hàng cụ thể</span>
+                  )}
+                </p>
               </div>
-              <span className="inline-block self-start sm:self-center border border-[#0284C7] text-[#0284C7] text-[10px] font-bold px-2 py-0.5 rounded">
-                Mặc định
-              </span>
+              <button
+                type="button"
+                onClick={() => setIsEditingAddress(true)}
+                className="text-xs text-[#0284C7] hover:underline font-semibold shrink-0"
+              >
+                Sửa thông tin
+              </button>
             </div>
           ) : (
             <div className="p-3 bg-slate-50 rounded-xl space-y-3 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Họ và tên người nhận <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Nguyễn Văn A"
+                    value={address.receiverName}
+                    onChange={(e) => setAddress({ ...address, receiverName: e.target.value })}
+                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#0284C7] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Số điện thoại nhận hàng <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="0988889999 (bắt buộc 10 số)"
+                    value={address.phone}
+                    onChange={(e) => setAddress({ ...address, phone: e.target.value })}
+                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#0284C7] outline-none"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">* Bắt buộc để bưu tá liên lạc khi phát hàng.</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Địa chỉ chi tiết (Số nhà, tên đường, thôn xóm...) <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Họ và tên người nhận"
-                  value={address.receiverName}
-                  onChange={(e) => setAddress({ ...address, receiverName: e.target.value })}
-                  className="bg-white border border-slate-200 rounded-lg p-2 text-xs"
-                />
-                <input
-                  type="text"
-                  placeholder="Số điện thoại"
-                  value={address.phone}
-                  onChange={(e) => setAddress({ ...address, phone: e.target.value })}
-                  className="bg-white border border-slate-200 rounded-lg p-2 text-xs"
+                  placeholder="Địa chỉ chi tiết (Số nhà, tên đường, tòa nhà...)"
+                  value={address.detailAddress}
+                  onChange={(e) => setAddress({ ...address, detailAddress: e.target.value })}
+                  className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#0284C7] outline-none"
                 />
               </div>
-              <input
-                type="text"
-                placeholder="Địa chỉ chi tiết (Số nhà, tên đường, tòa nhà)"
-                value={address.detailAddress}
-                onChange={(e) => setAddress({ ...address, detailAddress: e.target.value })}
-                className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs"
-              />
-              <button
-                onClick={() => setIsEditingAddress(false)}
-                className="px-4 py-1.5 bg-[#0284C7] text-white font-bold rounded-lg text-xs shadow-sm"
-              >
-                Lưu Địa Chỉ
-              </button>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingAddress(false)}
+                  className="px-4 py-1.5 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold rounded-lg text-xs shadow-sm"
+                >
+                  Xác Nhận Lưu
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -19,8 +19,7 @@ import lombok.Setter;
 @Schema(description = "Thông tin yêu cầu đăng ký tài khoản mới")
 public class RegisterRequest {
 
-    @Schema(description = "Địa chỉ email duy nhất của người dùng", example = "customer@gmail.com", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "Email không được để trống")
+    @Schema(description = "Địa chỉ email (tùy chọn nếu đã cung cấp số điện thoại)", example = "customer@gmail.com")
     @Email(message = "Email không đúng định dạng")
     private String email;
 

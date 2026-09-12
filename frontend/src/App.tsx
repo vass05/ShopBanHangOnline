@@ -40,9 +40,23 @@ export const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <CheckoutPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/payment-result" element={<PaymentResultPage />} />
-          <Route path="/orders" element={<OrdersPage />} />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <OrdersPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Authentication & Admin/Seller Dashboard */}
           <Route path="/login" element={<LoginPage />} />

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useCartStore } from "@/store/useCartStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { formatVND } from "@/lib/formatters";
 import {
   ShoppingBag,
@@ -68,9 +69,16 @@ export const CartPage: React.FC = () => {
     }
   };
 
+  const { isAuthenticated } = useAuthStore();
+
   const handleProceedCheckout = () => {
     if (selectedCount === 0) {
       alert("Vui lòng chọn ít nhất 1 sản phẩm để tiến hành đặt hàng!");
+      return;
+    }
+    if (!isAuthenticated) {
+      alert("Bạn bắt buộc phải đăng nhập tài khoản trước khi tiến hành đặt hàng!");
+      navigate("/login?redirect=/checkout");
       return;
     }
     navigate("/checkout");

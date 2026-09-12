@@ -41,6 +41,9 @@ public class AuthResponse {
     @Schema(description = "Họ và tên", example = "Nguyễn Văn A")
     private String fullName;
 
+    @Schema(description = "Số điện thoại liên hệ", example = "0987654321")
+    private String phone;
+
     @Schema(description = "Vai trò người dùng trong hệ thống", example = "ROLE_CUSTOMER")
     private UserRole role;
 
