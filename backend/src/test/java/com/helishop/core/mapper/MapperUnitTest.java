@@ -11,18 +11,15 @@ import com.helishop.core.modules.product.entity.Category;
 import com.helishop.core.modules.product.entity.Product;
 import com.helishop.core.modules.product.entity.ProductSku;
 import com.helishop.core.modules.product.mapper.CategoryMapper;
-import com.helishop.core.modules.product.mapper.CategoryMapperImpl;
 import com.helishop.core.modules.product.mapper.ProductMapper;
-import com.helishop.core.modules.product.mapper.ProductMapperImpl;
 import com.helishop.core.modules.product.mapper.ProductSkuMapper;
-import com.helishop.core.modules.product.mapper.ProductSkuMapperImpl;
 import com.helishop.core.modules.user.dto.UserResponse;
 import com.helishop.core.modules.user.entity.Shop;
 import com.helishop.core.modules.user.entity.User;
 import com.helishop.core.modules.user.mapper.UserMapper;
-import com.helishop.core.modules.user.mapper.UserMapperImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
 
@@ -30,10 +27,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MapperUnitTest {
 
-    private final ProductMapper productMapper = new ProductMapperImpl();
-    private final CategoryMapper categoryMapper = new CategoryMapperImpl();
-    private final ProductSkuMapper productSkuMapper = new ProductSkuMapperImpl();
-    private final UserMapper userMapper = new UserMapperImpl();
+    private final ProductMapper productMapper = Mappers.getMapper(ProductMapper.class);
+    private final CategoryMapper categoryMapper = Mappers.getMapper(CategoryMapper.class);
+    private final ProductSkuMapper productSkuMapper = Mappers.getMapper(ProductSkuMapper.class);
+    private final UserMapper userMapper = Mappers.getMapper(UserMapper.class);
 
     @Test
     @DisplayName("ProductMapper: Ánh xạ Product Entity sang ProductResponse chính xác")
