@@ -17,6 +17,8 @@ import {
   Eye,
   EyeOff,
   Sparkles,
+  ArrowLeft,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -97,6 +99,18 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-sky-50/40 to-slate-100 p-4 py-10">
       <div className="w-full max-w-lg">
+        {/* Back to home navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0284C7] transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Quay lại Trang Chủ</span>
+          </Link>
+          <span className="text-xs text-slate-400 font-medium">HeliShop Mall</span>
+        </div>
+
         {/* Brand Header */}
         <div className="text-center mb-6">
           <Link to="/" className="inline-block hover:scale-105 transition-transform">
@@ -123,8 +137,18 @@ export const RegisterPage: React.FC = () => {
           </div>
         )}
 
-        <Card className="border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="space-y-1 pb-4">
+        <Card className="border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm relative overflow-hidden">
+          {/* Exit / Close button to go home */}
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all cursor-pointer z-10"
+            title="Thoát về Trang Chủ"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <CardHeader className="space-y-1 pb-4 pr-12">
             <CardTitle className="text-xl font-bold">Đăng ký thành viên</CardTitle>
             <CardDescription className="text-xs">
               Chọn vai trò của bạn trên sàn và điền các thông tin dưới đây

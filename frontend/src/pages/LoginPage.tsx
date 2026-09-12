@@ -43,6 +43,7 @@ export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [dismissExpired, setDismissExpired] = useState(false);
 
   // Forgot Password Modal States
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -214,11 +215,25 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-sky-50/40 to-slate-100 p-4">
       <div className="w-full max-w-md">
+        {/* Back to home navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0284C7] transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Quay lại Trang Chủ</span>
+          </Link>
+          <span className="text-xs text-slate-400 font-medium">HeliShop Mall</span>
+        </div>
+
         {/* HeliShop Brand Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-xl shadow-sky-500/20 p-2 ring-2 ring-sky-100 mb-3 hover:scale-105 transition-transform">
-            <img src="/images/logo.png" alt="HeliShop Logo" className="w-full h-full object-cover rounded-2xl" />
-          </div>
+        <div className="text-center mb-6">
+          <Link to="/" className="inline-block hover:scale-105 transition-transform">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-xl shadow-sky-500/20 p-2 ring-2 ring-sky-100 mb-3">
+              <img src="/images/logo.png" alt="HeliShop Logo" className="w-full h-full object-cover rounded-2xl" />
+            </div>
+          </Link>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
             Heli<span className="text-[#0284C7]">Shop</span> Core
           </h1>
@@ -227,16 +242,26 @@ export const LoginPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Expired Notification Alert */}
-        {isExpired && (
-          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-amber-800 text-sm shadow-sm">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">Phiên làm việc đã hết hạn!</p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.
-              </p>
+        {/* Expired Notification Alert with Dismiss button */}
+        {isExpired && !dismissExpired && (
+          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start justify-between gap-3 text-amber-800 text-sm shadow-sm animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Phiên làm việc đã hết hạn!</p>
+                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                  Phiên đăng nhập cũ đã được thu hồi. Vui lòng đăng nhập lại tài khoản để tiếp tục.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setDismissExpired(true)}
+              className="p-1 text-amber-600 hover:text-amber-800 rounded-md hover:bg-amber-100 transition-colors shrink-0 cursor-pointer"
+              title="Đóng thông báo"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 
@@ -262,8 +287,18 @@ export const LoginPage: React.FC = () => {
           </div>
         )}
 
-        <Card className="border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm">
-          <CardHeader className="space-y-1 pb-4">
+        <Card className="border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm relative overflow-hidden">
+          {/* Exit / Close button to go home */}
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all cursor-pointer z-10"
+            title="Thoát về Trang Chủ"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <CardHeader className="space-y-1 pb-4 pr-12">
             <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
             <CardDescription>
               Nhập Gmail hoặc Số điện thoại để truy cập tài khoản mua sắm
