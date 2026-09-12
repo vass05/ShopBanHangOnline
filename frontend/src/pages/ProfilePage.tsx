@@ -640,28 +640,7 @@ export const ProfilePage: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Mật khẩu đăng nhập */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Mật khẩu tài khoản
-                      </label>
-                      <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                        <div className="flex items-center gap-2 pl-1.5">
-                          <Lock className="w-4 h-4 text-slate-400" />
-                          <span className="text-slate-600 font-mono tracking-widest text-sm">••••••••</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleTabChange("password")}
-                          className="text-xs font-bold text-[#0284C7] hover:text-[#0369A1] bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-lg border border-sky-200 transition-colors"
-                        >
-                          Đổi mật khẩu
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-slate-400 mt-1">
-                        Bấm "Đổi mật khẩu" để cập nhật mật khẩu mới bảo mật tài khoản.
-                      </p>
-                    </div>
+
 
                     {/* Submit Button */}
                     <div className="pt-3">
