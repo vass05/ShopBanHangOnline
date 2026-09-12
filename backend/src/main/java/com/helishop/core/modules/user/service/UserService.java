@@ -71,7 +71,8 @@ public class UserService {
         }
 
         if (request.getAvatarUrl() != null) {
-            user.setAvatarUrl(request.getAvatarUrl().trim());
+            String trimmed = request.getAvatarUrl().trim();
+            user.setAvatarUrl(trimmed.isEmpty() ? null : trimmed);
         }
 
         User updatedUser = userRepository.save(user);

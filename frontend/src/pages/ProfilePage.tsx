@@ -34,6 +34,36 @@ import {
   X,
 } from "lucide-react";
 
+export const ShopeeDefaultAvatar: React.FC<{ className?: string; iconSize?: string }> = ({
+  className = "w-28 h-28 sm:w-32 sm:h-32",
+  iconSize = "w-16 h-16 sm:w-18 sm:h-18",
+}) => (
+  <div
+    className={`rounded-full bg-[#EFEFEF] flex items-center justify-center overflow-hidden shrink-0 select-none ${className}`}
+  >
+    <svg
+      viewBox="0 0 15 15"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={iconSize}
+    >
+      <circle
+        cx="7.5"
+        cy="4.5"
+        r="2.5"
+        stroke="#C6C6C6"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M1.5 14.2C1.5 10.9 4.2 8.2 7.5 8.2C10.8 8.2 13.5 10.9 13.5 14.2"
+        stroke="#C6C6C6"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  </div>
+);
+
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -48,11 +78,26 @@ export const ProfilePage: React.FC = () => {
   const [fullName, setFullName] = useState(authUser?.fullName || "");
   const [phone, setPhone] = useState(authUser?.phone || "");
   const [avatarUrl, setAvatarUrl] = useState(authUser?.avatarUrl || "");
+  const [avatarError, setAvatarError] = useState(false);
+  const [sidebarAvatarError, setSidebarAvatarError] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState("");
   const [profileErrorMsg, setProfileErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setAvatarError(false);
+    setSidebarAvatarError(false);
+  }, [avatarUrl]);
+
+  const resolveAvatar = (url?: string) => {
+    if (!url) return "";
+    if (url.startsWith("/uploads/")) {
+      return `http://localhost:8080${url}`;
+    }
+    return url;
+  };
 
   // Addresses State
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
@@ -165,6 +210,8 @@ export const ProfilePage: React.FC = () => {
       const updatedProfile = await profileService.uploadAvatar(file);
       const newAvatarUrl = updatedProfile.avatarUrl || localPreviewUrl;
       setAvatarUrl(newAvatarUrl);
+      setAvatarError(false);
+      setSidebarAvatarError(false);
       updateUser({
         avatarUrl: newAvatarUrl,
       });
@@ -179,6 +226,25 @@ export const ProfilePage: React.FC = () => {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+    }
+  };
+
+  // Handle Remove Avatar to restore Shopee default
+  const handleRemoveAvatar = async () => {
+    setAvatarUrl("");
+    setAvatarError(false);
+    setSidebarAvatarError(false);
+    updateUser({ avatarUrl: undefined });
+    try {
+      await profileService.updateProfile({
+        fullName,
+        phone,
+        avatarUrl: "",
+      });
+      setProfileSuccessMsg("Đã đặt lại ảnh đại diện về biểu tượng mặc định!");
+      setTimeout(() => setProfileSuccessMsg(""), 3000);
+    } catch {
+      // ignore
     }
   };
 
@@ -387,35 +453,15 @@ export const ProfilePage: React.FC = () => {
             {/* User Profile Card */}
             <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
               <div className="relative">
-                {avatarUrl ? (
+                {avatarUrl && !sidebarAvatarError ? (
                   <img
-                    src={avatarUrl}
+                    src={resolveAvatar(avatarUrl)}
                     alt={fullName || "User Avatar"}
+                    onError={() => setSidebarAvatarError(true)}
                     className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-[#EFEFEF] flex items-center justify-center overflow-hidden shrink-0">
-                    <svg
-                      viewBox="0 0 15 15"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-8 h-8"
-                    >
-                      <circle
-                        cx="7.5"
-                        cy="4.5"
-                        r="2.5"
-                        stroke="#C6C6C6"
-                        strokeWidth="1.2"
-                      />
-                      <path
-                        d="M1.5 14.2C1.5 10.9 4.2 8.2 7.5 8.2C10.8 8.2 13.5 10.9 13.5 14.2"
-                        stroke="#C6C6C6"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </div>
+                  <ShopeeDefaultAvatar className="w-14 h-14" iconSize="w-8 h-8" />
                 )}
                 <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-300"></span>
               </div>
@@ -653,35 +699,15 @@ export const ProfilePage: React.FC = () => {
                       className="relative cursor-pointer"
                       title="Bấm để chọn ảnh từ máy tính"
                     >
-                      {avatarUrl ? (
+                      {avatarUrl && !avatarError ? (
                         <img
-                          src={avatarUrl}
+                          src={resolveAvatar(avatarUrl)}
                           alt={fullName || "User Avatar"}
+                          onError={() => setAvatarError(true)}
                           className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover shadow-xs"
                         />
                       ) : (
-                        <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-[#EFEFEF] flex items-center justify-center overflow-hidden shrink-0">
-                          <svg
-                            viewBox="0 0 15 15"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-16 h-16 sm:w-18 sm:h-18"
-                          >
-                            <circle
-                              cx="7.5"
-                              cy="4.5"
-                              r="2.5"
-                              stroke="#C6C6C6"
-                              strokeWidth="1.2"
-                            />
-                            <path
-                              d="M1.5 14.2C1.5 10.9 4.2 8.2 7.5 8.2C10.8 8.2 13.5 10.9 13.5 14.2"
-                              stroke="#C6C6C6"
-                              strokeWidth="1.2"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                        </div>
+                        <ShopeeDefaultAvatar />
                       )}
 
                       {/* Uploading Spinner Overlay */}
@@ -702,6 +728,17 @@ export const ProfilePage: React.FC = () => {
                     >
                       Chọn Ảnh
                     </button>
+
+                    {/* Remove Avatar Button if user has custom avatar */}
+                    {avatarUrl && !avatarError && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveAvatar}
+                        className="mt-2 text-xs text-slate-500 hover:text-red-500 hover:underline cursor-pointer"
+                      >
+                        Xóa ảnh đại diện
+                      </button>
+                    )}
 
                     {/* Exact format notice from Shopee */}
                     <div className="text-[13px] text-[#888888] text-center mt-3.5 space-y-1 leading-snug">

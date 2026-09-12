@@ -28,6 +28,11 @@ export const Header: React.FC = () => {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCartPreview, setShowCartPreview] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user?.avatarUrl]);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -114,10 +119,11 @@ export const Header: React.FC = () => {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-1.5 hover:text-white font-medium"
                 >
-                  {user?.avatarUrl ? (
+                  {user?.avatarUrl && !avatarError ? (
                     <img
-                      src={user.avatarUrl}
+                      src={user.avatarUrl.startsWith("/uploads/") ? `http://localhost:8080${user.avatarUrl}` : user.avatarUrl}
                       alt={user.fullName || "Avatar"}
+                      onError={() => setAvatarError(true)}
                       className="w-5 h-5 rounded-full object-cover ring-1 ring-white/60"
                     />
                   ) : (
