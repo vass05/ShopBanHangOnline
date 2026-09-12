@@ -24,7 +24,7 @@
 --    - Anker Innovations Store: seller.anker@gmail.com (hoặc 0907777777) / Password123!
 --
 -- * Tất cả mật khẩu đã được băm bằng thuật toán BCrypt:
---   $2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea  -> "Password123!"
+--   $2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG  -> "Password123!"
 -- ==============================================================================
 
 USE eshop_db;
@@ -39,18 +39,18 @@ SET FOREIGN_KEY_CHECKS = 0;
 INSERT INTO users (id, email, password_hash, full_name, phone, avatar_url, role, status, created_at, updated_at)
 VALUES
   -- Khách hàng chính
-  (1, 'vuvietanh@gmail.com', '$2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea', 'Vũ Viết Anh', '0988889999', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300', 'ROLE_CUSTOMER', 'ACTIVE', NOW(), NOW()),
+  (1, 'vuvietanh@gmail.com', '$2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG', 'Vũ Viết Anh', '0988889999', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300', 'ROLE_CUSTOMER', 'ACTIVE', NOW(), NOW()),
   
   -- Quản trị viên sàn HeliShop
-  (2, 'admin.helishop@gmail.com', '$2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea', 'Quản Trị Viên HeliShop', '0901111111', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300', 'ROLE_ADMIN', 'ACTIVE', NOW(), NOW()),
+  (2, 'admin.helishop@gmail.com', '$2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG', 'Quản Trị Viên HeliShop', '0901111111', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300', 'ROLE_ADMIN', 'ACTIVE', NOW(), NOW()),
   
   -- Người bán hàng chính hãng
-  (3, 'seller.apple@gmail.com', '$2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea', 'Chủ Shop Apple Flagship Store', '0902222222', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
-  (4, 'seller.sony@gmail.com', '$2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea', 'Chủ Shop Sony Vietnam', '0903333333', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
-  (5, 'seller.nuphy@gmail.com', '$2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea', 'Chủ Shop NuPhy Mechanical Studio', '0904444444', 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
-  (6, 'seller.coolmate@gmail.com', '$2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea', 'Chủ Shop Coolmate Vietnam', '0905555555', 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
-  (7, 'seller.logitech@gmail.com', '$2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea', 'Chủ Shop Logitech G Vietnam', '0906666666', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
-  (8, 'seller.anker@gmail.com', '$2a$10$Q7yM4jQvCcm40hM15yqV7.27r9Wkvx0g5985kcm1Q45rG7eJpWJea', 'Chủ Shop Anker Innovations', '0907777777', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW())
+  (3, 'seller.apple@gmail.com', '$2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG', 'Chủ Shop Apple Flagship Store', '0902222222', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
+  (4, 'seller.sony@gmail.com', '$2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG', 'Chủ Shop Sony Vietnam', '0903333333', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
+  (5, 'seller.nuphy@gmail.com', '$2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG', 'Chủ Shop NuPhy Mechanical Studio', '0904444444', 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
+  (6, 'seller.coolmate@gmail.com', '$2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG', 'Chủ Shop Coolmate Vietnam', '0905555555', 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
+  (7, 'seller.logitech@gmail.com', '$2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG', 'Chủ Shop Logitech G Vietnam', '0906666666', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW()),
+  (8, 'seller.anker@gmail.com', '$2a$10$7CzKNB4QRDs2V1Ky0uAeiO27mgPki1oxlH/zHzADU.OGQMZA6fJKG', 'Chủ Shop Anker Innovations', '0907777777', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300', 'ROLE_SELLER', 'ACTIVE', NOW(), NOW())
 ON DUPLICATE KEY UPDATE 
   full_name = VALUES(full_name),
   phone = VALUES(phone),
