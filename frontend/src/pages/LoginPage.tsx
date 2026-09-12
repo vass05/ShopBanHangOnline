@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore, User } from "@/store/useAuthStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -403,9 +403,9 @@ export const LoginPage: React.FC = () => {
               </Button>
               <p className="text-xs text-center text-slate-500">
                 Chưa có tài khoản?{" "}
-                <span className="text-[#0284C7] font-semibold cursor-pointer hover:underline">
+                <Link to="/register" className="text-[#0284C7] font-semibold hover:underline">
                   Đăng ký ngay
-                </span>
+                </Link>
               </p>
             </CardFooter>
           </form>

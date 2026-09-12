@@ -155,7 +155,7 @@ export const Header: React.FC = () => {
                   Đăng Nhập
                 </Link>
                 <span>|</span>
-                <Link to="/login" className="hover:text-white transition-colors">
+                <Link to="/register" className="hover:text-white transition-colors">
                   Đăng Ký
                 </Link>
               </div>

@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/useAuthStore";
 import { LoginPage } from "@/pages/LoginPage";
+import { RegisterPage } from "@/pages/RegisterPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { HomePage } from "@/pages/HomePage";
 import { ProductDetailPage } from "@/pages/ProductDetailPage";
@@ -45,6 +46,7 @@ export const App: React.FC = () => {
 
           {/* Authentication & Admin/Seller Dashboard */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route
             path="/dashboard"
             element={
