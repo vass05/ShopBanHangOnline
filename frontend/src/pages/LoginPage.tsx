@@ -254,9 +254,8 @@ export const LoginPage: React.FC = () => {
                   autoComplete="username"
                   required
                 />
-                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
-                  <span className="text-sky-600 font-bold">*</span>
-                  <span>Quy tắc: Nhập địa chỉ Gmail hợp lệ (VD: user@gmail.com) hoặc Số điện thoại 10 số.</span>
+                <p className="text-[11px] text-slate-400 pt-0.5">
+                  Có thể đăng nhập bằng Gmail hoặc Số điện thoại (10 số)
                 </p>
               </div>
 
@@ -301,10 +300,6 @@ export const LoginPage: React.FC = () => {
                   autoComplete="current-password"
                   required
                 />
-                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
-                  <span className="text-sky-600 font-bold">*</span>
-                  <span>Quy tắc: Mật khẩu bảo mật có độ dài tối thiểu từ 6 ký tự trở lên.</span>
-                </p>
               </div>
 
               {/* Remember Me Checkbox */}

@@ -237,17 +237,13 @@ export const RegisterPage: React.FC = () => {
                   onChange={(e) => setFullName(e.target.value)}
                   required
                 />
-                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
-                  <span className="text-sky-600 font-bold">*</span>
-                  <span>Chú thích: Nhập đầy đủ họ và tên thật của bạn.</span>
-                </p>
               </div>
 
               {/* Account Registration Method Notice */}
               <div className="p-3 bg-sky-50/70 border border-sky-200/80 rounded-xl flex items-start gap-2.5 text-xs text-sky-800">
                 <Info className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
                 <span>
-                  <strong>Phương thức đăng ký:</strong> Bạn có thể đăng ký bằng <strong>Gmail</strong> hoặc <strong>Số điện thoại</strong> (không bắt buộc cả hai, chỉ cần điền ít nhất 1 trong 2 thông tin).
+                  Có thể đăng ký bằng <strong>Gmail</strong> hoặc <strong>Số điện thoại</strong> (không bắt buộc cả hai, chỉ cần điền ít nhất 1 trong 2).
                 </span>
               </div>
 
@@ -264,10 +260,6 @@ export const RegisterPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
-                  <span className="text-sky-600 font-bold">*</span>
-                  <span>Quy tắc: Nhập đúng định dạng Gmail (VD: user@gmail.com).</span>
-                </p>
               </div>
 
               {/* Phone */}
@@ -283,9 +275,8 @@ export const RegisterPage: React.FC = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
-                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
-                  <span className="text-sky-600 font-bold">*</span>
-                  <span>Quy tắc: Số điện thoại di động gồm 10 chữ số (bắt đầu bằng 0 hoặc +84).</span>
+                <p className="text-[11px] text-slate-400 pt-0.5">
+                  Gồm 10 chữ số (bắt đầu bằng 0 hoặc +84)
                 </p>
               </div>
 
@@ -317,9 +308,8 @@ export const RegisterPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
-                  <span className="text-sky-600 font-bold">*</span>
-                  <span>Quy tắc: Mật khẩu bảo mật có độ dài tối thiểu từ 6 ký tự trở lên.</span>
+                <p className="text-[11px] text-slate-400 pt-0.5">
+                  Tối thiểu 6 ký tự
                 </p>
               </div>
 
@@ -351,10 +341,6 @@ export const RegisterPage: React.FC = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
-                <p className="text-[11px] text-slate-500 flex items-center gap-1 pt-0.5">
-                  <span className="text-sky-600 font-bold">*</span>
-                  <span>Quy tắc: Nhập lại chính xác mật khẩu đã tạo ở trên.</span>
-                </p>
               </div>
             </CardContent>
 
