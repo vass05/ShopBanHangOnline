@@ -128,6 +128,14 @@ export const Header: React.FC = () => {
                       <p className="text-xs text-slate-400 truncate">{user?.email}</p>
                     </div>
                     <Link
+                      to="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-2 px-3 py-2 hover:bg-sky-50 hover:text-[#0284C7] transition-colors"
+                    >
+                      <UserIcon className="w-4 h-4 text-sky-600" />
+                      <span>Hồ sơ của tôi</span>
+                    </Link>
+                    <Link
                       to="/orders"
                       onClick={() => setShowUserMenu(false)}
                       className="flex items-center gap-2 px-3 py-2 hover:bg-sky-50 hover:text-[#0284C7] transition-colors"

@@ -12,6 +12,7 @@ import { CartPage } from "@/pages/CartPage";
 import { CheckoutPage } from "@/pages/CheckoutPage";
 import { PaymentResultPage } from "@/pages/PaymentResultPage";
 import { OrdersPage } from "@/pages/OrdersPage";
+import { ProfilePage } from "@/pages/ProfilePage";
 
 // Scroll to top helper on route change
 const ScrollToTop: React.FC = () => {
@@ -54,6 +55,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <OrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

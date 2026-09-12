@@ -19,6 +19,7 @@ interface AuthState {
   isAuthenticated: boolean;
 
   setAuth: (payload: { user: User; accessToken: string; refreshToken: string }) => void;
+  updateUser: (partialUser: Partial<User>) => void;
   updateAccessToken: (newAccessToken: string) => void;
   corruptAccessToken: () => void;
   logout: () => Promise<void>;
@@ -44,6 +45,14 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
           isAuthenticated: true,
         });
+      },
+
+      updateUser: (partialUser) => {
+        const currentUser = get().user;
+        if (currentUser) {
+          const updated = { ...currentUser, ...partialUser };
+          set({ user: updated });
+        }
       },
 
       updateAccessToken: (newAccessToken: string) => {
