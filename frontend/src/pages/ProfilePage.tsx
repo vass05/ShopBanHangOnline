@@ -556,7 +556,7 @@ export const ProfilePage: React.FC = () => {
                     {/* Số điện thoại */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Số điện thoại liên hệ
+                        Số điện thoại (Dùng để đăng nhập & nhận hàng)
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -571,7 +571,30 @@ export const ProfilePage: React.FC = () => {
                         />
                       </div>
                       <p className="text-[11px] text-slate-400 mt-1">
-                        Số điện thoại dùng để shipper liên hệ giao hàng và nhận mã xác thực OTP.
+                        Số điện thoại có thể thay đổi bất kỳ lúc nào. Sau khi đổi, bạn có thể dùng số mới này để đăng nhập và nhận hàng từ shipper.
+                      </p>
+                    </div>
+
+                    {/* Mật khẩu đăng nhập */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Mật khẩu tài khoản
+                      </label>
+                      <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                        <div className="flex items-center gap-2 pl-1.5">
+                          <Lock className="w-4 h-4 text-slate-400" />
+                          <span className="text-slate-600 font-mono tracking-widest text-sm">••••••••</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleTabChange("password")}
+                          className="text-xs font-bold text-[#0284C7] hover:text-[#0369A1] bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-lg border border-sky-200 transition-colors"
+                        >
+                          Đổi mật khẩu
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Bấm "Đổi mật khẩu" để cập nhật mật khẩu mới bảo mật tài khoản.
                       </p>
                     </div>
 
@@ -605,31 +628,25 @@ export const ProfilePage: React.FC = () => {
                       className="hidden"
                     />
 
-                    {/* Interactive Avatar Circle */}
+                    {/* Avatar Circle - Pure image with NO camera icon inside */}
                     <div
                       onClick={handleAvatarClick}
-                      className="relative group cursor-pointer"
-                      title="Bấm để tải ảnh lên từ máy tính"
+                      className="relative cursor-pointer transition-transform hover:scale-105"
+                      title="Bấm để tải ảnh mới lên"
                     >
                       {avatarUrl ? (
                         <img
                           src={avatarUrl}
                           alt={fullName || "User Avatar"}
-                          className="w-36 h-36 rounded-full object-cover ring-4 ring-sky-100 shadow-md group-hover:ring-[#0284C7]/40 transition-all"
+                          className="w-36 h-36 rounded-full object-cover ring-4 ring-sky-100 shadow-md"
                         />
                       ) : (
-                        <div className="w-36 h-36 rounded-full bg-gradient-to-tr from-[#0284C7] to-sky-400 text-white flex items-center justify-center font-black text-5xl shadow-md ring-4 ring-sky-100 group-hover:ring-[#0284C7]/40 transition-all">
+                        <div className="w-36 h-36 rounded-full bg-gradient-to-tr from-[#0284C7] to-sky-400 text-white flex items-center justify-center font-black text-5xl shadow-md ring-4 ring-sky-100">
                           {fullName ? fullName.charAt(0).toUpperCase() : "U"}
                         </div>
                       )}
 
-                      {/* Hover Overlay with Camera Icon */}
-                      <div className="absolute inset-0 bg-black/40 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Camera className="w-8 h-8 mb-1" />
-                        <span className="text-[11px] font-semibold">Thay đổi ảnh</span>
-                      </div>
-
-                      {/* Uploading Spinner Overlay */}
+                      {/* Uploading Spinner Overlay (only while uploading) */}
                       {isUploadingAvatar && (
                         <div className="absolute inset-0 bg-slate-900/60 rounded-full flex flex-col items-center justify-center text-white backdrop-blur-xs">
                           <Loader2 className="w-8 h-8 animate-spin text-sky-400 mb-1" />
