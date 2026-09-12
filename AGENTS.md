@@ -7,19 +7,24 @@ Tệp quy chuẩn hoạt động cốt lõi cho toàn bộ AI Agents, Subagents 
 ## 🚨 1. Quy Tắc Bắt Buộc: Git Commit & Push Policy (QUAN TRỌNG NHẤT)
 
 > [!CAUTION]
-> **Tuyệt đối không được kết thúc Sprint hoặc bàn giao tính năng mà chỉ commit ở local!**
-> Mọi thay đổi sau khi hoàn tất kiểm thử đều phải được đẩy lên GitHub `origin/main` ngay lập tức.
+> **MỖI LẦN CÓ BẤT KỲ SỰ THAY ĐỔI NÀO VỀ CODE, BẮT BUỘC PHẢI COMMIT VÀ PUSH LÊN GITHUB NGAY LẬP TỨC KÈM CHÚ THÍCH (COMMIT MESSAGE) RÕ RÀNG!**
+> Tuyệt đối không được kết thúc task, sửa code, chỉnh tính năng hay kết thúc Sprint mà chỉ lưu ở local hoặc chỉ commit mà không push!
+> Mọi thay đổi sau khi kiểm thử xong đều phải nằm trên remote repository `origin/main`.
 
-### Quy trình kết thúc task / sprint chuẩn:
-1. **Kiểm thử tự động**: Chạy kiểm thử toàn diện:
+### Quy tắc "Thay đổi Code là phải Push":
+- **Phạm vi áp dụng**: Áp dụng cho **MỌI lần thay đổi code** (dù là sửa 1 lỗi nhỏ, chỉnh CSS/giao diện, cập nhật API, viết DTO hay làm xong Sprint).
+- **Chú thích bắt buộc (Commit Message)**: Mỗi commit phải có thông điệp mô tả chính xác nội dung thay đổi (chuẩn Conventional Commits: `<type>(<scope>): <mô tả chi tiết>`).
+
+### Quy trình thực hiện chuẩn:
+1. **Kiểm thử tự động**: Chạy kiểm thử hoặc build đảm bảo không có lỗi:
+   - Backend: `.\mvnw.cmd test-compile` (hoặc `.\mvnw.cmd test`)
+   - Frontend: `npx tsc --noEmit`
+2. **Commit kèm chú thích rõ ràng**:
    ```powershell
-   .\mvnw.cmd test
+   git add .
+   git commit -m "<type>(<scope>): <chú thích chi tiết thay đổi>"
    ```
-   Chỉ khi **100% bài kiểm thử PASSED** mới được tiến hành đóng gói commit.
-2. **Commit chuẩn mực (Conventional Commits)**:
-   - Cú pháp: `<type>(<scope>): <mô tả ngắn gọn>`
-   - Ví dụ: `feat(sprint-1): implement rabbitmq with dlq, redis persistent, and shopee redis cart engine`
-3. **Đẩy ngay lên Remote Repository**:
+3. **Đẩy ngay lên GitHub Remote Repository (Bắt buộc)**:
    ```powershell
    git push origin main
    ```

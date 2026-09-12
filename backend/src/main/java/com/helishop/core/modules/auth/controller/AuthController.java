@@ -2,9 +2,11 @@ package com.helishop.core.modules.auth.controller;
 
 import com.helishop.core.common.response.ApiResponse;
 import com.helishop.core.modules.auth.dto.AuthResponse;
+import com.helishop.core.modules.auth.dto.ForgotPasswordRequest;
 import com.helishop.core.modules.auth.dto.LoginRequest;
 import com.helishop.core.modules.auth.dto.RefreshTokenRequest;
 import com.helishop.core.modules.auth.dto.RegisterRequest;
+import com.helishop.core.modules.auth.dto.ResetPasswordRequest;
 import com.helishop.core.modules.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -92,5 +94,37 @@ public class AuthController {
             authService.logout(request.getRefreshToken());
         }
         return ApiResponse.success(null, "Đăng xuất thành công");
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(
+            summary = "Yêu cầu mã OTP khôi phục mật khẩu",
+            description = "Tạo mã OTP 6 chữ số lưu vào Redis với TTL 10 phút và gửi thông báo qua Email đăng ký"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Gửi mã xác thực OTP thành công",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        String result = authService.sendForgotPasswordOtp(request);
+        return ApiResponse.success(result, "Mã xác thực OTP đã được gửi");
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(
+            summary = "Đặt lại mật khẩu mới",
+            description = "Kiểm tra mã OTP trong Redis và cập nhật mật khẩu mới băm BCrypt"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đặt lại mật khẩu thành công",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Mã OTP không hợp lệ hoặc đã hết hạn",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        String result = authService.resetPassword(request);
+        return ApiResponse.success(result, "Đặt lại mật khẩu thành công");
     }
 }
