@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -30,18 +30,9 @@ import {
   ShieldCheck,
   Sparkles,
   Loader2,
+  Upload,
   X,
 } from "lucide-react";
-
-// Preset beautiful avatars for quick selection
-const PRESET_AVATARS = [
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-];
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -58,8 +49,10 @@ export const ProfilePage: React.FC = () => {
   const [phone, setPhone] = useState(authUser?.phone || "");
   const [avatarUrl, setAvatarUrl] = useState(authUser?.avatarUrl || "");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState("");
   const [profileErrorMsg, setProfileErrorMsg] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Addresses State
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
@@ -139,6 +132,54 @@ export const ProfilePage: React.FC = () => {
     setPasswordErrorMsg("");
     setAddressSuccessMsg("");
     setAddressErrorMsg("");
+  };
+
+  // Handle Avatar Selection & Upload
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setProfileErrorMsg("Dung lượng tệp vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn!");
+      return;
+    }
+
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      setProfileErrorMsg("Định dạng không được hỗ trợ. Vui lòng chọn tệp .JPEG, .PNG hoặc .WEBP!");
+      return;
+    }
+
+    // Show immediate local preview
+    const localPreviewUrl = URL.createObjectURL(file);
+    setAvatarUrl(localPreviewUrl);
+    setProfileErrorMsg("");
+    setProfileSuccessMsg("");
+    setIsUploadingAvatar(true);
+
+    try {
+      const updatedProfile = await profileService.uploadAvatar(file);
+      const newAvatarUrl = updatedProfile.avatarUrl || localPreviewUrl;
+      setAvatarUrl(newAvatarUrl);
+      updateUser({
+        avatarUrl: newAvatarUrl,
+      });
+      setProfileSuccessMsg("Tải lên và cập nhật ảnh đại diện thành công!");
+      setTimeout(() => setProfileSuccessMsg(""), 4000);
+    } catch (err: any) {
+      setProfileErrorMsg(
+        err.response?.data?.message || "Không thể tải ảnh lên máy chủ. Vui lòng thử lại!"
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   // Handle Profile Update
@@ -534,20 +575,6 @@ export const ProfilePage: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Đường dẫn ảnh đại diện tùy chọn */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Đường dẫn Avatar tùy chọn (URL)
-                      </label>
-                      <input
-                        type="url"
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder="https://example.com/my-photo.jpg"
-                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#0284C7]/20 focus:border-[#0284C7] transition-all"
-                      />
-                    </div>
-
                     {/* Submit Button */}
                     <div className="pt-3">
                       <button
@@ -567,47 +594,66 @@ export const ProfilePage: React.FC = () => {
                     </div>
                   </form>
 
-                  {/* Right: Avatar Preview & Quick Presets */}
+                  {/* Right: Avatar File Picker & Live Preview */}
                   <div className="flex flex-col items-center justify-start border-t md:border-t-0 md:border-l border-slate-100 pt-6 md:pt-0 md:pl-8">
-                    <div className="relative group">
+                    {/* Hidden Native File Input */}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                    />
+
+                    {/* Interactive Avatar Circle */}
+                    <div
+                      onClick={handleAvatarClick}
+                      className="relative group cursor-pointer"
+                      title="Bấm để tải ảnh lên từ máy tính"
+                    >
                       {avatarUrl ? (
                         <img
                           src={avatarUrl}
-                          alt="Avatar Preview"
-                          className="w-32 h-32 rounded-full object-cover ring-4 ring-sky-100 shadow-md"
+                          alt={fullName || "User Avatar"}
+                          className="w-36 h-36 rounded-full object-cover ring-4 ring-sky-100 shadow-md group-hover:ring-[#0284C7]/40 transition-all"
                         />
                       ) : (
-                        <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-[#0284C7] to-sky-400 text-white flex items-center justify-center font-black text-4xl shadow-md ring-4 ring-sky-100">
+                        <div className="w-36 h-36 rounded-full bg-gradient-to-tr from-[#0284C7] to-sky-400 text-white flex items-center justify-center font-black text-5xl shadow-md ring-4 ring-sky-100 group-hover:ring-[#0284C7]/40 transition-all">
                           {fullName ? fullName.charAt(0).toUpperCase() : "U"}
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                        <Camera className="w-6 h-6" />
+
+                      {/* Hover Overlay with Camera Icon */}
+                      <div className="absolute inset-0 bg-black/40 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Camera className="w-8 h-8 mb-1" />
+                        <span className="text-[11px] font-semibold">Thay đổi ảnh</span>
                       </div>
+
+                      {/* Uploading Spinner Overlay */}
+                      {isUploadingAvatar && (
+                        <div className="absolute inset-0 bg-slate-900/60 rounded-full flex flex-col items-center justify-center text-white backdrop-blur-xs">
+                          <Loader2 className="w-8 h-8 animate-spin text-sky-400 mb-1" />
+                          <span className="text-[10px] font-bold">Đang tải lên...</span>
+                        </div>
+                      )}
                     </div>
 
-                    <p className="text-xs font-semibold text-slate-600 mt-4 mb-2">
-                      Chọn nhanh ảnh đại diện:
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {PRESET_AVATARS.map((url, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setAvatarUrl(url)}
-                          className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-transform hover:scale-110 ${
-                            avatarUrl === url
-                              ? "border-[#0284C7] ring-2 ring-[#0284C7]/30"
-                              : "border-transparent"
-                          }`}
-                        >
-                          <img src={url} alt="Preset avatar" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                    {/* Choose Image Button */}
+                    <button
+                      type="button"
+                      onClick={handleAvatarClick}
+                      disabled={isUploadingAvatar}
+                      className="mt-5 inline-flex items-center gap-2 px-5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold shadow-xs hover:border-[#0284C7] hover:text-[#0284C7] transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      <Upload className="w-4 h-4 text-sky-600" />
+                      <span>Chọn Ảnh</span>
+                    </button>
+
+                    {/* File constraints notice */}
+                    <div className="text-[11px] text-slate-400 text-center mt-3 space-y-1 max-w-[220px]">
+                      <p>Dung lượng tệp tối đa: <strong className="text-slate-600">5 MB</strong></p>
+                      <p>Định dạng: <strong className="text-slate-600">.JPEG, .PNG, .WEBP</strong></p>
                     </div>
-                    <p className="text-[11px] text-slate-400 text-center mt-3 max-w-[200px]">
-                      Định dạng hỗ trợ: .JPEG, .PNG. Hoặc nhập link ảnh trực tiếp vào ô URL bên cạnh.
-                    </p>
                   </div>
                 </div>
               </div>

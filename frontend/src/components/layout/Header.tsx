@@ -114,9 +114,17 @@ export const Header: React.FC = () => {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-1.5 hover:text-white font-medium"
                 >
-                  <div className="w-5 h-5 rounded-full bg-sky-200 text-[#0369A1] flex items-center justify-center font-bold text-[10px]">
-                    {user?.fullName?.charAt(0) || "U"}
-                  </div>
+                  {user?.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.fullName || "Avatar"}
+                      className="w-5 h-5 rounded-full object-cover ring-1 ring-white/60"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-sky-200 text-[#0369A1] flex items-center justify-center font-bold text-[10px]">
+                      {user?.fullName?.charAt(0) || "U"}
+                    </div>
+                  )}
                   <span>{user?.fullName || user?.email}</span>
                   <ChevronDown className="w-3 h-3" />
                 </button>

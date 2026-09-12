@@ -60,6 +60,17 @@ export const profileService = {
     return res.data.data;
   },
 
+  async uploadAvatar(file: File): Promise<UserProfile> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await api.post("/users/me/avatar", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return res.data.data;
+  },
+
   async changePassword(data: ChangePasswordData): Promise<string> {
     const res = await api.put("/users/me/password", data);
     return res.data.message || "Đổi mật khẩu thành công";

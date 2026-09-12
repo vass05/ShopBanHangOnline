@@ -17,7 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 @Slf4j
@@ -201,5 +207,49 @@ public class UserService {
         address.setIsDefault(true);
         log.info("Đã đặt địa chỉ id: {} làm mặc định cho userId: {}", addressId, userId);
         return userMapper.toAddressResponse(address);
+    }
+
+    @Transactional
+    public UserResponse uploadAvatar(Long userId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Tệp hình ảnh không được để trống");
+        }
+        if (file.getSize() > 5 * 1024 * 1024L) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Dung lượng tệp hình ảnh tối đa là 5MB");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.equalsIgnoreCase("image/jpeg")
+                && !contentType.equalsIgnoreCase("image/png")
+                && !contentType.equalsIgnoreCase("image/webp"))) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Định dạng tệp không được hỗ trợ. Vui lòng chọn ảnh định dạng JPEG, PNG hoặc WEBP");
+        }
+
+        try {
+            Path uploadDir = Paths.get("uploads", "avatars");
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+
+            String extension = ".jpg";
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+
+            String fileName = "user_" + userId + "_" + System.currentTimeMillis() + extension;
+            Path targetLocation = uploadDir.resolve(fileName);
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+            String avatarUrl = "/uploads/avatars/" + fileName;
+            User user = getById(userId);
+            user.setAvatarUrl(avatarUrl);
+            User savedUser = userRepository.save(user);
+
+            log.info("Đã cập nhật ảnh đại diện mới thành công cho userId: {}, đường dẫn: {}", userId, avatarUrl);
+            return userMapper.toResponse(savedUser);
+        } catch (IOException e) {
+            log.error("Lỗi khi lưu tệp ảnh đại diện: {}", e.getMessage(), e);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Không thể lưu tệp ảnh: " + e.getMessage());
+        }
     }
 }

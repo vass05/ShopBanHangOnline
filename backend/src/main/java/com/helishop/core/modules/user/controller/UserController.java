@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,8 +25,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -70,6 +73,25 @@ public class UserController {
     public ApiResponse<UserResponse> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
         Long userId = securityUtils.getCurrentUserId(null);
         return ApiResponse.success(userService.updateProfile(userId, request), "Cập nhật thông tin cá nhân thành công");
+    }
+
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "Tải lên ảnh đại diện cho tài khoản hiện tại",
+            description = "Nhận tệp hình ảnh (JPEG, PNG, WEBP tối đa 5MB), lưu trữ cục bộ an toàn và tự động cập nhật avatarUrl cho người dùng"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Tải ảnh đại diện lên thành công",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Tệp không hợp lệ hoặc quá dung lượng cho phép",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa đăng nhập",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<UserResponse> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        Long userId = securityUtils.getCurrentUserId(null);
+        return ApiResponse.success(userService.uploadAvatar(userId, file), "Tải ảnh đại diện lên thành công");
     }
 
     @PutMapping("/me/password")

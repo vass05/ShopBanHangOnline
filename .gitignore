@@ -44,3 +44,9 @@ frontend/dist-ssr/
 frontend/*.local
 frontend/*.tsbuildinfo
 *.tsbuildinfo
+
+### Uploads & User Media ###
+backend/uploads/**
+!backend/uploads/**/.gitkeep
+uploads/**
+!uploads/**/.gitkeep
