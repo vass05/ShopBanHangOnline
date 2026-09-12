@@ -143,8 +143,8 @@ export const ProfilePage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setProfileErrorMsg("Dung lượng tệp vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn!");
+    if (file.size > 1 * 1024 * 1024) {
+      setProfileErrorMsg("Dụng lượng file tối đa 1 MB. Vui lòng chọn ảnh nhỏ hơn!");
       return;
     }
 
@@ -391,11 +391,30 @@ export const ProfilePage: React.FC = () => {
                   <img
                     src={avatarUrl}
                     alt={fullName || "User Avatar"}
-                    className="w-14 h-14 rounded-full object-cover ring-2 ring-[#0284C7]/20"
+                    className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#0284C7] to-sky-400 text-white flex items-center justify-center font-bold text-xl shadow-inner">
-                    {fullName ? fullName.charAt(0).toUpperCase() : "U"}
+                  <div className="w-14 h-14 rounded-full bg-[#EFEFEF] flex items-center justify-center overflow-hidden shrink-0">
+                    <svg
+                      viewBox="0 0 15 15"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-8 h-8"
+                    >
+                      <circle
+                        cx="7.5"
+                        cy="4.5"
+                        r="2.5"
+                        stroke="#C6C6C6"
+                        strokeWidth="1.2"
+                      />
+                      <path
+                        d="M1.5 14.2C1.5 10.9 4.2 8.2 7.5 8.2C10.8 8.2 13.5 10.9 13.5 14.2"
+                        stroke="#C6C6C6"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
                   </div>
                 )}
                 <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-300"></span>
@@ -628,48 +647,66 @@ export const ProfilePage: React.FC = () => {
                       className="hidden"
                     />
 
-                    {/* Avatar Circle - Pure image with NO camera icon inside */}
+                    {/* Avatar Circle - Pure image or exact Shopee neutral placeholder */}
                     <div
                       onClick={handleAvatarClick}
-                      className="relative cursor-pointer transition-transform hover:scale-105"
-                      title="Bấm để tải ảnh mới lên"
+                      className="relative cursor-pointer"
+                      title="Bấm để chọn ảnh từ máy tính"
                     >
                       {avatarUrl ? (
                         <img
                           src={avatarUrl}
                           alt={fullName || "User Avatar"}
-                          className="w-36 h-36 rounded-full object-cover ring-4 ring-sky-100 shadow-md"
+                          className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover shadow-xs"
                         />
                       ) : (
-                        <div className="w-36 h-36 rounded-full bg-gradient-to-tr from-[#0284C7] to-sky-400 text-white flex items-center justify-center font-black text-5xl shadow-md ring-4 ring-sky-100">
-                          {fullName ? fullName.charAt(0).toUpperCase() : "U"}
+                        <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-[#EFEFEF] flex items-center justify-center overflow-hidden shrink-0">
+                          <svg
+                            viewBox="0 0 15 15"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-16 h-16 sm:w-18 sm:h-18"
+                          >
+                            <circle
+                              cx="7.5"
+                              cy="4.5"
+                              r="2.5"
+                              stroke="#C6C6C6"
+                              strokeWidth="1.2"
+                            />
+                            <path
+                              d="M1.5 14.2C1.5 10.9 4.2 8.2 7.5 8.2C10.8 8.2 13.5 10.9 13.5 14.2"
+                              stroke="#C6C6C6"
+                              strokeWidth="1.2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
                         </div>
                       )}
 
-                      {/* Uploading Spinner Overlay (only while uploading) */}
+                      {/* Uploading Spinner Overlay */}
                       {isUploadingAvatar && (
                         <div className="absolute inset-0 bg-slate-900/60 rounded-full flex flex-col items-center justify-center text-white backdrop-blur-xs">
                           <Loader2 className="w-8 h-8 animate-spin text-sky-400 mb-1" />
-                          <span className="text-[10px] font-bold">Đang tải lên...</span>
+                          <span className="text-[10px] font-bold">Đang tải...</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Choose Image Button */}
+                    {/* Choose Image Button - Clean square-ish white button */}
                     <button
                       type="button"
                       onClick={handleAvatarClick}
                       disabled={isUploadingAvatar}
-                      className="mt-5 inline-flex items-center gap-2 px-5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold shadow-xs hover:border-[#0284C7] hover:text-[#0284C7] transition-all disabled:opacity-50 cursor-pointer"
+                      className="mt-4 px-5 py-2 bg-white border border-[#e0e0e0] text-[#555555] text-sm hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer rounded-[2px]"
                     >
-                      <Upload className="w-4 h-4 text-sky-600" />
-                      <span>Chọn Ảnh</span>
+                      Chọn Ảnh
                     </button>
 
-                    {/* File constraints notice */}
-                    <div className="text-[11px] text-slate-400 text-center mt-3 space-y-1 max-w-[220px]">
-                      <p>Dung lượng tệp tối đa: <strong className="text-slate-600">5 MB</strong></p>
-                      <p>Định dạng: <strong className="text-slate-600">.JPEG, .PNG, .WEBP</strong></p>
+                    {/* Exact format notice from Shopee */}
+                    <div className="text-[13px] text-[#888888] text-center mt-3.5 space-y-1 leading-snug">
+                      <p>Dụng lượng file tối đa 1 MB</p>
+                      <p>Định dạng:.JPEG, .PNG</p>
                     </div>
                   </div>
                 </div>

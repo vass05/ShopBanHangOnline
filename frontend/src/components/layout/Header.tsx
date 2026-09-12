@@ -121,8 +121,11 @@ export const Header: React.FC = () => {
                       className="w-5 h-5 rounded-full object-cover ring-1 ring-white/60"
                     />
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-sky-200 text-[#0369A1] flex items-center justify-center font-bold text-[10px]">
-                      {user?.fullName?.charAt(0) || "U"}
+                    <div className="w-5 h-5 rounded-full bg-[#EFEFEF] flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-white/60">
+                      <svg viewBox="0 0 15 15" fill="none" className="w-3.5 h-3.5">
+                        <circle cx="7.5" cy="4.5" r="2.5" stroke="#C6C6C6" strokeWidth="1.2" />
+                        <path d="M1.5 14.2C1.5 10.9 4.2 8.2 7.5 8.2C10.8 8.2 13.5 10.9 13.5 14.2" stroke="#C6C6C6" strokeWidth="1.2" strokeLinecap="round" />
+                      </svg>
                     </div>
                   )}
                   <span>{user?.fullName || user?.email}</span>
