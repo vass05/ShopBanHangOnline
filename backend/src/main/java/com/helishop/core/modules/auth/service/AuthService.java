@@ -62,12 +62,24 @@ public class AuthService {
             finalEmail = finalPhone + "@phone.helishop.com";
         }
 
+        // Họ tên mặc định nếu chưa cập nhật
+        String resolvedFullName;
+        if (request.getFullName() != null && !request.getFullName().trim().isBlank()) {
+            resolvedFullName = request.getFullName().trim();
+        } else if (hasEmail) {
+            resolvedFullName = "User " + finalEmail.split("@")[0];
+        } else if (hasPhone) {
+            resolvedFullName = "User " + finalPhone;
+        } else {
+            resolvedFullName = "Thành viên HeliShop";
+        }
+
         UserRole role = request.getRole() != null ? request.getRole() : UserRole.ROLE_CUSTOMER;
 
         User user = User.builder()
                 .email(finalEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName().trim())
+                .fullName(resolvedFullName)
                 .phone(finalPhone)
                 .role(role)
                 .status(UserStatus.ACTIVE)

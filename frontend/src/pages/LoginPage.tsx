@@ -247,7 +247,6 @@ export const LoginPage: React.FC = () => {
                 </label>
                 <Input
                   type="text"
-                  placeholder="Nhập Gmail hoặc số điện thoại..."
                   icon={<Mail className="w-4 h-4" />}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

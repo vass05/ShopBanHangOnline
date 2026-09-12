@@ -8,17 +8,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import {
   Lock,
   Mail,
-  User as UserIcon,
-  Phone,
   Store,
   ShoppingBag,
   AlertCircle,
   CheckCircle2,
   Eye,
   EyeOff,
-  Sparkles,
   X,
-  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,9 +25,7 @@ export const RegisterPage: React.FC = () => {
   const { setAuth } = useAuthStore();
 
   const [role, setRole] = useState<RoleType>("ROLE_CUSTOMER");
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,28 +38,18 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     setErrorMessage(null);
 
-    // Validation
-    if (!fullName.trim()) {
-      setErrorMessage("Vui lòng nhập họ và tên đầy đủ");
+    const rawAccount = account.trim();
+    if (!rawAccount) {
+      setErrorMessage("Vui lòng nhập Gmail hoặc Số điện thoại");
       return;
     }
 
-    const hasEmail = Boolean(email.trim());
-    const hasPhone = Boolean(phone.trim());
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawAccount);
+    const cleanPhone = rawAccount.replace(/\s+/g, "");
+    const isPhone = /^(0|\+84)[0-9]{9}$/.test(cleanPhone);
 
-    if (!hasEmail && !hasPhone) {
-      setErrorMessage("Vui lòng cung cấp ít nhất Địa chỉ Gmail hoặc Số điện thoại để đăng ký!");
-      return;
-    }
-
-    if (hasEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setErrorMessage("Địa chỉ Gmail không đúng định dạng (VD: name@gmail.com)!");
-      return;
-    }
-
-    const cleanPhone = phone.trim().replace(/\s+/g, "");
-    if (hasPhone && !/^(0|\+84)[0-9]{9}$/.test(cleanPhone)) {
-      setErrorMessage("Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 số (VD: 0988889999).");
+    if (!isEmail && !isPhone) {
+      setErrorMessage("Tài khoản phải là địa chỉ Gmail hợp lệ hoặc Số điện thoại 10 chữ số!");
       return;
     }
 
@@ -83,9 +67,8 @@ export const RegisterPage: React.FC = () => {
 
     try {
       const response = await api.post("/auth/register", {
-        fullName: fullName.trim(),
-        email: hasEmail ? email.trim() : undefined,
-        phone: hasPhone ? cleanPhone : undefined,
+        email: isEmail ? rawAccount : undefined,
+        phone: isPhone ? cleanPhone : undefined,
         password,
         role,
       });
@@ -93,9 +76,9 @@ export const RegisterPage: React.FC = () => {
       const data = response.data.data as any;
       const user: User = data.user || {
         id: data.userId || 1,
-        fullName: data.fullName || fullName.trim(),
-        email: data.email || (hasEmail ? email.trim() : `${cleanPhone}@phone.helishop.com`),
-        phone: data.phone || (hasPhone ? cleanPhone : undefined),
+        fullName: data.fullName || (isEmail ? rawAccount.split("@")[0] : `User ${cleanPhone}`),
+        email: data.email || (isEmail ? rawAccount : `${cleanPhone}@phone.helishop.com`),
+        phone: data.phone || (isPhone ? cleanPhone : undefined),
         role: data.role || role,
         status: "ACTIVE",
       };
@@ -224,60 +207,19 @@ export const RegisterPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Full Name */}
+              {/* Account (Gmail or Phone) */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Họ và tên
+                  Gmail hoặc Số điện thoại
                 </label>
                 <Input
                   type="text"
-                  placeholder="Ví dụ: Nguyễn Văn A"
-                  icon={<UserIcon className="w-4 h-4" />}
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  icon={<Mail className="w-4 h-4" />}
+                  value={account}
+                  onChange={(e) => setAccount(e.target.value)}
+                  autoComplete="username"
                   required
                 />
-              </div>
-
-              {/* Account Registration Method Notice */}
-              <div className="p-3 bg-sky-50/70 border border-sky-200/80 rounded-xl flex items-start gap-2.5 text-xs text-sky-800">
-                <Info className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
-                <span>
-                  Có thể đăng ký bằng <strong>Gmail</strong> hoặc <strong>Số điện thoại</strong> (không bắt buộc cả hai, chỉ cần điền ít nhất 1 trong 2).
-                </span>
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-                  <span>Địa chỉ Gmail</span>
-                  <span className="text-[11px] text-slate-400 font-normal lowercase">Tùy chọn nếu có SĐT</span>
-                </label>
-                <Input
-                  type="email"
-                  placeholder="name@gmail.com (hoặc để trống nếu dùng SĐT)"
-                  icon={<Mail className="w-4 h-4" />}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-
-              {/* Phone */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-                  <span>Số điện thoại</span>
-                  <span className="text-[11px] text-slate-400 font-normal lowercase">Tùy chọn nếu có Gmail</span>
-                </label>
-                <Input
-                  type="tel"
-                  placeholder="0988889999 (hoặc để trống nếu dùng Gmail)"
-                  icon={<Phone className="w-4 h-4" />}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-                <p className="text-[11px] text-slate-400 pt-0.5">
-                  Gồm 10 chữ số (bắt đầu bằng 0 hoặc +84)
-                </p>
               </div>
 
               {/* Password */}
@@ -287,7 +229,6 @@ export const RegisterPage: React.FC = () => {
                 </label>
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Tối thiểu 6 ký tự..."
                   icon={<Lock className="w-4 h-4" />}
                   rightElement={
                     <button
@@ -320,7 +261,6 @@ export const RegisterPage: React.FC = () => {
                 </label>
                 <Input
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Nhập lại mật khẩu..."
                   icon={<Lock className="w-4 h-4" />}
                   rightElement={
                     <button

@@ -28,8 +28,7 @@ public class RegisterRequest {
     @Size(min = 6, message = "Mật khẩu phải chứa ít nhất 6 ký tự")
     private String password;
 
-    @Schema(description = "Họ và tên đầy đủ của người dùng", example = "Nguyễn Văn A", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "Họ tên không được để trống")
+    @Schema(description = "Họ và tên đầy đủ của người dùng (tùy chọn)", example = "Nguyễn Văn A")
     private String fullName;
 
     @Schema(description = "Số điện thoại liên lạc", example = "0987654321")
