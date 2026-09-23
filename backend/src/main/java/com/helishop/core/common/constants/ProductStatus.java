@@ -1,8 +1,8 @@
 package com.helishop.core.common.constants;
 
 public enum ProductStatus {
-    DRAFT,
-    ACTIVE,
-    INACTIVE,
-    OUT_OF_STOCK
+    DRAFT,//nháp
+    ACTIVE,//hoạt động
+    INACTIVE,//không hoạt động
+    OUT_OF_STOCK//hết hàng
 }
