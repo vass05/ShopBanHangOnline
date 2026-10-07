@@ -22,109 +22,79 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
+@RestController // đánh dấu class là 1 rest controller
+@RequestMapping("/api/v1/auth") // định nghĩa đường dẫn gốc
+@RequiredArgsConstructor // tự động tạo hàm khởi tạo nhận tham số AuthService để tiêm phụ thuộc
 @Tag(name = "Authentication", description = "APIs Đăng ký, Đăng nhập, Làm mới Token và Đăng xuất")
 public class AuthController {
 
-    private final AuthService authService;
+        private final AuthService authService;
 
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(
-            summary = "Đăng ký tài khoản người dùng mới",
-            description = "Tạo tài khoản mới với vai trò chỉ định (Mặc định ROLE_CUSTOMER hoặc ROLE_SELLER) và mã hóa mật khẩu bằng BCrypt"
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Đăng ký tài khoản thành công",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu đăng ký không hợp lệ (Validation Error)",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Email hoặc số điện thoại đã tồn tại trong hệ thống",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ApiResponse.success(authService.register(request), "Đăng ký tài khoản thành công");
-    }
-
-    @PostMapping("/login")
-    @Operation(
-            summary = "Đăng nhập hệ thống",
-            description = "Xác thực email/mật khẩu và cấp cặp Access Token JWT (15 phút) cùng Refresh Token (7 ngày lưu trong Redis)"
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng nhập thành công, trả về JWT Token và User Info",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu đăng nhập trống hoặc sai format",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Sai email hoặc mật khẩu / Tài khoản bị khóa",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.success(authService.login(request), "Đăng nhập thành công");
-    }
-
-    @PostMapping("/refresh-token")
-    @Operation(
-            summary = "Làm mới Access Token",
-            description = "Cấp mới Access Token khi token cũ hết hạn bằng Refresh Token hợp lệ lưu trong Redis"
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cấp mới access token thành công",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Refresh Token không hợp lệ hoặc đã hết hạn trong Redis",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        return ApiResponse.success(authService.refreshToken(request), "Cấp mới access token thành công");
-    }
-
-    @PostMapping("/logout")
-    @Operation(
-            summary = "Đăng xuất tài khoản",
-            description = "Thu hồi và xóa Refresh Token khỏi Redis để vô hiệu hóa phiên làm việc"
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng xuất thành công",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<Void> logout(@RequestBody(required = false) RefreshTokenRequest request) {
-        if (request != null && request.getRefreshToken() != null) {
-            authService.logout(request.getRefreshToken());
+        @PostMapping("/register") // định tuyến http post đến địa chỉ /api/v1/auth/register
+        @ResponseStatus(HttpStatus.CREATED)
+        @Operation( // mô tả tóm tắt tính năng và cách xử lý
+                        summary = "Đăng ký tài khoản người dùng mới", description = "Tạo tài khoản mới với vai trò chỉ định (Mặc định ROLE_CUSTOMER hoặc ROLE_SELLER) và mã hóa mật khẩu bằng BCrypt")
+        @ApiResponses({ // định nghĩa tài liệu Swagger cho các trường hợp phản hồi
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Đăng ký tài khoản thành công", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu đăng ký không hợp lệ (Validation Error)", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Email hoặc số điện thoại đã tồn tại trong hệ thống", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        })
+        public ApiResponse<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+                return ApiResponse.success(authService.register(request), "Đăng ký tài khoản thành công");
         }
-        return ApiResponse.success(null, "Đăng xuất thành công");
-    }
 
-    @PostMapping("/forgot-password")
-    @Operation(
-            summary = "Yêu cầu mã OTP khôi phục mật khẩu",
-            description = "Tạo mã OTP 6 chữ số lưu vào Redis với TTL 10 phút và gửi thông báo qua Email đăng ký"
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Gửi mã xác thực OTP thành công",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        String result = authService.sendForgotPasswordOtp(request);
-        return ApiResponse.success(result, "Mã xác thực OTP đã được gửi");
-    }
+        @PostMapping("/login")
+        @Operation(summary = "Đăng nhập hệ thống", description = "Xác thực email/mật khẩu và cấp cặp Access Token JWT (15 phút) cùng Refresh Token (7 ngày lưu trong Redis)")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng nhập thành công, trả về JWT Token và User Info", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu đăng nhập trống hoặc sai format", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Sai email hoặc mật khẩu / Tài khoản bị khóa", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        })
+        public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+                return ApiResponse.success(authService.login(request), "Đăng nhập thành công");
+        }
 
-    @PostMapping("/reset-password")
-    @Operation(
-            summary = "Đặt lại mật khẩu mới",
-            description = "Kiểm tra mã OTP trong Redis và cập nhật mật khẩu mới băm BCrypt"
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đặt lại mật khẩu thành công",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Mã OTP không hợp lệ hoặc đã hết hạn",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        String result = authService.resetPassword(request);
-        return ApiResponse.success(result, "Đặt lại mật khẩu thành công");
-    }
+        @PostMapping("/refresh-token")
+        @Operation(summary = "Làm mới Access Token", description = "Cấp mới Access Token khi token cũ hết hạn bằng Refresh Token hợp lệ lưu trong Redis")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cấp mới access token thành công", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Refresh Token không hợp lệ hoặc đã hết hạn trong Redis", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        })
+        public ApiResponse<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+                return ApiResponse.success(authService.refreshToken(request), "Cấp mới access token thành công");
+        }
+
+        @PostMapping("/logout")
+        @Operation(summary = "Đăng xuất tài khoản", description = "Thu hồi và xóa Refresh Token khỏi Redis để vô hiệu hóa phiên làm việc")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng xuất thành công", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        })
+        public ApiResponse<Void> logout(@RequestBody(required = false) RefreshTokenRequest request) {
+                if (request != null && request.getRefreshToken() != null) {
+                        authService.logout(request.getRefreshToken());
+                }
+                return ApiResponse.success(null, "Đăng xuất thành công");
+        }
+
+        @PostMapping("/forgot-password")
+        @Operation(summary = "Yêu cầu mã OTP khôi phục mật khẩu", description = "Tạo mã OTP 6 chữ số lưu vào Redis với TTL 10 phút và gửi thông báo qua Email đăng ký")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Gửi mã xác thực OTP thành công", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        })
+        public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+                String result = authService.sendForgotPasswordOtp(request);
+                return ApiResponse.success(result, "Mã xác thực OTP đã được gửi");
+        }
+
+        @PostMapping("/reset-password")
+        @Operation(summary = "Đặt lại mật khẩu mới", description = "Kiểm tra mã OTP trong Redis và cập nhật mật khẩu mới băm BCrypt")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đặt lại mật khẩu thành công", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Mã OTP không hợp lệ hoặc đã hết hạn", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        })
+        public ApiResponse<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+                String result = authService.resetPassword(request);
+                return ApiResponse.success(result, "Đặt lại mật khẩu thành công");
+        }
 }

@@ -37,27 +37,31 @@ public class AuthService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
 
-    @Transactional
+    @Transactional // giúp đảm bảo tính toàn vẽn dữ liệu
     public AuthResponse register(RegisterRequest request) {
         boolean hasEmail = request.getEmail() != null && !request.getEmail().trim().isBlank();
         boolean hasPhone = request.getPhone() != null && !request.getPhone().trim().isBlank();
 
         if (!hasEmail && !hasPhone) {
-            throw new AppException(ErrorCode.INVALID_REQUEST, "Vui lòng cung cấp ít nhất một phương thức liên lạc: Địa chỉ Gmail hoặc Số điện thoại");
+            throw new AppException(ErrorCode.INVALID_REQUEST,
+                    "Vui lòng cung cấp ít nhất một phương thức liên lạc: Địa chỉ Gmail hoặc Số điện thoại");
         }
 
         String finalEmail = hasEmail ? request.getEmail().trim() : null;
         String finalPhone = hasPhone ? request.getPhone().trim() : null;
 
         if (hasEmail && userRepository.existsByEmail(finalEmail)) {
-            throw new AppException(ErrorCode.USER_EXISTED, "Địa chỉ Gmail này đã được sử dụng. Vui lòng chọn Gmail khác hoặc đăng nhập.");
+            throw new AppException(ErrorCode.USER_EXISTED,
+                    "Địa chỉ Gmail này đã được sử dụng. Vui lòng chọn Gmail khác hoặc đăng nhập.");
         }
 
         if (hasPhone && userRepository.existsByPhone(finalPhone)) {
-            throw new AppException(ErrorCode.USER_EXISTED, "Số điện thoại này đã được liên kết với một tài khoản khác.");
+            throw new AppException(ErrorCode.USER_EXISTED,
+                    "Số điện thoại này đã được liên kết với một tài khoản khác.");
         }
 
-        // Nếu đăng ký bằng Số điện thoại mà không nhập Gmail, tạo định danh email hệ thống
+        // Nếu đăng ký bằng Số điện thoại mà không nhập Gmail, tạo định danh email hệ
+        // thống
         if (finalEmail == null) {
             finalEmail = finalPhone + "@phone.helishop.com";
         }
@@ -92,8 +96,7 @@ public class AuthService {
                 savedUser.getEmail(),
                 savedUser.getId(),
                 savedUser.getRole().name(),
-                savedUser.getFullName()
-        );
+                savedUser.getFullName());
         String refreshToken = jwtUtils.generateRefreshToken();
 
         // Lưu Refresh Token vào Redis với TTL 7 ngày
@@ -119,7 +122,8 @@ public class AuthService {
         String identifier = request.getEmail().trim();
         User user = userRepository.findByEmail(identifier)
                 .or(() -> userRepository.findByPhone(identifier))
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED, "Tài khoản (Email hoặc Số điện thoại) không tồn tại trên hệ thống"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED,
+                        "Tài khoản (Email hoặc Số điện thoại) không tồn tại trên hệ thống"));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.UNAUTHENTICATED, "Tài khoản hiện đang bị khóa hoặc chưa kích hoạt");
@@ -134,8 +138,7 @@ public class AuthService {
                 user.getEmail(),
                 user.getId(),
                 user.getRole().name(),
-                user.getFullName()
-        );
+                user.getFullName());
         String refreshToken = jwtUtils.generateRefreshToken();
 
         // Lưu Refresh Token vào Redis
@@ -181,8 +184,7 @@ public class AuthService {
                 user.getEmail(),
                 user.getId(),
                 user.getRole().name(),
-                user.getFullName()
-        );
+                user.getFullName());
 
         long expiresIn = jwtUtils.getAccessTokenExpirationMs() / 1000;
 
@@ -210,7 +212,8 @@ public class AuthService {
         String identifier = request.getEmail().trim();
         User user = userRepository.findByEmail(identifier)
                 .or(() -> userRepository.findByPhone(identifier))
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED, "Không tìm thấy tài khoản với Gmail/SĐT: " + identifier));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED,
+                        "Không tìm thấy tài khoản với Gmail/SĐT: " + identifier));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.UNAUTHENTICATED, "Tài khoản hiện đang bị khóa hoặc ngưng hoạt động");
@@ -253,17 +256,20 @@ public class AuthService {
         String identifier = request.getEmail().trim();
         User user = userRepository.findByEmail(identifier)
                 .or(() -> userRepository.findByPhone(identifier))
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED, "Không tìm thấy tài khoản để đặt lại mật khẩu"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED,
+                        "Không tìm thấy tài khoản để đặt lại mật khẩu"));
 
         String redisKey = "auth:password_reset:" + user.getEmail();
         String cachedOtp = stringRedisTemplate.opsForValue().get(redisKey);
 
         if (cachedOtp == null) {
-            throw new AppException(ErrorCode.INVALID_REQUEST, "Mã xác thực OTP đã hết hạn hoặc chưa được tạo. Vui lòng lấy mã mới!");
+            throw new AppException(ErrorCode.INVALID_REQUEST,
+                    "Mã xác thực OTP đã hết hạn hoặc chưa được tạo. Vui lòng lấy mã mới!");
         }
 
         if (!cachedOtp.equals(request.getOtp().trim())) {
-            throw new AppException(ErrorCode.INVALID_REQUEST, "Mã xác thực OTP không chính xác. Vui lòng kiểm tra lại!");
+            throw new AppException(ErrorCode.INVALID_REQUEST,
+                    "Mã xác thực OTP không chính xác. Vui lòng kiểm tra lại!");
         }
 
         // Cập nhật mật khẩu mới băm BCrypt

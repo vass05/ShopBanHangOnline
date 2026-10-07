@@ -59,17 +59,17 @@ public class RedisCartService {
                     String.format("Sản phẩm '%s' chỉ còn %d món trong kho, không thể thêm %d món",
                             sku.getProduct().getName(), sku.getStockQuantity(), newQty));
         }
-
+        //đảm bảo hiển thị hình ảnh giỏ hàng
         String imageUrl = sku.getSkuImageUrl();
         if (imageUrl == null || imageUrl.isBlank()) {
             imageUrl = sku.getProduct().getMainImageUrl();
         }
-
+        //xác định thông tin phân loại sản phẩm
         String variant = sku.getSkuAttributes();
         if (variant == null || variant.isBlank()) {
             variant = sku.getSkuCode();
         }
-
+        //Đóng gói dữ liệu sản phẩm
         CartItemDto itemDto = CartItemDto.builder()
                 .skuId(sku.getId())
                 .productId(sku.getProduct().getId())
