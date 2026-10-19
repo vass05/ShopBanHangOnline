@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,16 +31,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/cart")
+@RequiredArgsConstructor
 @Tag(name = "Cart Engine Management", description = "APIs quản lý giỏ hàng Shopee hiệu năng cao trên Redis Hash")
 public class CartController {
 
     private final RedisCartService cartService;
     private final SecurityUtils securityUtils;
-
-    public CartController(RedisCartService cartService, SecurityUtils securityUtils) {
-        this.cartService = cartService;
-        this.securityUtils = securityUtils;
-    }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,14 +18,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/categories")
+@RequiredArgsConstructor
 @Tag(name = "Category Management", description = "APIs quản lý danh mục sản phẩm đa tầng")
 public class CategoryController {
 
     private final CategoryService categoryService;
-
-    public CategoryController(CategoryService categoryService) {
-        this.categoryService = categoryService;
-    }
 
     @GetMapping("/tree")
     @Operation(

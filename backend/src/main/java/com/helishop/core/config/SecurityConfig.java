@@ -3,6 +3,7 @@ package com.helishop.core.config;
 import com.helishop.core.security.CustomAccessDeniedHandler;
 import com.helishop.core.security.CustomEntryPoint;
 import com.helishop.core.security.JwtFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,20 +28,12 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final CustomEntryPoint customEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
-
-    public SecurityConfig(
-            JwtFilter jwtFilter,
-            CustomEntryPoint customEntryPoint,
-            CustomAccessDeniedHandler customAccessDeniedHandler) {
-        this.jwtFilter = jwtFilter;
-        this.customEntryPoint = customEntryPoint;
-        this.customAccessDeniedHandler = customAccessDeniedHandler;
-    }
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",

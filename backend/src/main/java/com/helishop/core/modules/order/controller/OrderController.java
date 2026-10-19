@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,14 +28,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/orders")
+@RequiredArgsConstructor
 @Tag(name = "Order Management", description = "APIs đặt hàng, xử lý thanh toán và quản lý đơn hàng")
 public class OrderController {
 
     private final OrderService orderService;
-
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
 
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)

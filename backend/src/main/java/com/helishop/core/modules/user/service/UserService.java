@@ -12,6 +12,7 @@ import com.helishop.core.modules.user.entity.UserAddress;
 import com.helishop.core.modules.user.mapper.UserMapper;
 import com.helishop.core.modules.user.repository.UserAddressRepository;
 import com.helishop.core.modules.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,23 +28,13 @@ import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-
-    public UserService(
-            UserRepository userRepository,
-            UserAddressRepository userAddressRepository,
-            UserMapper userMapper,
-            PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.userAddressRepository = userAddressRepository;
-        this.userMapper = userMapper;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     @Transactional(readOnly = true)
     public User getById(Long id) {

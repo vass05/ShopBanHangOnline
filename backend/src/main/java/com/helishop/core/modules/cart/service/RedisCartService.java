@@ -10,6 +10,7 @@ import com.helishop.core.modules.cart.dto.CartResponse;
 import com.helishop.core.modules.cart.dto.CartShopGroupResponse;
 import com.helishop.core.modules.product.entity.ProductSku;
 import com.helishop.core.modules.product.repository.ProductSkuRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RedisCartService {
 
     public static final String CART_KEY_PREFIX = "cart:user:";
@@ -32,15 +34,6 @@ public class RedisCartService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ProductSkuRepository productSkuRepository;
     private final ObjectMapper objectMapper;
-
-    public RedisCartService(
-            StringRedisTemplate stringRedisTemplate,
-            ProductSkuRepository productSkuRepository,
-            ObjectMapper objectMapper) {
-        this.stringRedisTemplate = stringRedisTemplate;
-        this.productSkuRepository = productSkuRepository;
-        this.objectMapper = objectMapper;
-    }
 
     /**
      * Thêm sản phẩm vào giỏ hàng Redis Hash

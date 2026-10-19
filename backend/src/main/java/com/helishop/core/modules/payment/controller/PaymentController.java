@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,16 +27,12 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/payments")
+@RequiredArgsConstructor
 @Tag(name = "Payment Gateway Management", description = "APIs thanh toán trực tuyến qua cổng VNPAY Sandbox & Xử lý Webhook IPN Idempotent")
 public class PaymentController {
 
     private final PaymentService paymentService;
     private final SecurityUtils securityUtils;
-
-    public PaymentController(PaymentService paymentService, SecurityUtils securityUtils) {
-        this.paymentService = paymentService;
-        this.securityUtils = securityUtils;
-    }
 
     @PostMapping("/create-vnpay-url")
     @PreAuthorize("isAuthenticated()")

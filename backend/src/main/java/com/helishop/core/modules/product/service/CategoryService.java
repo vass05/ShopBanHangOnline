@@ -5,6 +5,7 @@ import com.helishop.core.modules.product.dto.CategoryResponse;
 import com.helishop.core.modules.product.entity.Category;
 import com.helishop.core.modules.product.mapper.CategoryMapper;
 import com.helishop.core.modules.product.repository.CategoryRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -19,15 +20,11 @@ import java.util.Set;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
-
-    public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
-        this.categoryRepository = categoryRepository;
-        this.categoryMapper = categoryMapper;
-    }
 
     /**
      * Lấy toàn bộ ID của danh mục cha và tất cả danh mục con/cháu đệ quy

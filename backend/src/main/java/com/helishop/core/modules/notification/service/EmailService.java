@@ -3,6 +3,7 @@
     import com.helishop.core.modules.payment.event.OrderPaidEvent;
     import jakarta.mail.MessagingException;
     import jakarta.mail.internet.MimeMessage;
+    import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
     import org.springframework.beans.factory.annotation.Value;
     import org.springframework.mail.javamail.JavaMailSender;
@@ -15,15 +16,11 @@
 
     @Slf4j
     @Service
+    @RequiredArgsConstructor
     public class EmailService {
 
         private final JavaMailSender mailSender;
         private final TemplateEngine templateEngine;
-
-        public EmailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
-            this.mailSender = mailSender;
-            this.templateEngine = templateEngine;
-        }
 
         @Value("${spring.mail.username:helishop.system@gmail.com}")
         private String senderEmail = "helishop.system@gmail.com";

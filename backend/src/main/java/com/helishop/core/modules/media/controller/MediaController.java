@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,14 +23,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/media")
+@RequiredArgsConstructor
 @Tag(name = "Media Management", description = "APIs tải lên và quản lý hình ảnh sản phẩm chuẩn tỉ lệ 1:1 catalog Shopee")
 public class MediaController {
 
     private final MediaUploadService mediaUploadService;
-
-    public MediaController(MediaUploadService mediaUploadService) {
-        this.mediaUploadService = mediaUploadService;
-    }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
