@@ -17,7 +17,6 @@ import com.helishop.core.modules.product.repository.ProductRepository;
 import com.helishop.core.modules.product.repository.ProductSkuRepository;
 import com.helishop.core.modules.user.entity.User;
 import com.helishop.core.modules.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +28,23 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductSkuRepository productSkuRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+
+    public OrderService(
+            OrderRepository orderRepository,
+            ProductSkuRepository productSkuRepository,
+            ProductRepository productRepository,
+            UserRepository userRepository) {
+        this.orderRepository = orderRepository;
+        this.productSkuRepository = productSkuRepository;
+        this.productRepository = productRepository;
+        this.userRepository = userRepository;
+    }
 
     /**
      * Tiến hành đặt hàng với Khóa bi quan (PESSIMISTIC_WRITE) chống âm kho

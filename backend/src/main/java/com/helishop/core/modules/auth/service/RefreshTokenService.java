@@ -1,7 +1,6 @@
 package com.helishop.core.modules.auth.service;
 
 import com.helishop.core.security.JwtUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -10,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class RefreshTokenService {
 
     private static final String RT_PREFIX = "auth:refresh_token:";
@@ -18,6 +16,11 @@ public class RefreshTokenService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final JwtUtils jwtUtils;
+
+    public RefreshTokenService(StringRedisTemplate stringRedisTemplate, JwtUtils jwtUtils) {
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.jwtUtils = jwtUtils;
+    }
 
     /**
      * Lưu Refresh Token vào Redis với thời gian hết hạn TTL 7 ngày

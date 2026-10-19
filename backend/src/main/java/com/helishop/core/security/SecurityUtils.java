@@ -3,16 +3,18 @@ package com.helishop.core.security;
 import com.helishop.core.common.exception.AppException;
 import com.helishop.core.common.exception.ErrorCode;
 import com.helishop.core.modules.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class SecurityUtils {
 
     private final UserRepository userRepository;
+
+    public SecurityUtils(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public Long getCurrentUserId(Long fallbackCustomerId) {
         if (fallbackCustomerId != null) {

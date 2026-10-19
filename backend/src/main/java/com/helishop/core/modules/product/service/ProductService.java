@@ -14,7 +14,6 @@ import com.helishop.core.modules.product.repository.ProductRepository;
 import com.helishop.core.modules.product.repository.ProductSpecification;
 import com.helishop.core.modules.user.entity.Shop;
 import com.helishop.core.modules.user.repository.ShopRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,7 +28,6 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -37,6 +35,19 @@ public class ProductService {
     private final CategoryService categoryService;
     private final ShopRepository shopRepository;
     private final ProductMapper productMapper;
+
+    public ProductService(
+            ProductRepository productRepository,
+            CategoryRepository categoryRepository,
+            CategoryService categoryService,
+            ShopRepository shopRepository,
+            ProductMapper productMapper) {
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
+        this.shopRepository = shopRepository;
+        this.productMapper = productMapper;
+    }
 
     @Cacheable(value = "products", key = "#id")
     @Transactional(readOnly = true)

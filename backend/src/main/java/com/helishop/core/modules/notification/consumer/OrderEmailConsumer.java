@@ -3,17 +3,19 @@ package com.helishop.core.modules.notification.consumer;
 import com.helishop.core.config.RabbitMQConfig;
 import com.helishop.core.modules.notification.service.EmailService;
 import com.helishop.core.modules.payment.event.OrderPaidEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class OrderEmailConsumer {
 
     private final EmailService emailService;
+
+    public OrderEmailConsumer(EmailService emailService) {
+        this.emailService = emailService;
+    }
 
     /**
      * Lắng nghe queue 'order.email.queue' để gửi email xác nhận thanh toán bất đồng bộ

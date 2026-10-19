@@ -6,7 +6,6 @@ import com.cloudinary.utils.ObjectUtils;
 import com.helishop.core.common.exception.AppException;
 import com.helishop.core.common.exception.ErrorCode;
 import com.helishop.core.modules.media.dto.MediaUploadResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,7 +18,6 @@ import java.util.Set;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MediaUploadService {
 
     public static final long MAX_FILE_SIZE = 5 * 1024 * 1024L; // 5 MB
@@ -30,6 +28,10 @@ public class MediaUploadService {
     );
 
     private final Cloudinary cloudinary;
+
+    public MediaUploadService(Cloudinary cloudinary) {
+        this.cloudinary = cloudinary;
+    }
 
     /**
      * Tải lên một hình ảnh lên Cloudinary, tự động chuẩn hóa tỉ lệ vuông 1:1 (800x800) chuẩn Shopee

@@ -13,7 +13,6 @@ import com.helishop.core.modules.auth.dto.ResetPasswordRequest;
 import com.helishop.core.modules.user.entity.User;
 import com.helishop.core.modules.user.repository.UserRepository;
 import com.helishop.core.security.JwtUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -36,6 +34,21 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
+
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtils jwtUtils,
+            RefreshTokenService refreshTokenService,
+            StringRedisTemplate stringRedisTemplate,
+            ObjectProvider<JavaMailSender> mailSenderProvider) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtils = jwtUtils;
+        this.refreshTokenService = refreshTokenService;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.mailSenderProvider = mailSenderProvider;
+    }
 
     @Transactional // giúp đảm bảo tính toàn vẽn dữ liệu
     public AuthResponse register(RegisterRequest request) {

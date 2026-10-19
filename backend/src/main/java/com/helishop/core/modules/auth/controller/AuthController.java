@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,11 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController // đánh dấu class là 1 rest controller
 @RequestMapping("/api/v1/auth") // định nghĩa đường dẫn gốc
-@RequiredArgsConstructor // tự động tạo hàm khởi tạo nhận tham số AuthService để tiêm phụ thuộc
 @Tag(name = "Authentication", description = "APIs Đăng ký, Đăng nhập, Làm mới Token và Đăng xuất")
 public class AuthController {
 
         private final AuthService authService;
+
+        public AuthController(AuthService authService) {
+                this.authService = authService;
+        }
 
         @PostMapping("/register") // định tuyến http post đến địa chỉ /api/v1/auth/register
         @ResponseStatus(HttpStatus.CREATED)

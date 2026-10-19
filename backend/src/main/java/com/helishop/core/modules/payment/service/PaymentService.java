@@ -19,7 +19,6 @@ import com.helishop.core.modules.payment.event.OrderPaidEvent;
 import com.helishop.core.modules.payment.repository.PaymentTransactionRepository;
 import com.helishop.core.modules.payment.util.VnPayUtils;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +34,6 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PaymentService {
 
     private static final DateTimeFormatter VNPAY_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -45,6 +43,19 @@ public class PaymentService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final OrderEventPublisher orderEventPublisher;
     private final ObjectMapper objectMapper;
+
+    public PaymentService(
+            VnPayConfig vnPayConfig,
+            OrderRepository orderRepository,
+            PaymentTransactionRepository paymentTransactionRepository,
+            OrderEventPublisher orderEventPublisher,
+            ObjectMapper objectMapper) {
+        this.vnPayConfig = vnPayConfig;
+        this.orderRepository = orderRepository;
+        this.paymentTransactionRepository = paymentTransactionRepository;
+        this.orderEventPublisher = orderEventPublisher;
+        this.objectMapper = objectMapper;
+    }
 
     /**
      * 1. Sinh URL thanh toán VNPAY Sandbox kèm chữ ký HMAC-SHA512

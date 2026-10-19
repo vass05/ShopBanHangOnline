@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,12 +33,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users")
-@RequiredArgsConstructor
 @Tag(name = "Customer Profile Management", description = "APIs quản lý hồ sơ cá nhân, đổi mật khẩu và sổ địa chỉ giao hàng khách hàng")
 public class UserController {
 
     private final UserService userService;
     private final SecurityUtils securityUtils;
+
+    public UserController(UserService userService, SecurityUtils securityUtils) {
+        this.userService = userService;
+        this.securityUtils = securityUtils;
+    }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
