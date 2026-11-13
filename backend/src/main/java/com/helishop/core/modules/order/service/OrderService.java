@@ -62,6 +62,9 @@ public class OrderService {
                 .build();
 
         for (CheckoutRequest.ItemRequest itemReq : request.getItems()) {
+            if (itemReq.getQuantity() == null || itemReq.getQuantity() <= 0) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Số lượng mua phải lớn hơn 0");
+            }
             // Khóa bi quan trên SKU: Các request đồng thời cạnh tranh sẽ xếp hàng chờ
             ProductSku sku = productSkuRepository.findByIdWithLock(itemReq.getSkuId())
                     .orElseThrow(() -> new ResourceNotFoundException("SKU", "id", itemReq.getSkuId()));
@@ -180,11 +183,15 @@ public class OrderService {
                 .toList();
     }
 
-    private OrderResponse mapToResponse(Order order) {
+    OrderResponse mapToResponse(Order order) {
         List<OrderResponse.ItemResponse> itemResponses = order.getItems().stream()
                 .map(item -> OrderResponse.ItemResponse.builder()
                         .id(item.getId())
                         .skuId(item.getProductSku() != null ? item.getProductSku().getId() : null)
+                        .productId(item.getProductSku() != null && item.getProductSku().getProduct() != null ? item.getProductSku().getProduct().getId() : null)
+                        .skuCode(item.getProductSku() != null ? item.getProductSku().getSkuCode() : null)
+                        .imageUrl(item.getProductSku() != null && item.getProductSku().getProduct() != null
+                                ? (item.getProductSku().getSkuImageUrl() != null ? item.getProductSku().getSkuImageUrl() : item.getProductSku().getProduct().getMainImageUrl()) : null)
                         .productNameSnapshot(item.getProductNameSnapshot())
                         .skuVariantSnapshot(item.getSkuVariantSnapshot())
                         .quantity(item.getQuantity())
@@ -199,6 +206,7 @@ public class OrderService {
                 .customerId(order.getCustomer() != null ? order.getCustomer().getId() : null)
                 .customerName(order.getCustomer() != null ? order.getCustomer().getFullName() : null)
                 .shopId(order.getShop() != null ? order.getShop().getId() : null)
+                .shopName(order.getShop() != null ? order.getShop().getShopName() : null)
                 .totalAmount(order.getTotalAmount())
                 .discountAmount(order.getDiscountAmount())
                 .shippingFee(order.getShippingFee())

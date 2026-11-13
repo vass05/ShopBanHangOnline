@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -38,29 +38,17 @@ export const CartPage: React.FC = () => {
     fetchCart,
   } = useCartStore();
 
-  const [voucherCode, setVoucherCode] = useState("HELI50K");
-  const [voucherApplied, setVoucherApplied] = useState(false);
   useEffect(() => { void fetchCart(); }, [fetchCart]);
 
   const shopGroups = getShopGroups();
   const selectedCount = getSelectedCount();
   const rawSubtotal = getSelectedTotal();
-  const discountAmount = voucherApplied ? (rawSubtotal > 500000 ? 50000 : 0) : 0;
-  const finalTotal = Math.max(0, rawSubtotal - discountAmount);
+  const finalTotal = rawSubtotal;
 
   // Debounced quantity updates
   const handleQuantityChange = (skuId: number, currentQty: number, delta: number, stock: number) => {
     const newQty = Math.min(Math.max(1, currentQty + delta), stock);
     if (!loading) void updateQuantity(skuId, newQty);
-  };
-
-  const handleApplyVoucher = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (voucherCode.trim().toUpperCase() === "HELI50K" || voucherCode.trim().toUpperCase() === "FREESHIP") {
-      setVoucherApplied(true);
-    } else {
-      alert("Mã voucher không hợp lệ hoặc đã hết lượt dùng!");
-    }
   };
 
   const { isAuthenticated } = useAuthStore();
@@ -283,28 +271,9 @@ export const CartPage: React.FC = () => {
               <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
                 <Ticket className="w-4 h-4 text-[#0284C7]" />
                 <span>HeliShop Voucher Khuyến Mãi</span>
-                {voucherApplied && (
-                  <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-black">
-                    -50.000₫ ĐÃ ÁP DỤNG
-                  </span>
-                )}
               </div>
 
-              <form onSubmit={handleApplyVoucher} className="flex items-center gap-2 w-full sm:w-auto">
-                <input
-                  type="text"
-                  placeholder="Nhập mã HELI50K"
-                  value={voucherCode}
-                  onChange={(e) => setVoucherCode(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs uppercase font-bold focus:outline-none focus:ring-1 focus:ring-[#0284C7] w-full sm:w-36"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-lg text-xs font-semibold shrink-0 transition-colors"
-                >
-                  Áp Dụng
-                </button>
-              </form>
+              <p className="text-sm text-slate-500">Áp dụng voucher và xem phí vận chuyển tại bước thanh toán.</p>
             </div>
           </div>
         )}
@@ -342,11 +311,6 @@ export const CartPage: React.FC = () => {
                 <div className="text-lg sm:text-xl font-black text-[#0284C7] leading-tight">
                   {formatVND(finalTotal)}
                 </div>
-                {discountAmount > 0 && (
-                  <div className="text-[11px] text-emerald-600 font-semibold">
-                    Tiết kiệm {formatVND(discountAmount)}
-                  </div>
-                )}
               </div>
 
               <button
