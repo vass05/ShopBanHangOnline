@@ -34,6 +34,10 @@ class CheckoutDatabaseIntegrationTest {
     @Autowired OrderRepository orders;
     @Autowired com.helishop.core.modules.order.service.OrderLifecycleService lifecycle;
     @MockBean RedisCartService cart;
+    @Autowired com.helishop.core.modules.payment.service.PaymentService payment;
+    @Autowired com.helishop.core.modules.payment.config.VnPayConfig vnPayConfig;
+    @Autowired com.helishop.core.modules.payment.repository.PaymentTransactionRepository transactions;
+    @Autowired com.helishop.core.modules.payment.event.OrderPaidOutboxRepository outbox;
     Long customerId;
     Long addressId;
     List<Long> skuIds;
@@ -134,5 +138,64 @@ class CheckoutDatabaseIntegrationTest {
             assertThrows(com.helishop.core.common.exception.AppException.class, () -> lifecycle.update(id, OrderStatus.CANCELLED));
         } finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
         assertEquals(OrderStatus.PENDING, orders.findById(id).orElseThrow().getOrderStatus());
+    }
+
+    private Map<String, String> signedCallback(OrderResponse order, boolean success) {
+        Map<String, String> fields = new HashMap<>();
+        fields.put("vnp_TmnCode", vnPayConfig.getTmnCode()); fields.put("vnp_TxnRef", order.getOrderCode());
+        fields.put("vnp_Amount", order.getFinalAmount().multiply(BigDecimal.valueOf(100)).toBigIntegerExact().toString());
+        fields.put("vnp_ResponseCode", success ? "00" : "24"); fields.put("vnp_TransactionStatus", success ? "00" : "02");
+        fields.put("vnp_TransactionNo", success ? "9" + order.getId() : "0");
+        fields.put("vnp_PayDate", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        fields.put("vnp_SecureHash", com.helishop.core.modules.payment.util.VnPayUtils.hashAllFields(fields, vnPayConfig.getHashSecret()));
+        return fields;
+    }
+
+    @Test void concurrentSuccessfulIpnPersistsOneTransactionAndOneOutboxEvent() throws Exception {
+        var request = request(); request.setPaymentMethod(PaymentMethod.VNPAY);
+        var order = service.checkout(customerId, request, "payment-concurrent-0001").getFirst();
+        var callback = signedCallback(order, true);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<String>> calls = new ArrayList<>();
+            for (int i = 0; i < 2; i++) calls.add(executor.submit(() -> { start.await(); return payment.processVnPayIpn(callback).getRspCode(); }));
+            start.countDown();
+            Set<String> responses = new HashSet<>();
+            for (var call : calls) responses.add(call.get(10, TimeUnit.SECONDS));
+            assertEquals(Set.of("00", "02"), responses);
+        }
+        assertEquals(1, transactions.findByOrderId(order.getId()).size());
+        assertEquals(1, outbox.findByOrderId(order.getId()).size());
+        assertEquals(PaymentStatus.PAID, orders.findById(order.getId()).orElseThrow().getPaymentStatus());
+    }
+
+    @Test void repeatedFailedIpnIsIdempotentAndDoesNotQueueFulfilment() {
+        var request = request(); request.setPaymentMethod(PaymentMethod.VNPAY);
+        var order = service.checkout(customerId, request, "payment-failure-0001").getFirst();
+        var callback = signedCallback(order, false);
+        assertEquals("00", payment.processVnPayIpn(callback).getRspCode());
+        assertEquals("02", payment.processVnPayIpn(callback).getRspCode());
+        assertEquals(1, transactions.findByOrderId(order.getId()).size());
+        assertEquals(0, outbox.findByOrderId(order.getId()).size());
+    }
+
+    @Test void browserReturnCannotMarkPaidBeforeTheIpnCommits() {
+        var request = request(); request.setPaymentMethod(PaymentMethod.VNPAY);
+        var order = service.checkout(customerId, request, "payment-return-0001").getFirst();
+        var callback = signedCallback(order, true);
+        assertEquals(PaymentStatus.PENDING, payment.processVnPayReturn(callback).getStatus());
+        assertEquals(PaymentStatus.UNPAID, orders.findById(order.getId()).orElseThrow().getPaymentStatus());
+        payment.processVnPayIpn(callback);
+        assertEquals(PaymentStatus.PAID, payment.processVnPayReturn(callback).getStatus());
+    }
+
+    @Test void unpaidVnpayOrderCannotBeAdvancedToShipping() {
+        var request = request(); request.setPaymentMethod(PaymentMethod.VNPAY);
+        var order = service.checkout(customerId, request, "payment-shipping-0001").getFirst();
+        authenticateAdmin();
+        try {
+            lifecycle.update(order.getId(), OrderStatus.CONFIRMED);
+            assertThrows(com.helishop.core.common.exception.AppException.class, () -> lifecycle.update(order.getId(), OrderStatus.SHIPPING));
+        } finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
     }
 }

@@ -71,9 +71,11 @@ class PaymentAndEmailDlqE2ETest {
 
     private User sampleCustomer;
     private Order sampleOrder;
+    @Autowired private com.helishop.core.modules.payment.event.OrderPaidOutboxRepository outbox;
 
     @BeforeEach
     void setUp() {
+        outbox.deleteAll();
         paymentTransactionRepository.deleteAll();
         orderRepository.deleteAll();
         userRepository.deleteAll();
@@ -103,6 +105,8 @@ class PaymentAndEmailDlqE2ETest {
     void shouldProcessVnPayIpnAndPublishEventToRabbitMQ() {
         // 1. Chuẩn bị params VNPAY gửi về
         Map<String, String> vnpParams = new HashMap<>();
+        vnpParams.put("vnp_TmnCode", vnPayConfig.getTmnCode());
+        vnpParams.put("vnp_TransactionStatus", "00");
         vnpParams.put("vnp_TxnRef", sampleOrder.getOrderCode());
         vnpParams.put("vnp_Amount", "150000000"); // 1,500,000 * 100
         vnpParams.put("vnp_ResponseCode", "00");
@@ -131,17 +135,12 @@ class PaymentAndEmailDlqE2ETest {
         assertThat(txns.get(0).getTransactionCode()).isEqualTo("14567890");
         assertThat(txns.get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(1500000));
 
-        // 6. Kiểm tra RabbitMQ được gọi đẩy OrderPaidEvent vào queue
-        ArgumentCaptor<OrderPaidEvent> eventCaptor = ArgumentCaptor.forClass(OrderPaidEvent.class);
-        verify(rabbitTemplate, atLeastOnce()).convertAndSend(
-                eq(RabbitMQConfig.EXCHANGE_ORDER_DIRECT),
-                eq(RabbitMQConfig.ROUTING_ORDER_PAID_EMAIL),
-                eventCaptor.capture()
-        );
-
-        OrderPaidEvent capturedEvent = eventCaptor.getValue();
-        assertThat(capturedEvent.getOrderCode()).isEqualTo(sampleOrder.getOrderCode());
-        assertThat(capturedEvent.getCustomerEmail()).isEqualTo("customer.e2e@helishop.com");
+        // Event is durable in the same database transaction before the dispatcher sends it.
+        var pending = outbox.findByOrderId(sampleOrder.getId());
+        assertThat(pending).hasSize(1);
+        assertThat(pending.getFirst().getPayload()).contains(sampleOrder.getOrderCode(), "customer.e2e@helishop.com");
+        assertThat(pending.getFirst().isEmailPublished()).isFalse();
+        verifyNoInteractions(rabbitTemplate);
     }
 
     @Test
@@ -153,6 +152,8 @@ class PaymentAndEmailDlqE2ETest {
         orderRepository.save(sampleOrder);
 
         Map<String, String> vnpParams = new HashMap<>();
+        vnpParams.put("vnp_TmnCode", vnPayConfig.getTmnCode());
+        vnpParams.put("vnp_TransactionStatus", "00");
         vnpParams.put("vnp_TxnRef", sampleOrder.getOrderCode());
         vnpParams.put("vnp_Amount", "150000000");
         vnpParams.put("vnp_ResponseCode", "00");

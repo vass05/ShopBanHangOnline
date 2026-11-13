@@ -1,128 +1,87 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { useAuthStore } from "@/store/useAuthStore";
+import { orderService } from "@/services/orderService";
+import { paymentService, paymentView } from "@/services/paymentService";
+import type { VerifiedReturn, PaymentView } from "@/services/paymentService";
+import type { OrderDto } from "@/services/checkoutService";
 import { formatVND } from "@/lib/formatters";
-import {
-  CheckCircle,
-  XCircle,
-  ShoppingBag,
-  Package,
-  ArrowRight,
-  ShieldCheck,
-  Calendar,
-  CreditCard,
-} from "lucide-react";
+
+const messages: Record<PaymentView, [string, string]> = {
+  paid: ["Thanh toán thành công", "Máy chủ đã xác nhận thanh toán của đơn hàng."],
+  placed: ["Đã tạo đơn COD", "Bạn thanh toán khi nhận hàng. Theo dõi tiến độ tại đơn mua."],
+  pending: ["Đang chờ xác nhận thanh toán", "Đơn hàng vẫn được giữ. Kết quả sẽ cập nhật khi máy chủ nhận xác nhận thanh toán."],
+  failed: ["Thanh toán chưa thành công", "Bạn có thể mở đơn mua và thử thanh toán lại."],
+  invalid: ["Chưa xác minh được kết quả", "Thông tin trở về không hợp lệ. Vui lòng kiểm tra trạng thái trong đơn mua."],
+  cancelled: ["Đơn hàng đã đóng", "Đơn đã hủy hoặc trả hàng và không được kích hoạt lại từ trang thanh toán."],
+  "closed-paid": ["Thanh toán cần được đối soát", "Máy chủ ghi nhận thanh toán cho đơn đã đóng. Vui lòng liên hệ hỗ trợ để xử lý hoàn tiền."],
+  refunded: ["Đã ghi nhận hoàn tiền", "Kiểm tra chi tiết trong đơn mua của bạn."],
+};
 
 export const PaymentResultPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [params] = useSearchParams();
+  const { isAuthenticated, user } = useAuthStore();
+  const orderCode = params.get("vnp_TxnRef") || params.get("orderCode");
+  const callback = useMemo(() => Object.fromEntries([...params.entries()].filter(([key]) => key.startsWith("vnp_"))), [params]);
+  const [order, setOrder] = useState<OrderDto | null>(null);
+  const [verified, setVerified] = useState<VerifiedReturn | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
 
-  const responseCode = searchParams.get("vnp_ResponseCode");
-  const statusParam = searchParams.get("status");
-  const orderCode = searchParams.get("orderCode") || "ORD-20260910-8F3A";
-  const amountParam = searchParams.get("amount") || searchParams.get("vnp_Amount") || "34970000";
-  const transactionNo = searchParams.get("vnp_TransactionNo") || "14592810";
-  const method = searchParams.get("method") || "VNPAY";
+  useEffect(() => {
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    setOrder(null); setVerified(null); setError("");
+    if (!orderCode || !isAuthenticated) return;
+    setLoading(true);
+    let result: VerifiedReturn | null = null;
+    const load = async (attempt: number) => {
+      try {
+        if (attempt === 0 && callback.vnp_SecureHash) {
+          result = await paymentService.verifyReturn(callback);
+          if (!active) return;
+          setVerified(result);
+        }
+        const data = await orderService.byCode(orderCode);
+        if (!active) return;
+        setOrder(data);
+        if (paymentView(data, result) === "pending" && attempt < 15) timer = setTimeout(() => void load(attempt + 1), 2000);
+      } catch (error: unknown) {
+        if (active) setError((error as { response?: { data?: { message?: string } } }).response?.data?.message || "Chưa tải được kết quả. Vui lòng kiểm tra lại đơn mua.");
+      } finally { if (active) setLoading(false); }
+    };
+    void load(0);
+    return () => { active = false; clearTimeout(timer); };
+  }, [orderCode, callback, isAuthenticated, user?.id, retry]);
 
-  // VNPAY responseCode "00" is success
-  const isSuccess = statusParam === "success" || responseCode === "00";
-  const amount = Number(amountParam);
-
-  return (
-    <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
-      <Header />
-
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-10">
-        <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-sm border border-slate-200/80 text-center space-y-6">
-          {/* Status Icon */}
-          <div className="flex justify-center">
-            {isSuccess ? (
-              <div className="w-20 h-20 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border-4 border-emerald-100 shadow-lg animate-bounce-gentle">
-                <CheckCircle className="w-10 h-10 stroke-[2.5]" />
-              </div>
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-red-50 text-red-600 flex items-center justify-center border-4 border-red-100 shadow-lg">
-                <XCircle className="w-10 h-10 stroke-[2.5]" />
-              </div>
-            )}
-          </div>
-
-          {/* Heading */}
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-              {isSuccess
-                ? method === "VNPAY"
-                  ? "Thanh Toán Thành Công!"
-                  : "Đặt Hàng Thành Công!"
-                : "Giao Dịch Không Thành Công"}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-              {isSuccess
-                ? "Cảm ơn bạn đã tin tưởng mua sắm tại HeliShop. Đơn hàng của bạn đã được xác nhận và người bán đang đóng gói sản phẩm."
-                : "Giao dịch thanh toán chưa hoàn tất do khách hàng hủy hoặc lỗi xác thực từ ngân hàng. Bạn có thể thử lại bất cứ lúc nào."}
-            </p>
-          </div>
-
-          {/* Transaction Summary Card */}
-          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 text-left text-xs space-y-3 max-w-lg mx-auto">
-            <div className="flex justify-between pb-2 border-b border-slate-200/60">
-              <span className="text-slate-500">Mã đơn hàng:</span>
-              <strong className="font-mono text-slate-900 text-sm">{orderCode}</strong>
-            </div>
-
-            <div className="flex justify-between pb-2 border-b border-slate-200/60">
-              <span className="text-slate-500">Số tiền thanh toán:</span>
-              <strong className="text-base font-black text-[#0284C7]">{formatVND(amount)}</strong>
-            </div>
-
-            <div className="flex justify-between pb-2 border-b border-slate-200/60">
-              <span className="text-slate-500">Phương thức:</span>
-              <span className="font-bold text-slate-800">
-                {method === "VNPAY" ? "Cổng thanh toán VNPAY Sandbox" : "Thanh toán khi nhận hàng (COD)"}
-              </span>
-            </div>
-
-            {method === "VNPAY" && (
-              <div className="flex justify-between pb-2 border-b border-slate-200/60">
-                <span className="text-slate-500">Mã giao dịch VNPAY:</span>
-                <span className="font-mono font-bold text-slate-800">{transactionNo}</span>
-              </div>
-            )}
-
-            <div className="flex justify-between">
-              <span className="text-slate-500">Thời gian giao dịch:</span>
-              <span className="font-medium text-slate-800">{new Date().toLocaleString("vi-VN")}</span>
-            </div>
-          </div>
-
-          {/* Security Badge */}
-          <div className="inline-flex items-center gap-2 text-xs text-slate-500 bg-sky-50 px-3 py-1.5 rounded-full border border-sky-100">
-            <ShieldCheck className="w-4 h-4 text-[#0284C7]" />
-            <span>Giao dịch được bảo vệ và mã hóa bởi HeliShop Core</span>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Link
-              to="/orders"
-              className="w-full sm:w-auto px-6 py-3 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-sky-600/25 transition-all"
-            >
-              <Package className="w-4 h-4" />
-              <span>Xem Đơn Hàng Của Tôi</span>
-            </Link>
-
-            <Link
-              to="/"
-              className="w-full sm:w-auto px-6 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-sm"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Tiếp Tục Mua Sắm</span>
-            </Link>
-          </div>
+  const view = order ? paymentView(order, verified) : null;
+  const redirect = `/payment-result?${params.toString()}`;
+  return <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
+    <Header />
+    <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-10">
+      <section className="bg-white border rounded-3xl p-8 space-y-5 text-center">
+        <h1 className="text-2xl font-bold">{view ? messages[view][0] : "Kết quả thanh toán"}</h1>
+        {!orderCode && <p role="alert">Không có mã đơn hàng để tra cứu.</p>}
+        {orderCode && !isAuthenticated && <p>Vui lòng <Link className="text-sky-700 underline" to={`/login?redirect=${encodeURIComponent(redirect)}`}>đăng nhập</Link> để xem trạng thái đơn hàng của bạn.</p>}
+        {loading && <p role="status">Đang kiểm tra với máy chủ…</p>}
+        {error && <p role="alert" className="text-red-600">{error}</p>}
+        {view && <p className="text-slate-600">{messages[view][1]}</p>}
+        {order && <dl className="bg-slate-50 border rounded-xl p-5 text-left text-sm space-y-3">
+          <div className="flex justify-between gap-3"><dt>Mã đơn</dt><dd className="font-mono break-all">{order.orderCode}</dd></div>
+          <div className="flex justify-between gap-3"><dt>Số tiền đơn hàng</dt><dd className="font-bold text-sky-700">{formatVND(Number(order.finalAmount))}</dd></div>
+          <div className="flex justify-between gap-3"><dt>Phương thức</dt><dd>{order.paymentMethod}</dd></div>
+          {verified?.verified && verified.transactionCode && <div className="flex justify-between gap-3"><dt>Mã giao dịch</dt><dd>{verified.transactionCode}</dd></div>}
+        </dl>}
+        <div className="flex flex-wrap justify-center gap-4 text-sm">
+          {isAuthenticated && orderCode && <button disabled={loading} className="border rounded-lg px-4 py-2" onClick={() => setRetry(value => value + 1)}>Kiểm tra lại</button>}
+          <Link to="/orders" className="bg-sky-600 text-white rounded-lg px-4 py-2">Xem đơn mua</Link>
+          <Link to="/" className="border rounded-lg px-4 py-2">Tiếp tục mua sắm</Link>
         </div>
-      </main>
-
-      <Footer />
-    </div>
-  );
+      </section>
+    </main>
+    <Footer />
+  </div>;
 };

@@ -8,7 +8,7 @@ import { profileService } from "@/services/profileService";
 import type { UserAddress } from "@/services/profileService";
 import { checkoutService, checkoutAttemptKey } from "@/services/checkoutService";
 import type { CheckoutPayload, CheckoutQuote, OrderDto } from "@/services/checkoutService";
-import { api, sessionRequestConfig } from "@/lib/api";
+import { paymentService } from "@/services/paymentService";
 import { readAuthSession } from "@/lib/authSession";
 import { formatVND } from "@/lib/formatters";
 
@@ -82,9 +82,7 @@ export const CheckoutPage: React.FC = () => {
     const session = readAuthSession()?.refreshToken;
     setSubmitting(true); setError("");
     try {
-      const result = await api.post("/payments/create-vnpay-url", { orderCode }, sessionRequestConfig());
-      const url = result.data?.data?.paymentUrl;
-      if (!url) throw new Error("Không nhận được URL thanh toán");
+      const url = await paymentService.createUrl(orderCode);
       if (readAuthSession()?.refreshToken !== session) return;
       window.location.assign(url);
     } catch (error) { setError(failureMessage(error)); }

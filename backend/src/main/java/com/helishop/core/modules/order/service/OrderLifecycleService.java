@@ -25,6 +25,11 @@ public class OrderLifecycleService {
         access.requireOrderStatus(id, target);
         OrderStatus current = order.getOrderStatus();
         if (current == target) return orderService.mapToResponse(order);
+        if (Set.of(OrderStatus.PROCESSING, OrderStatus.SHIPPING, OrderStatus.DELIVERED).contains(target)
+                && order.getPaymentMethod() == com.helishop.core.common.constants.PaymentMethod.VNPAY
+                && order.getPaymentStatus() != com.helishop.core.common.constants.PaymentStatus.PAID) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Đơn VNPAY cần được xác nhận thanh toán trước khi xử lý giao hàng");
+        }
         Set<OrderStatus> allowed = switch (current) {
             case PENDING -> Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED);
             case CONFIRMED -> Set.of(OrderStatus.PROCESSING, OrderStatus.SHIPPING, OrderStatus.CANCELLED);

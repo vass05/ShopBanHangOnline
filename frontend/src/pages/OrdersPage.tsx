@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { useOrderStore } from "@/store/useOrderStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
-import { api, sessionRequestConfig } from "@/lib/api";
+import { paymentService } from "@/services/paymentService";
 import { readAuthSession } from "@/lib/authSession";
 import type { OrderDto } from "@/services/checkoutService";
 import { formatVND } from "@/lib/formatters";
@@ -43,10 +43,9 @@ export const OrdersPage: React.FC = () => {
     setBusy(true); setActionError("");
     const token = readAuthSession()?.refreshToken;
     try {
-      const result = await api.post("/payments/create-vnpay-url", { orderCode }, sessionRequestConfig());
+      const url = await paymentService.createUrl(orderCode);
       if (readAuthSession()?.refreshToken !== token) return;
-      if (!result.data?.data?.paymentUrl) throw new Error("Không nhận được URL thanh toán");
-      window.location.assign(result.data.data.paymentUrl);
+      window.location.assign(url);
     } catch (error: unknown) {
       setActionError((error as { response?: { data?: { message?: string } } }).response?.data?.message || "Chưa tạo được yêu cầu thanh toán. Đơn hàng vẫn được giữ để thử lại.");
     } finally { setBusy(false); }
@@ -72,7 +71,7 @@ export const OrdersPage: React.FC = () => {
         <p className="text-sm text-slate-500">Giao đến: {order.shippingAddressSnapshot}</p>
         <div className="text-right text-sm space-y-1"><p>Tiền hàng {formatVND(Number(order.totalAmount))} + vận chuyển {formatVND(Number(order.shippingFee || 0))} − giảm giá {formatVND(Number(order.discountAmount || 0))}</p><p className="font-bold text-lg text-sky-700">Tổng: {formatVND(Number(order.finalAmount))}</p></div>
         <div className="flex flex-wrap justify-end gap-3 text-sm">
-          {["PENDING", "CONFIRMED"].includes(order.orderStatus) && order.paymentStatus !== "PAID" && <button disabled={loading || busy} onClick={() => void cancel(order.id)} className="border rounded-lg px-4 py-2 disabled:opacity-50">Hủy đơn</button>}
+          {["PENDING", "CONFIRMED"].includes(order.orderStatus) && (["UNPAID", "FAILED"].includes(order.paymentStatus) || (order.paymentStatus === "PENDING" && order.paymentExpiresAt && new Date(order.paymentExpiresAt).getTime() <= Date.now())) && <button disabled={loading || busy} onClick={() => void cancel(order.id)} className="border rounded-lg px-4 py-2 disabled:opacity-50">Hủy đơn</button>}
           {order.paymentMethod === "VNPAY" && ["UNPAID", "PENDING", "FAILED"].includes(order.paymentStatus) && !["CANCELLED", "RETURNED", "DELIVERED"].includes(order.orderStatus) && <button disabled={loading || busy} onClick={() => void pay(order.orderCode)} className="bg-sky-600 text-white rounded-lg px-4 py-2 disabled:opacity-50">Thanh toán</button>}
           <button disabled={loading || busy} onClick={() => void rebuy(order)} className="border border-sky-600 text-sky-700 rounded-lg px-4 py-2 disabled:opacity-50">Mua lại</button>
         </div>

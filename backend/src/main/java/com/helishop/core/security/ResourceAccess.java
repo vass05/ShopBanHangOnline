@@ -43,6 +43,8 @@ public class ResourceAccess {
             if (status == OrderStatus.CANCELLED && order.getOrderStatus() == OrderStatus.CANCELLED) return;
             if (status != OrderStatus.CANCELLED
                     || order.getPaymentStatus() == com.helishop.core.common.constants.PaymentStatus.PAID
+                    || (order.getPaymentStatus() == com.helishop.core.common.constants.PaymentStatus.PENDING
+                        && (order.getPaymentExpiresAt() == null || order.getPaymentExpiresAt().isAfter(java.time.LocalDateTime.now())))
                     || (order.getOrderStatus() != OrderStatus.PENDING
                     && order.getOrderStatus() != OrderStatus.CONFIRMED)) {
                 throw new AppException(ErrorCode.UNAUTHORIZED, "Khách hàng chỉ được hủy đơn chưa xử lý và chưa thanh toán");

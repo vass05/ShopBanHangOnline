@@ -78,6 +78,9 @@ public class Order extends BaseEntity {
     @Column(name = "payment_method", nullable = false, length = 30)
     private PaymentMethod paymentMethod;
 
+    @Column(name = "payment_expires_at")
+    private java.time.LocalDateTime paymentExpiresAt;
+
     @Column(name = "shipping_address_snapshot", columnDefinition = "TEXT", nullable = false)
     private String shippingAddressSnapshot;
 
