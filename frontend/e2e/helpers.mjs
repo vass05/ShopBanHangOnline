@@ -18,12 +18,14 @@ export async function addAddress(request, user) {
     recipientName: 'E2E Customer', phone: '0901234567', provinceCity: 'Ha Noi', district: 'Test District', ward: 'Test Ward', streetAddress: '1 Integration Test', isDefault: true,
   } }), 201);
 }
-export async function login(page, user, remember = true) {
-  await page.goto('/login');
+export async function login(page, user, remember = true, origin) {
+  await page.goto(origin ? new URL('/login', origin).href : '/login');
   await page.locator('form').first().locator('input[type="text"]').fill(user.email);
   await page.locator('form').first().locator('input[type="password"]').fill(user.password);
   await page.locator('form').first().getByRole('checkbox').setChecked(remember);
+  const response = page.waitForResponse(result => result.url().endsWith('/auth/login') && result.request().method() === 'POST');
   await page.getByRole('button', { name: 'Đăng Nhập', exact: true }).click();
+  expect((await response).status()).toBe(200);
   await expect(page).toHaveURL(/\/$/);
 }
 export async function browserUser(page) {

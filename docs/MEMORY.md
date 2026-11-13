@@ -2,9 +2,9 @@
 
 ## 1. Trạng thái hiện hành — 13/11/2026
 
-Người dùng yêu cầu **mỗi chức năng tạo nhánh → PR → merge main**, thay cho push thẳng main trong quy tắc cũ. Các chức năng 01–09 đã merge PR #1–#9. Nhánh chức năng 10: `test/browser-checkout-and-ci`; hoàn tất browser E2E và CI trước khi bàn giao PR. Không coi các ghi nhận baseline/Sprint phía dưới là nghiệm thu production.
+Người dùng yêu cầu **mỗi chức năng tạo nhánh → PR → merge main**, thay cho push thẳng main trong quy tắc cũ. Các chức năng 01–09 đã merge PR #1–#9. Chức năng 10 bàn giao tại [PR #10](https://github.com/vass05/ShopBanHangOnline/pull/10), nhánh `test/browser-checkout-and-ci`; hoàn tất browser E2E và CI trước khi bàn giao PR. Không coi các ghi nhận baseline/Sprint phía dưới là nghiệm thu production.
 
-**Kiểm chứng:** backend 152/152 tests, frontend 31/31 tests và build pass; 6/6 Playwright E2E qua Chrome headless trên Docker thật. Cụm thử `helishop-integration`, container/volume `helishop_integration_*`, web 18000, API 18080, Mailpit 18025. Dev `eshop_*` vẫn chạy; không xóa/chuyển volume khi đổi môi trường.
+**Kiểm chứng:** backend 152/152 tests, frontend 31/31 tests và build pass; 7/7 Playwright E2E qua Chrome headless trên Docker thật. Cụm thử `helishop-integration`, container/volume `helishop_integration_*`, web 18000, API 18080, Mailpit 18025. Dev `eshop_*` vẫn chạy; không xóa/chuyển volume khi đổi môi trường.
 
 - JWT principal đã xác minh và ResourceAccess kiểm quyền tài nguyên; không tin customerId trong request, không cho tự đăng ký admin.
 - Phiên duy nhất `helishop-session-v3`, rememberMe chọn localStorage/sessionStorage, Axios refresh đồng bộ và chặn response sai tài khoản. OTP BCrypt trong Redis, cooldown/giới hạn thử, gửi qua SMTP; reset thu hồi refresh.

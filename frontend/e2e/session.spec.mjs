@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { register, login, browserUser, authorization, data } from './helpers.mjs';
 
+test('same-origin login preserves a non-default port for a host outside the CORS allowlist', async ({ page, request }) => {
+  const user = await register(request, 'origin');
+  await login(page, user, true, 'http://127.0.0.1:18000');
+  await expect(page).toHaveURL('http://127.0.0.1:18000/');
+});
+
 test('real refresh restores an invalid access token; session-only login and logout stay isolated', async ({ page, context, request }) => {
   const user = await register(request, 'session');
   await login(page, user, false);

@@ -4,7 +4,7 @@
 
 Luồng khách hàng đã được kiểm chứng trên Docker cục bộ: catalog → xác thực/OTP → giỏ Redis → địa chỉ/checkout → đơn mua/hủy → Return/IPN → email/ảnh đại diện. Các chức năng 01–09 đã merge qua PR #1–#9; chức năng 10 trên `test/browser-checkout-and-ci` bổ sung browser E2E và ba job CI, bàn giao qua PR riêng.
 
-Kết quả: **152/152 backend tests, 31/31 frontend tests/build, 6/6 browser E2E pass**. Cụm thử web 18000 dùng MySQL, Redis, RabbitMQ, Nginx và Mailpit thật, volume riêng; không thay đổi container dev. Chi tiết từng chức năng và nhánh/PR: [implementation_plan.md](../implementation_plan.md). Tổng kết: [integration-10-browser-ci.md](sprints/integration-10-browser-ci.md).
+Kết quả: **152/152 backend tests, 31/31 frontend tests/build, 7/7 browser E2E pass**. Cụm thử web 18000 dùng MySQL, Redis, RabbitMQ, Nginx và Mailpit thật, volume riêng; không thay đổi container dev. Chi tiết từng chức năng và nhánh/PR: [implementation_plan.md](../implementation_plan.md). Tổng kết: [integration-10-browser-ci.md](sprints/integration-10-browser-ci.md).
 
 Đợt này hoàn thành tích hợp cục bộ, chưa nghiệm thu nhà cung cấp thật hoặc phát hành Internet. Không đánh đồng các mốc lịch sử “100%” phía dưới với việc production đã sẵn sàng.
 
