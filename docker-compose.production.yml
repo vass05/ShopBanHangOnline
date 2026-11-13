@@ -1,59 +1,60 @@
-# ==============================================================================
-# HeliShop Core E-Commerce - Full Ecosystem Production Docker Compose
-# Services:
-#   1. frontend: React 18 + Vite SPA served via Nginx with Reverse Proxy (Port 80/443)
-#   2. backend: Spring Boot 3 / Temurin 21 JRE Alpine (Port 8080)
-#   3. mysql: MySQL 8.0 utf8mb4 (Port 3307:3306)
-#   4. redis: Redis 7 AOF Persistent (Port 6379)
-#   5. rabbitmq: RabbitMQ 3.13 Management with DLQ (Port 5672, 15672)
-# ==============================================================================
-
+# Initialize .env.production first; see README.md. Environment files never enter images.
 services:
-  # ----------------------------------------------------------------------------
-  # 1. FRONTEND: React 18 / Vite + Nginx Reverse Proxy
-  # ----------------------------------------------------------------------------
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: helishop_prod_frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+    container_name: ${CONTAINER_PREFIX:-helishop_prod}_frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
       backend:
         condition: service_healthy
-    networks:
-      - helishop_prod_network
+    networks: [helishop]
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://127.0.0.1/"]
       interval: 15s
       timeout: 5s
       retries: 3
 
-  # ----------------------------------------------------------------------------
-  # 2. BACKEND: Spring Boot 3.3.5 / Java 21 Core API
-  # ----------------------------------------------------------------------------
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: helishop_prod_backend
+    build: ./backend
+    container_name: ${CONTAINER_PREFIX:-helishop_prod}_backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eshop_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&characterEncoding=UTF-8
-      - SPRING_DATASOURCE_USERNAME=eshop_user
-      - SPRING_DATASOURCE_PASSWORD=eshop_secret
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_REDIS_PORT=6379
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - SPRING_RABBITMQ_PORT=5672
-      - SPRING_RABBITMQ_USERNAME=guest
-      - SPRING_RABBITMQ_PASSWORD=guest
-      - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-eshop_db}?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-eshop_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?Initialize .env.production first}
+      SPRING_JPA_SHOW_SQL: "false"
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: INFO
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-helishop}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Initialize .env.production first}
+      JWT_SECRET: ${JWT_SECRET:?Initialize .env.production first}
+      APP_CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
+      SPRING_MAIL_HOST: ${SMTP_HOST:-localhost}
+      SPRING_MAIL_PORT: ${SMTP_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SMTP_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD:-}
+      SPRING_MAIL_SMTP_AUTH: ${SMTP_AUTH:-true}
+      SPRING_MAIL_STARTTLS: ${SMTP_STARTTLS:-true}
+      VNP_TMN_CODE: ${VNP_TMN_CODE:-HELI0001}
+      APP_VNPAY_DISABLED: ${VNP_DISABLED:-true}
+      VNP_HASH_SECRET: ${VNP_HASH_SECRET:-not-a-configured-merchant-secret}
+      VNP_PAY_URL: ${VNP_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      VNP_RETURN_URL: ${VNP_RETURN_URL:-http://localhost/payment-result}
+      VNP_IPN_URL: ${VNP_IPN_URL:-http://localhost/api/v1/payments/vnpay-ipn}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -61,103 +62,85 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    networks:
-      - helishop_prod_network
+    networks: [helishop]
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/v3/api-docs"]
-      interval: 20s
+      test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://127.0.0.1:8080/v3/api-docs"]
+      interval: 15s
       timeout: 5s
-      start_period: 45s
-      retries: 3
+      start_period: 60s
+      retries: 10
 
-  # ----------------------------------------------------------------------------
-  # 3. DATABASE: MySQL 8.0 (Source of Truth)
-  # ----------------------------------------------------------------------------
   mysql:
     image: mysql:8.0
-    container_name: helishop_prod_mysql
+    container_name: ${CONTAINER_PREFIX:-helishop_prod}_mysql
     restart: unless-stopped
     ports:
-      - "3307:3306"
+      - "127.0.0.1:${MYSQL_PORT:-3307}:3306"
     environment:
-      MYSQL_DATABASE: eshop_db
-      MYSQL_USER: eshop_user
-      MYSQL_PASSWORD: eshop_secret
-      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-eshop_db}
+      MYSQL_USER: ${MYSQL_USER:-eshop_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Initialize .env.production first}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Initialize .env.production first}
       TZ: Asia/Ho_Chi_Minh
-    command: >
-      mysqld
-      --default-time-zone=+07:00
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
+    command: mysqld --default-time-zone=+07:00 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - eshop_prod_mysql_data:/var/lib/mysql
-    networks:
-      - helishop_prod_network
+      - mysql_data:/var/lib/mysql
+    networks: [helishop]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      test: ["CMD-SHELL", 'mysqladmin ping -h localhost -u root -p"$$MYSQL_ROOT_PASSWORD" --silent']
       interval: 10s
       timeout: 5s
-      retries: 5
+      start_period: 30s
+      retries: 15
 
-  # ----------------------------------------------------------------------------
-  # 4. CACHE / CART: Redis 7 Alpine with AOF Persistent
-  # ----------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: helishop_prod_redis
+    container_name: ${CONTAINER_PREFIX:-helishop_prod}_redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
-      - eshop_prod_redis_data:/data
-    networks:
-      - helishop_prod_network
+      - redis_data:/data
+    networks: [helishop]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ----------------------------------------------------------------------------
-  # 5. MESSAGE BROKER: RabbitMQ 3.13 Management with DLQ
-  # ----------------------------------------------------------------------------
   rabbitmq:
     image: rabbitmq:3.13-management
-    container_name: helishop_prod_rabbitmq
+    container_name: ${CONTAINER_PREFIX:-helishop_prod}_rabbitmq
     restart: unless-stopped
+    hostname: rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-helishop}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Initialize .env.production first}
     volumes:
-      - eshop_prod_rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - helishop_prod_network
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks: [helishop]
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      start_period: 30s
+      retries: 12
 
-# ------------------------------------------------------------------------------
-# NETWORKS & VOLUMES CONFIGURATION
-# ------------------------------------------------------------------------------
 networks:
-  helishop_prod_network:
-    name: helishop_prod_network
+  helishop:
+    name: ${CONTAINER_PREFIX:-helishop_prod}_network
     driver: bridge
 
 volumes:
-  eshop_prod_mysql_data:
-    name: eshop_prod_mysql_data
-    driver: local
-  eshop_prod_redis_data:
-    name: eshop_prod_redis_data
-    driver: local
-  eshop_prod_rabbitmq_data:
-    name: eshop_prod_rabbitmq_data
-    driver: local
+  mysql_data:
+    name: ${MYSQL_VOLUME_NAME:-eshop_prod_mysql_data}
+  redis_data:
+    name: ${REDIS_VOLUME_NAME:-eshop_prod_redis_data}
+  rabbitmq_data:
+    name: ${RABBITMQ_VOLUME_NAME:-eshop_prod_rabbitmq_data}
+  uploads:
+    name: ${UPLOADS_VOLUME_NAME:-helishop_prod_uploads}

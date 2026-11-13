@@ -19,7 +19,7 @@ const notifyLog = (type: Parameters<InterceptorLogCallback>[0]["type"], message:
   listeners.forEach(listener => listener({ timestamp, type, message }));
 };
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+const baseURL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 export const api = axios.create({ baseURL, timeout: 15000 });
 const refreshClient = axios.create({ baseURL, timeout: 15000 });
 let refreshPromise: Promise<string> | null = null;

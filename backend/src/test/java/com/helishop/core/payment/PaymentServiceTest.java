@@ -48,6 +48,15 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
+    @Test
+    void disabledGatewayRejectsInitiationAndCallbacksWithoutDatabaseWrites() {
+        when(vnPayConfig.isDisabled()).thenReturn(true);
+        assertThatThrownBy(() -> paymentService.createVnPayPaymentUrl(1L, new CreatePaymentUrlRequest(), new MockHttpServletRequest()))
+                .isInstanceOfSatisfying(AppException.class, e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.PAYMENT_UNAVAILABLE));
+        assertThatThrownBy(() -> paymentService.processVnPayReturn(Map.of())).isInstanceOf(AppException.class);
+        assertThat(paymentService.processVnPayIpn(Map.of()).getRspCode()).isEqualTo("99");
+        org.mockito.Mockito.verifyNoInteractions(orderRepository, paymentTransactionRepository);
+    }
 
     @Mock
     private VnPayConfig vnPayConfig;

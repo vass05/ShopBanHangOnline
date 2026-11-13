@@ -1,5 +1,7 @@
 # BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE (LIVING MEMORY)
 
+Chức năng 08 đã merge PR #8. Chức năng 09 trên `fix/docker-runtime-and-uploads`: backend 152/152 tests, frontend 31/31 tests/build pass; build image thành công, 5/5 Docker services healthy, API/ảnh qua Nginx và ảnh giữ nguyên sau tạo lại riêng backend. Cụm thử web 18000 dùng volume riêng, giữ nguyên dev. Chi tiết: [integration-09-docker-uploads.md](sprints/integration-09-docker-uploads.md).
+
 Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự án, các thông số kết nối, tài khoản kiểm thử, kiến trúc hiện thời và các bài học kỹ thuật quan trọng nhằm loại bỏ rủi ro quên ngữ cảnh giữa các phiên làm việc.
 
 ---

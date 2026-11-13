@@ -15,8 +15,8 @@ Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm t
 | Checkout, voucher/phí và nhiều shop | `feat/server-checkout-and-pricing` | PR #5 đã merge; backend 130/130 tests pass; frontend 18/18 tests và build pass |
 | Lịch sử đơn và hủy đơn | `feat/order-history-and-cancellation` | PR #6 đã merge; backend 132/132 tests; frontend 22/22 tests/build pass |
 | VNPAY và kết quả thanh toán | `fix/vnpay-return-and-ipn` | PR #7 đã merge; backend 144/144 tests; frontend 26/26 tests/build pass |
-| Catalog và phân trang | `feat/server-catalog-pagination` | Đã triển khai; backend 149/149 tests; frontend 30/30 tests/build pass; bàn giao qua PR |
-| Docker và uploads | Chưa tạo | Chờ triển khai |
+| Catalog và phân trang | `feat/server-catalog-pagination` | PR #8 đã merge; backend 149/149 tests; frontend 30/30 tests/build pass |
+| Docker và uploads | `fix/docker-runtime-and-uploads` | Backend 152/152 tests; frontend 31/31 tests/build pass; 5/5 Docker healthy, upload giữ nguyên sau tạo lại backend; bàn giao qua PR |
 | E2E và CI | Chưa tạo | Chờ triển khai |
 
 ## 1. Kết luận và phạm vi kiểm chứng

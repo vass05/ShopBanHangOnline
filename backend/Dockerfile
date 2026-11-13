@@ -12,12 +12,11 @@ WORKDIR /build
 # Copy dependency definition first for Docker layer caching
 COPY pom.xml .
 
-# Download dependencies offline to optimize rebuilds
-RUN mvn dependency:go-offline -B
-
 # Copy source code and build executable JAR
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package -DskipTests -B -U -Dmaven.wagon.http.retryHandler.count=5 \
+    || mvn clean package -DskipTests -B -U -Dmaven.wagon.http.retryHandler.count=5
 
 # ==============================================================================
 # Stage 2: Runtime Environment
@@ -25,7 +24,7 @@ RUN mvn clean package -DskipTests -B
 FROM eclipse-temurin:21-jre-alpine AS runner
 
 # Create non-root system group and user for security best practices
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S -g 10001 appgroup && adduser -S -u 10001 appuser -G appgroup
 
 WORKDIR /app
 
@@ -33,7 +32,7 @@ WORKDIR /app
 COPY --from=builder /build/target/helishop-core-*.jar app.jar
 
 # Adjust ownership
-RUN chown -R appuser:appgroup /app
+RUN mkdir -p /app/uploads/avatars && chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser
@@ -42,11 +41,12 @@ USER appuser
 EXPOSE 8080
 
 # Environment variables for JVM container optimization
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom" \
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom -Duser.timezone=Asia/Ho_Chi_Minh" \
+    TZ="Asia/Ho_Chi_Minh" \
     SPRING_PROFILES_ACTIVE="prod"
 
 # Healthcheck for container orchestration
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:8080/v3/api-docs || exit 1
+  CMD wget --quiet --tries=1 -O /dev/null http://127.0.0.1:8080/v3/api-docs || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

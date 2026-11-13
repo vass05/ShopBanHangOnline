@@ -17,6 +17,8 @@ RUN npm ci
 
 # Copy source code and build production distribution
 COPY . .
+ARG VITE_API_BASE_URL=/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build
 
 # ==============================================================================
@@ -38,7 +40,7 @@ EXPOSE 80
 
 # Container Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:80/ || exit 1
+  CMD wget --quiet --tries=1 -O /dev/null http://127.0.0.1:80/ || exit 1
 
 # Run Nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]

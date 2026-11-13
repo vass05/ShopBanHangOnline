@@ -52,6 +52,7 @@ public class PaymentService {
      */
     @Transactional
     public PaymentUrlResponse createVnPayPaymentUrl(Long userId, CreatePaymentUrlRequest request, HttpServletRequest servletRequest) {
+        if (vnPayConfig.isDisabled()) throw new AppException(ErrorCode.PAYMENT_UNAVAILABLE);
         Order order = orderRepository.findByOrderCodeWithLock(request.getOrderCode())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn hàng với mã: " + request.getOrderCode()));
 
@@ -118,6 +119,7 @@ public class PaymentService {
      */
     @Transactional
     public VnPayIpnResponse processVnPayIpn(Map<String, String> allParams) {
+        if (vnPayConfig.isDisabled()) return VnPayIpnResponse.unknownError("Payment gateway is not configured");
         Map<String, String> fields = signedFields(allParams);
         if (!validSignature(allParams, fields) || !vnPayConfig.getTmnCode().equals(fields.get("vnp_TmnCode"))) return VnPayIpnResponse.invalidChecksum();
         String orderCode = fields.get("vnp_TxnRef");
@@ -160,6 +162,7 @@ public class PaymentService {
 
     @Transactional(readOnly = true)
     public PaymentTransactionResponse processVnPayReturn(Map<String, String> allParams) {
+        if (vnPayConfig.isDisabled()) throw new AppException(ErrorCode.PAYMENT_UNAVAILABLE);
         Map<String, String> fields = signedFields(allParams);
         if (!validSignature(allParams, fields) || !vnPayConfig.getTmnCode().equals(fields.get("vnp_TmnCode"))) return invalidReturn("Chữ ký phản hồi không hợp lệ");
         String orderCode = fields.get("vnp_TxnRef");

@@ -10,7 +10,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?style=flat-square&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-103%2F103_Passed-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
+[![Tests](https://img.shields.io/badge/Tests-152_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
 
 **Hệ thống Thương mại Điện tử Đa Nhà bán hàng (Multi-vendor Shopee Mall) chuẩn Doanh nghiệp.**  
 *Tối ưu xử lý tải cao, giỏ hàng phân tán tốc độ cao, chống âm kho Flash Sale và tích hợp thanh toán trực tuyến.*
@@ -145,22 +145,40 @@ WebMall/
 
 ## Hướng Dẫn Khởi Chạy (Quick Start)
 
-### Cách 1: Triển khai 1 lệnh với Docker Compose (Khuyên Dùng)
+### Cách 1: Chạy toàn bộ bằng Docker
 
-Khởi chạy trọn gói 5 dịch vụ (Frontend, Backend, MySQL, Redis, RabbitMQ):
+Lần đầu, bật Docker Desktop và tạo file cấu hình riêng (mật khẩu được sinh ngẫu nhiên, không commit):
 
-```bash
-docker compose -f docker-compose.production.yml up -d --build
+```powershell
+.\scripts\Initialize-Environment.ps1
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --build --wait
+docker compose --env-file .env.production -f docker-compose.production.yml ps
 ```
 
-- **Giao diện Web**: http://localhost
-- **Swagger UI API**: http://localhost:8080/swagger-ui/index.html
-- **RabbitMQ Dashboard**: http://localhost:15672 (`guest` / `guest`)
+Frontend: http://localhost — API và ảnh `/uploads` đi qua cùng Nginx. Swagger: http://localhost/swagger-ui/index.html. Có thể truy cập giao diện bằng IP máy chủ từ máy khác. Đổi `FRONTEND_PORT` và URL callback trong `.env.production` nếu cần.
 
-*Dừng hệ thống: `docker compose -f docker-compose.production.yml down`*
+Những lần sau, bật Docker Desktop rồi chạy lại lệnh `up -d --wait`; thêm `--build` khi có thay đổi mã nguồn. `restart: unless-stopped` giúp container tự bật lại nếu trước đó chưa bị dừng thủ công. Chỉ bật Docker Desktop chưa bảo đảm cụm đã được tạo và đang healthy.
+
+```powershell
+# Dừng, giữ dữ liệu và ảnh upload
+docker compose --env-file .env.production -f docker-compose.production.yml down
+# Xem lỗi khởi động
+docker compose --env-file .env.production -f docker-compose.production.yml logs --tail 100 backend frontend
+```
+
+MySQL/Redis/RabbitMQ production dùng cổng riêng `13307/16379/15673/15674` trong file mẫu, tránh xung đột với môi trường dev. Backend và các cổng quản trị chỉ bind localhost; Nginx mở cổng web. Các named volume giữ MySQL, Redis, RabbitMQ và ảnh đại diện qua lần tạo lại container. Giữ nguyên mật khẩu khi dùng lại volume cũ; thay mật khẩu trong file không tự đổi tài khoản đã có trong database/broker.
+
+Database mới ban đầu chưa có hàng hóa. Chỉ nạp dữ liệu demo vào database thử nghiệm trống; `seed-data.sql` có cập nhật tài khoản và giá cố định, không chạy trên dữ liệu người dùng thật:
+
+```powershell
+Get-Content -Raw -Encoding UTF8 backend/src/main/resources/seed-data.sql | docker compose --env-file .env.production -f docker-compose.production.yml exec -T mysql sh -c 'exec mysql --default-character-set=utf8mb4 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
+```
+
+Cấu hình SMTP thật trước khi dùng OTP/email. VNPAY mặc định bị khóa (`VNP_DISABLED=true`): chỉ chuyển thành `false` sau khi đặt mã merchant, hash secret và các callback HTTPS công khai; Return trỏ `/payment-result`, IPN trỏ `/api/v1/payments/vnpay-ipn`. Chưa có merchant thì dùng COD. Upload ảnh sản phẩm qua Cloudinary cần cấu hình ba biến Cloudinary. Ảnh đại diện lưu trong volume cục bộ, tối đa 5 MB JPEG/PNG/WEBP.
+
+`VITE_API_BASE_URL` là cấu hình **lúc build** (mặc định `/api/v1`), đổi biến này cần build lại frontend. Khi đưa ra Internet, đặt HTTPS/reverse proxy và hostname thực tế; cấu hình trên là cụm tự vận hành cục bộ, chưa thay thế quy trình migration/backup production.
 
 ---
-
 ### Cách 2: Chạy Môi Trường Phát Triển (Local Dev)
 
 **1. Khởi động MySQL, Redis, RabbitMQ:**
@@ -183,7 +201,7 @@ cd backend
 **4. Khởi chạy Frontend:**
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 *(Frontend sẵn sàng tại `http://localhost:5173`)*

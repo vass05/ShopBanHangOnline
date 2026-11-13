@@ -10,3 +10,5 @@ target/
 .agents/
 scratch/
 README.md
+uploads/
+.env*

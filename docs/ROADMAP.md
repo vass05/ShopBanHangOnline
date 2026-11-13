@@ -1,5 +1,7 @@
 # LỘ TRÌNH DỰ ÁN TỔNG THỂ: HELISHOP E-COMMERCE
 
+Chức năng 08 đã merge PR #8. Chức năng 09 trên `fix/docker-runtime-and-uploads`: backend 152/152 tests, frontend 31/31 tests/build pass; build image thành công, 5/5 Docker services healthy, API/ảnh qua Nginx và ảnh giữ nguyên sau tạo lại riêng backend. Cụm thử web 18000 dùng volume riêng, giữ nguyên dev. Chi tiết: [integration-09-docker-uploads.md](sprints/integration-09-docker-uploads.md).
+
 Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), các dự án (Projects) và Sprint chi tiết từ khởi tạo đến bàn giao hoàn thiện.
 
 ## Cập nhật rà soát tích hợp — 13/11/2026
