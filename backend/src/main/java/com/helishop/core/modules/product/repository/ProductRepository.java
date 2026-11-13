@@ -23,11 +23,11 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @EntityGraph(attributePaths = {"category", "shop"})
     Page<Product> findAll(Specification<Product> spec, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"category", "shop", "skus", "images"})
+    @EntityGraph(attributePaths = {"category", "shop"})
     Optional<Product> findBySlug(String slug);
 
     @Override
-    @EntityGraph(attributePaths = {"category", "shop", "skus", "images"})
+    @EntityGraph(attributePaths = {"category", "shop"})
     Optional<Product> findById(Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

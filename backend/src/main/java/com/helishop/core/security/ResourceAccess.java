@@ -69,6 +69,16 @@ public class ResourceAccess {
         }
     }
 
+    public void requireVisibleProduct(com.helishop.core.modules.product.dto.ProductResponse product) {
+        if (product != null && product.getStatus() == com.helishop.core.common.constants.ProductStatus.ACTIVE
+                && product.getShopStatus() != com.helishop.core.common.constants.ShopStatus.INACTIVE
+                && product.getShopStatus() != com.helishop.core.common.constants.ShopStatus.BANNED) return;
+        if (securityUtils.hasRole("ADMIN")) return;
+        if (product != null && securityUtils.hasRole("SELLER")
+                && shopRepository.findById(product.getShopId()).map(this::ownsShop).orElse(false)) return;
+        throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
+    }
+
     private Order findOrder(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Đơn hàng không tồn tại"));

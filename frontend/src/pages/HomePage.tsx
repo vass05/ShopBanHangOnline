@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { SidebarFilter } from "@/components/catalog/SidebarFilter";
 import { Product, Category } from "@/types";
-import { api } from "@/lib/api";
+import { catalogService, mapProduct } from "@/services/catalogService";
 import {
   Sparkles,
   ChevronLeft,
@@ -37,164 +37,56 @@ export const HomePage: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<"popular" | "latest" | "sales" | "price-asc" | "price-desc">("popular");
+  const [sortBy, setSortBy] = useState<"popular" | "latest" | "price-asc" | "price-desc">("popular");
 
   // Hero Carousel State
   const [activeBanner, setActiveBanner] = useState(0);
 
-  const fetchCatalogData = () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    Promise.allSettled([
-      api.get("/categories/tree"),
-      api.get("/products?size=50"),
-    ])
-      .then(([catRes, prodRes]) => {
-        let mappedCats: Category[] = [];
-
-        // 1. Process Categories
-        if (catRes.status === "fulfilled") {
-          const catData = catRes.value.data?.data;
-          if (Array.isArray(catData)) {
-            mappedCats = catData.map((c: any) => ({
-              id: c.id,
-              name: c.name,
-              slug: c.slug,
-              parentId: c.parentId,
-              icon: c.slug,
-              children: Array.isArray(c.children)
-                ? c.children.map((child: any) => ({
-                    id: child.id,
-                    name: child.name,
-                    slug: child.slug,
-                    parentId: child.parentId,
-                  }))
-                : [],
-            }));
-            setCategories(mappedCats);
-          }
-        }
-
-        // 2. Process Products
-        if (prodRes.status === "fulfilled") {
-          const pageData = prodRes.value.data?.data;
-          const rawItems = Array.isArray(pageData?.items)
-            ? pageData.items
-            : Array.isArray(pageData?.content)
-            ? pageData.content
-            : Array.isArray(pageData)
-            ? pageData
-            : [];
-
-          const mapped: Product[] = rawItems.map((p: any) => {
-            const rawSkus = Array.isArray(p.skus) ? p.skus : [];
-            const rawImages = Array.isArray(p.images) ? p.images : [];
-
-            // Determine parent category ID from categories tree
-            let parentCatId: number | null = null;
-            for (const rootCat of mappedCats) {
-              if (rootCat.children?.some((ch) => ch.id === p.categoryId)) {
-                parentCatId = rootCat.id;
-                break;
-              }
-            }
-
-            return {
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              description: p.description || "",
-              price: Number(p.price) || 0,
-              originalPrice: p.price ? Math.round(Number(p.price) * 1.15) : 0,
-              rating: Number(p.rating) || 5.0,
-              reviewCount: 32,
-              soldCount: p.stockQuantity ? Math.max(10, 100 - p.stockQuantity) : 85,
-              category: {
-                id: p.categoryId || 1,
-                parentId: parentCatId,
-                name: p.categoryName || "Danh mục",
-                slug: p.categoryName
-                  ? p.categoryName.toLowerCase().replace(/\s+/g, "-")
-                  : "danh-muc",
-              },
-              shop: {
-                id: p.shopId || 1,
-                shopName: p.shopName || "Gian Hàng Chính Hãng",
-                avatarUrl: `https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=100`,
-                rating: 4.9,
-                responseRate: "99%",
-                joinedTime: "2 năm trước",
-              },
-              isFavorite: true,
-              isMall: true,
-              images:
-                rawImages.length > 0
-                  ? rawImages.map((img: any) => ({
-                      id: img.id,
-                      imageUrl: img.imageUrl,
-                      isThumbnail: !!img.isThumbnail,
-                      displayOrder: img.displayOrder || 1,
-                    }))
-                  : [
-                      {
-                        id: 1,
-                        imageUrl:
-                          p.mainImageUrl ||
-                          "https://images.unsplash.com/photo-1511707171634-5f897ff02560?w=800",
-                        isThumbnail: true,
-                        displayOrder: 1,
-                      },
-                    ],
-              productSkus: rawSkus.map((sku: any) => {
-                let parsedAttrs = {};
-                try {
-                  parsedAttrs =
-                    typeof sku.skuAttributes === "string"
-                      ? JSON.parse(sku.skuAttributes)
-                      : sku.skuAttributes || {};
-                } catch {
-                  parsedAttrs = {};
-                }
-                return {
-                  id: sku.id,
-                  skuCode: sku.skuCode,
-                  price: Number(sku.price),
-                  originalPrice: Number(sku.originalPrice) || Number(sku.price) * 1.1,
-                  stockQuantity: sku.stockQuantity,
-                  attributes: parsedAttrs,
-                  imageUrl: sku.skuImageUrl || p.mainImageUrl,
-                };
-              }),
-            };
-          });
-
-          setProducts(mapped);
-          setIsBackendConnected(true);
-        } else {
-          setIsBackendConnected(false);
-          setErrorMessage("Không thể kết nối đến Backend Server (http://localhost:8080/api/v1).");
-        }
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
+  const [page, setPage] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [reload, setReload] = useState(0);
+  const [categoryError, setCategoryError] = useState("");
+  const shopId = Number(searchParams.get("shop")) || undefined;
+  const fetchCatalogData = () => setReload(value => value + 1);
 
   useEffect(() => {
-    fetchCatalogData();
-  }, []);
+    let active = true;
+    catalogService.categories().then(data => { if (active) { setCategories(data); setCategoryError(""); } })
+      .catch(() => { if (active) setCategoryError("Chưa tải được danh mục. Bạn vẫn có thể tìm sản phẩm và thử lại."); });
+    return () => { active = false; };
+  }, [reload]);
 
-  // Sync category with URL search param
   useEffect(() => {
-    const catParam = searchParams.get("category");
-    if (catParam) {
-      const parsedId = Number(catParam);
-      if (!isNaN(parsedId)) {
-        setSelectedCategoryId(parsedId);
-      }
-    }
+    const value = Number(searchParams.get("category"));
+    setSelectedCategoryId(Number.isInteger(value) && value > 0 ? value : null);
   }, [searchParams]);
+
+  useEffect(() => { setPage(1); }, [searchKeyword, selectedCategoryId, shopId, priceRange.min, priceRange.max, selectedRating, sortBy]);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true); setErrorMessage(null); setProducts([]);
+    const timer = setTimeout(() => {
+      catalogService.search({ page, size: 20, keyword: searchKeyword || undefined,
+        categoryId: selectedCategoryId || undefined, shopId,
+        minPrice: priceRange.min !== "" ? Number(priceRange.min) : undefined,
+        maxPrice: priceRange.max !== "" ? Number(priceRange.max) : undefined,
+        minRating: selectedRating || undefined,
+        sortBy: sortBy.startsWith("price") ? "price" : sortBy === "latest" ? "createdAt" : "rating",
+        sortDirection: sortBy === "price-asc" ? "ASC" : "DESC",
+      }).then(data => {
+        if (!active) return;
+        setProducts(data.items.map(mapProduct)); setTotalElements(data.totalElements); setTotalPages(data.totalPages);
+        setIsBackendConnected(true);
+      }).catch(error => {
+        if (!active) return;
+        setIsBackendConnected(false);
+        setErrorMessage(error.response?.data?.message || "Chưa tải được sản phẩm. Vui lòng thử lại sau.");
+      }).finally(() => { if (active) setIsLoading(false); });
+    }, 150);
+    return () => { active = false; clearTimeout(timer); };
+  }, [page, searchKeyword, selectedCategoryId, shopId, priceRange.min, priceRange.max, selectedRating, sortBy, reload]);
 
   const handleSelectCategory = (catId: number | null) => {
     setSelectedCategoryId(catId);
@@ -211,55 +103,28 @@ export const HomePage: React.FC = () => {
     {
       id: 1,
       title: "HeliShop Super Brand Day",
-      subtitle: "Giảm đến 50% thiết bị Apple, Sony, NuPhy & Logitech chính hãng",
-      badge: "ĐỘC QUYỀN HÔM NAY",
+      subtitle: "Khám phá thiết bị và phụ kiện từ các cửa hàng trên HeliShop",
+      badge: "KHÁM PHÁ HELISHOP",
       bgColor: "from-[#0284C7] via-[#0369A1] to-[#0C4A6E]",
-      tag: "Voucher 500K",
+      tag: "Khám phá sản phẩm",
     },
     {
       id: 2,
       title: "Lễ Hội Thanh Toán VNPAY",
-      subtitle: "Nhập mã VNPAY100K giảm ngay 10% - Áp dụng toàn sàn cho mọi đơn hàng",
-      badge: "ƯU ĐÃI ĐỘC QUYỀN VNPAY-QR",
+      subtitle: "Thanh toán COD hoặc VNPAY theo từng đơn hàng",
+      badge: "THANH TOÁN THEO ĐƠN",
       bgColor: "from-[#0369A1] via-[#0284C7] to-[#0EA5E9]",
-      tag: "Hoàn Tiền 100K",
+      tag: "Lựa chọn thanh toán",
     },
     {
       id: 3,
-      title: "Freeship Toàn Quốc 0Đ",
-      subtitle: "Giao hỏa tốc 2 giờ nội thành Hà Nội & TP. Hồ Chí Minh",
-      badge: "TIẾT KIỆM TỐI ĐA",
+      title: "Chọn cách giao hàng phù hợp",
+      subtitle: "Xem phí giao theo từng cửa hàng ở bước thanh toán",
+      badge: "LỰA CHỌN GIAO HÀNG",
       bgColor: "from-[#075985] via-[#0284C7] to-[#38BDF8]",
-      tag: "Miễn Phí Vận Chuyển",
+      tag: "Giao hàng theo đơn",
     },
   ];
-
-  // Helper: Get all descendant category IDs (including the selected category itself)
-  const getCategoryAndDescendantIds = useMemo(() => {
-    return (targetId: number): number[] => {
-      const ids: number[] = [targetId];
-      const traverse = (list: Category[]) => {
-        for (const item of list) {
-          if (item.id === targetId) {
-            const addChildren = (children?: Category[]) => {
-              if (!children) return;
-              for (const ch of children) {
-                ids.push(ch.id);
-                addChildren(ch.children);
-              }
-            };
-            addChildren(item.children);
-            return;
-          }
-          if (item.children && item.children.length > 0) {
-            traverse(item.children);
-          }
-        }
-      };
-      traverse(categories);
-      return ids;
-    };
-  }, [categories]);
 
   // Find active category name for visual feedback
   const activeCategoryName = useMemo(() => {
@@ -277,43 +142,14 @@ export const HomePage: React.FC = () => {
     return findInTree(categories);
   }, [selectedCategoryId, categories]);
 
-  // Filtering & Sorting
-  const filteredProducts = useMemo(() => {
-    return products
-      .filter((product) => {
-        // Keyword filter
-        if (searchKeyword && !product.name.toLowerCase().includes(searchKeyword.toLowerCase())) {
-          return false;
-        }
-        // Category filter: match direct category or any ancestor
-        if (selectedCategoryId) {
-          const matchingIds = getCategoryAndDescendantIds(selectedCategoryId);
-          if (!matchingIds.includes(product.category.id)) {
-            return false;
-          }
-        }
-        // Price range filter
-        if (priceRange.min && product.price < Number(priceRange.min)) return false;
-        if (priceRange.max && product.price > Number(priceRange.max)) return false;
-        // Rating filter
-        if (selectedRating && product.rating < selectedRating) return false;
-
-        return true;
-      })
-      .sort((a, b) => {
-        if (sortBy === "sales") return b.soldCount - a.soldCount;
-        if (sortBy === "latest") return b.id - a.id;
-        if (sortBy === "price-asc") return a.price - b.price;
-        if (sortBy === "price-desc") return b.price - a.price;
-        return b.rating - a.rating; // default: popular
-      });
-  }, [products, searchKeyword, selectedCategoryId, getCategoryAndDescendantIds, priceRange, selectedRating, sortBy]);
+  const filteredProducts = products;
 
   const handleResetFilters = () => {
     setSelectedCategoryId(null);
     setPriceRange({ min: "", max: "" });
     setSelectedRating(null);
     setSortBy("popular");
+    setSearchParams({});
   };
 
   const getCategoryIcon = (slug: string) => {
@@ -469,6 +305,7 @@ export const HomePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Sidebar Filter (3 cols) */}
           <div className="lg:col-span-3">
+            {categoryError && <p role="alert" className="text-sm text-amber-700 mb-3">{categoryError}</p>}
             <SidebarFilter
               categories={categories}
               selectedCategoryId={selectedCategoryId}
@@ -510,18 +347,7 @@ export const HomePage: React.FC = () => {
                   Mới Nhất
                 </button>
 
-                <button
-                  onClick={() => setSortBy("sales")}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-sm ${
-                    sortBy === "sales"
-                      ? "bg-[#0284C7] text-white"
-                      : "bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  Bán Chạy
-                </button>
-
-                {/* Price Sort Dropdown */}
+{/* Price Sort Dropdown */}
                 <div className="relative inline-block">
                   <select
                     value={sortBy === "price-asc" || sortBy === "price-desc" ? sortBy : ""}
@@ -537,7 +363,7 @@ export const HomePage: React.FC = () => {
 
               {/* Product count stats */}
               <div className="text-xs text-slate-500 font-medium">
-                Hiển thị <strong className="text-slate-800">{filteredProducts.length}</strong> sản phẩm
+                Tổng <strong className="text-slate-800">{totalElements}</strong> sản phẩm · Trang {page}/{Math.max(1, totalPages)}
               </div>
             </div>
 
@@ -549,7 +375,7 @@ export const HomePage: React.FC = () => {
                   <span className="font-bold text-[#0284C7] bg-white px-2.5 py-0.5 rounded-md border border-sky-200 shadow-xs">
                     {activeCategoryName}
                   </span>
-                  <span className="text-slate-400 font-medium">({filteredProducts.length} sản phẩm)</span>
+                  <span className="text-slate-400 font-medium">({totalElements} sản phẩm)</span>
                 </div>
                 <button
                   onClick={() => handleSelectCategory(null)}
@@ -595,17 +421,9 @@ export const HomePage: React.FC = () => {
                 <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto">
                   <ServerOff className="w-7 h-7" />
                 </div>
-                <div className="space-y-1 max-w-md mx-auto">
-                  <h4 className="font-bold text-slate-900 text-base">
-                    Chưa kết nối được với Backend Server
-                  </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Hệ thống đã loại bỏ hoàn toàn dữ liệu mẫu (mock data). Frontend hiện kết nối trực tiếp đến cơ sở dữ liệu MySQL qua Spring Boot API tại{" "}
-                    <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-800">http://localhost:8080/api/v1</code>.
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Hãy khởi động backend bằng lệnh <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">.\mvnw.cmd spring-boot:run</code> và nạp tệp <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">seed-data.sql</code> vào MySQL.
-                  </p>
+                <div className="space-y-1 max-w-md mx-auto" role="alert">
+                  <h4 className="font-bold text-slate-900 text-base">Chưa tải được sản phẩm</h4>
+                  <p className="text-sm text-slate-600">{errorMessage || "Vui lòng thử lại sau."}</p>
                 </div>
                 <button
                   onClick={fetchCatalogData}
@@ -648,6 +466,11 @@ export const HomePage: React.FC = () => {
                 ))}
               </div>
             )}
+            {!isLoading && isBackendConnected && totalPages > 1 && <nav aria-label="Phân trang sản phẩm" className="flex justify-center items-center gap-4 pt-4">
+              <button disabled={page <= 1} onClick={() => setPage(value => value - 1)} className="border rounded-lg px-4 py-2 disabled:opacity-40">Trang trước</button>
+              <span className="text-sm">{page} / {totalPages}</span>
+              <button disabled={page >= totalPages} onClick={() => setPage(value => value + 1)} className="border rounded-lg px-4 py-2 disabled:opacity-40">Trang sau</button>
+            </nav>}
           </div>
         </div>
       </main>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { formatVND } from "@/lib/formatters";
+import { catalogService } from "@/services/catalogService";
 import { HeliShopLogo } from "./HeliShopLogo";
 import {
   ShoppingBag,
@@ -40,16 +41,18 @@ export const Header: React.FC = () => {
 
   const cartCount = getTotalBadgeCount();
 
-  const SUGGESTIONS = [
-    "iPhone 16 Pro Max 256GB Titan",
-    "Tai nghe Sony WH-1000XM5",
-    "Bàn phím cơ NuPhy Air75 V2",
-    "MacBook Pro 14 M3 Pro",
-    "Áo Polo Coolmate ExCool",
-    "Chuột Logitech G Pro X Superlight 2",
-    "Củ sạc Anker Prime 67W GaN",
-    "Màn hình Dell UltraSharp 2K",
-  ];
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  useEffect(() => {
+    let active = true;
+    setSuggestions([]);
+    if (!showAutocomplete || !searchQuery.trim()) return;
+    const timer = setTimeout(() => {
+      catalogService.search({ page: 1, size: 5, keyword: searchQuery.trim(), sortBy: "id", sortDirection: "DESC" })
+        .then(data => { if (active) setSuggestions([...new Set(data.items.map(item => item.name))]); })
+        .catch(() => { if (active) setSuggestions([]); });
+    }, 200);
+    return () => { active = false; clearTimeout(timer); };
+  }, [searchQuery, showAutocomplete]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -225,9 +228,10 @@ export const Header: React.FC = () => {
               <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-2xl border border-slate-100 text-slate-700 py-2 z-50 overflow-hidden animate-in fade-in">
                 <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-sky-500" />
-                  Gợi ý tìm kiếm phổ biến
+                  Gợi ý từ sản phẩm hiện có
                 </div>
-                {SUGGESTIONS.map((term, idx) => (
+                {suggestions.length === 0 && <p className="px-4 py-2 text-xs text-slate-500">Nhấn Enter để tìm sản phẩm phù hợp.</p>}
+                {suggestions.map((term, idx) => (
                   <div
                     key={idx}
                     onClick={() => handleSelectSuggestion(term)}

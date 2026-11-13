@@ -10,14 +10,14 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const discountPercent =
-    product.originalPrice && product.originalPrice > product.price
+    product.originalPrice && product.price !== undefined && product.originalPrice > product.price
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : null;
 
   const thumbnail =
     product.images && product.images.length > 0
       ? product.images[0].imageUrl
-      : "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=500&auto=format&fit=crop&q=80";
+      : "/images/product-placeholder.svg";
 
   return (
     <Link
@@ -55,13 +55,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
 
-        {/* Freeship Extra ribbon on bottom of image */}
-        <div className="absolute bottom-1 left-1.5 z-10">
-          <div className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm">
-            <Truck className="w-2.5 h-2.5" />
-            <span>Freeship Xtra</span>
-          </div>
-        </div>
+        {product.stockQuantity === 0 && <span className="absolute bottom-2 left-2 rounded bg-slate-700 text-white px-2 py-1 text-xs">Hết hàng</span>}
       </div>
 
       {/* 2. Product Information */}
@@ -78,9 +72,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="space-y-1.5 pt-1">
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-sm sm:text-base font-extrabold text-[#0284C7]">
-              {formatVND(product.price)}
+              {product.price !== undefined ? formatVND(product.price) : "Chưa có giá"}
             </span>
-            {product.originalPrice && product.originalPrice > product.price && (
+            {product.originalPrice && product.price !== undefined && product.originalPrice > product.price && (
               <span className="text-[11px] text-slate-400 line-through">
                 {formatVND(product.originalPrice)}
               </span>
@@ -91,9 +85,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-50">
             <div className="flex items-center gap-1">
               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-              <span className="font-semibold text-slate-700">{product.rating}</span>
+              <span className="font-semibold text-slate-700">{product.rating > 0 ? product.rating : "Chưa có đánh giá"}</span>
             </div>
-            <span>Đã bán {formatCompact(product.soldCount)}</span>
+            {product.soldCount !== undefined && <span>Đã bán {formatCompact(product.soldCount)}</span>}
           </div>
         </div>
       </div>

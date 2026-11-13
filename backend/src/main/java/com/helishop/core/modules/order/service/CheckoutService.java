@@ -40,6 +40,7 @@ public class CheckoutService {
     private final OrderService orderService;
     private final RedisCartService cart;
     private final ObjectMapper json;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     @Transactional(readOnly = true)
     public CheckoutQuoteResponse quote(Long userId, CheckoutBatchRequest request) {
@@ -98,6 +99,7 @@ public class CheckoutService {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Không thể ghi nhận phiên đặt hàng");
         }
         Map<Long, Integer> purchased = quantities(request);
+        events.publishEvent(new com.helishop.core.modules.product.service.ProductStockChanged(Set.copyOf(lockedProducts.keySet())));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override public void afterCommit() {
                 try { cart.consumePurchasedItems(userId, purchased); }

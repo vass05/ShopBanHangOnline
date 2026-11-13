@@ -4,6 +4,8 @@ Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), c
 
 ## Cập nhật rà soát tích hợp — 13/11/2026
 
+Chức năng 07 đã merge PR #7. Chức năng 08 trên `feat/server-catalog-pagination` đồng bộ catalog, phân trang/filter server, mapper chung, quyền xem hàng ngừng bán và xóa cache stock sau commit; **149/149 backend tests, 30/30 frontend tests/build pass**. Chi tiết: [integration-08-catalog.md](sprints/integration-08-catalog.md).
+
 Chức năng 06 đã merge PR #6. Chức năng 07 trên `fix/vnpay-return-and-ipn` hoàn thiện Return/IPN, trạng thái chờ xác nhận và outbox RabbitMQ; **144/144 backend tests, 26/26 frontend tests/build pass**. Chi tiết: [integration-07-vnpay.md](sprints/integration-07-vnpay.md). Giao dịch ngân hàng với merchant thật chưa nghiệm thu.
 
 Chức năng 05 đã merge PR #5. Chức năng 06 trên `feat/order-history-and-cancellation` nối lịch sử/hủy đơn với API, bổ sung khóa vòng đời và kiểm tra hoàn kho đồng thời; backend 132/132 tests, frontend 22/22 tests và build pass. Chi tiết: [integration-06-order-history.md](sprints/integration-06-order-history.md).

@@ -1,6 +1,7 @@
 package com.helishop.core.modules.product.service;
 
 import com.helishop.core.common.exception.AppException;
+import com.helishop.core.common.constants.ProductStatus;
 import com.helishop.core.common.exception.ErrorCode;
 import com.helishop.core.common.response.PageResponse;
 import com.helishop.core.modules.product.dto.ProductFilterCriteria;
@@ -56,6 +57,14 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public PageResponse<ProductResponse> searchProducts(ProductFilterCriteria criteria) {
+        if (criteria.getPage() < 1 || criteria.getSize() < 1 || criteria.getSize() > 100
+                || criteria.getSortBy() == null || !java.util.Set.of("id", "price", "createdAt", "rating").contains(criteria.getSortBy())
+                || (criteria.getMinPrice() != null && criteria.getMaxPrice() != null && criteria.getMinPrice().compareTo(criteria.getMaxPrice()) > 0)) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Bộ lọc hoặc phân trang không hợp lệ");
+        }
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean admin = authentication != null && authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        if (!admin) criteria.setStatus(ProductStatus.ACTIVE);
         Sort.Direction direction = "ASC".equalsIgnoreCase(criteria.getSortDirection())
                 ? Sort.Direction.ASC
                 : Sort.Direction.DESC;
@@ -80,10 +89,17 @@ public class ProductService {
                 criteria.getMaxPrice(),
                 criteria.getMinRating()
         );
+        if (!admin) spec = spec.and((root, query, builder) -> builder.equal(root.get("shop").get("status"), com.helishop.core.common.constants.ShopStatus.ACTIVE));
 
         // productRepository.findAll với @EntityGraph(attributePaths = {"category", "shop"}) giải quyết N+1 query
         Page<Product> page = productRepository.findAll(spec, pageable);
-        Page<ProductResponse> dtoPage = page.map(productMapper::toResponse);
+        // List responses use the already-fetched shop/category and main image; collections are loaded only on the detail endpoint.
+        Page<ProductResponse> dtoPage = page.map(product -> ProductResponse.builder()
+                .id(product.getId()).name(product.getName()).slug(product.getSlug()).description(product.getDescription())
+                .price(product.getPrice()).rating(product.getRating()).stockQuantity(product.getStockQuantity()).status(product.getStatus())
+                .mainImageUrl(product.getMainImageUrl()).shopId(product.getShop().getId()).shopName(product.getShop().getShopName()).shopStatus(product.getShop().getStatus())
+                .categoryId(product.getCategory().getId()).categoryName(product.getCategory().getName())
+                .skus(List.of()).images(List.of()).createdAt(product.getCreatedAt()).updatedAt(product.getUpdatedAt()).build());
         return PageResponse.from(dtoPage);
     }
 

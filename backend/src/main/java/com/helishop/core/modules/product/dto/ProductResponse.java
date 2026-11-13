@@ -26,6 +26,7 @@ public class ProductResponse {
 
     @Schema(description = "Tên gian hàng bán sản phẩm", example = "Apple Official Flagship Store")
     private String shopName;
+    private com.helishop.core.common.constants.ShopStatus shopStatus;
 
     @Schema(description = "ID danh mục", example = "10")
     private Long categoryId;

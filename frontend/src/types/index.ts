@@ -39,11 +39,12 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
-  price: number;
+  price?: number;
   originalPrice?: number;
   rating: number;
-  reviewCount: number;
-  soldCount: number;
+  stockQuantity?: number;
+  reviewCount?: number;
+  soldCount?: number;
   category: Category;
   shop: Shop;
   isFavorite?: boolean;

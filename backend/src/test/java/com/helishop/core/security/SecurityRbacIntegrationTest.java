@@ -34,6 +34,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc // Giữ nguyên SecurityFilterChain để kiểm tra phân quyền thực tế
 class SecurityRbacIntegrationTest {
 
+    @Test void invalidCatalogPageSizeAndSortAreBadRequests() throws Exception {
+        mockMvc.perform(get("/api/v1/products").param("page", "0")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/products").param("size", "200")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/products").param("sortBy", "passwordHash")).andExpect(status().isBadRequest());
+    }
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -62,7 +68,7 @@ class SecurityRbacIntegrationTest {
     @DisplayName("Public Access: Người dùng chưa đăng nhập xem được chi tiết sản phẩm (HTTP 200)")
     void shouldAllowPublicAccessToGetProducts() throws Exception {
         when(productService.getById(1L))
-                .thenReturn(ProductResponse.builder().id(1L).name("iPhone 16 Pro").build());
+                .thenReturn(ProductResponse.builder().id(1L).name("iPhone 16 Pro").status(com.helishop.core.common.constants.ProductStatus.ACTIVE).build());
 
         mockMvc.perform(get("/api/v1/products/1")
                         .accept(MediaType.APPLICATION_JSON))

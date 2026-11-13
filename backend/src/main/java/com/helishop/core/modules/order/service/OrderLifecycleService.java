@@ -16,6 +16,7 @@ public class OrderLifecycleService {
     private final OrderRepository orders;
     private final OrderService orderService;
     private final ResourceAccess access;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     @Transactional
     public OrderResponse update(Long id, OrderStatus target) {
@@ -39,6 +40,12 @@ public class OrderLifecycleService {
             case CANCELLED, RETURNED -> Set.of();
         };
         if (!allowed.contains(target)) throw new AppException(ErrorCode.INVALID_REQUEST, "Không được chuyển trạng thái từ " + current + " sang " + target);
-        return orderService.updateOrderStatus(id, target);
+        OrderResponse result = orderService.updateOrderStatus(id, target);
+        if (target == OrderStatus.CANCELLED || target == OrderStatus.RETURNED) {
+            events.publishEvent(new com.helishop.core.modules.product.service.ProductStockChanged(order.getItems().stream()
+                    .filter(item -> item.getProductSku() != null && item.getProductSku().getProduct() != null)
+                    .map(item -> item.getProductSku().getProduct().getId()).collect(java.util.stream.Collectors.toSet())));
+        }
+        return result;
     }
 }

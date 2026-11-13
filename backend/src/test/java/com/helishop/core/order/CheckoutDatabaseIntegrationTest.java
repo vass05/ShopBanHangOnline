@@ -34,6 +34,10 @@ class CheckoutDatabaseIntegrationTest {
     @Autowired OrderRepository orders;
     @Autowired com.helishop.core.modules.order.service.OrderLifecycleService lifecycle;
     @MockBean RedisCartService cart;
+    @MockBean org.springframework.cache.CacheManager cacheManager;
+    @Autowired com.helishop.core.modules.product.service.ProductService productService;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
     @Autowired com.helishop.core.modules.payment.service.PaymentService payment;
     @Autowired com.helishop.core.modules.payment.config.VnPayConfig vnPayConfig;
     @Autowired com.helishop.core.modules.payment.repository.PaymentTransactionRepository transactions;
@@ -43,6 +47,7 @@ class CheckoutDatabaseIntegrationTest {
     List<Long> skuIds;
 
     @BeforeEach void fixtures() {
+        when(cacheManager.getCache("products")).thenReturn(new org.springframework.cache.concurrent.ConcurrentMapCache("products"));
         String suffix = UUID.randomUUID().toString();
         var customer = users.save(User.builder().email(suffix + "@test.com").fullName("Buyer").passwordHash("hash")
                 .role(UserRole.ROLE_CUSTOMER).status(UserStatus.ACTIVE).build());
@@ -197,5 +202,51 @@ class CheckoutDatabaseIntegrationTest {
             lifecycle.update(order.getId(), OrderStatus.CONFIRMED);
             assertThrows(com.helishop.core.common.exception.AppException.class, () -> lifecycle.update(order.getId(), OrderStatus.SHIPPING));
         } finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
+    }
+
+    @Test void catalogCanFindProductsBeyondFirstFiftyWithoutFetchingCollections() {
+        var sku = skus.findByIdWithProductAndShop(skuIds.getFirst()).orElseThrow();
+        var base = products.findById(sku.getProduct().getId()).orElseThrow();
+        String prefix = "Catalog-" + UUID.randomUUID();
+        for (int i = 0; i < 55; i++) products.save(Product.builder().name(prefix + i).slug(prefix + i).shop(base.getShop()).category(base.getCategory())
+                .price(BigDecimal.valueOf(1000 + i)).stockQuantity(1).status(ProductStatus.ACTIVE).build());
+        products.save(Product.builder().name(prefix + " hidden").slug(prefix + "-hidden").shop(base.getShop()).category(base.getCategory())
+                .price(BigDecimal.ONE).stockQuantity(1).status(ProductStatus.INACTIVE).build());
+        var stats = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true); stats.clear();
+        var criteria = com.helishop.core.modules.product.dto.ProductFilterCriteria.builder().page(3).size(20).keyword(prefix).sortBy("id").sortDirection("ASC").status(ProductStatus.INACTIVE).build();
+        var page = productService.searchProducts(criteria);
+        assertEquals(55, page.getTotalElements()); assertEquals(15, page.getItems().size()); assertEquals(3, page.getPage());
+        assertTrue(page.getItems().stream().allMatch(product -> product.getStatus() == ProductStatus.ACTIVE));
+        assertEquals(0, stats.getCollectionFetchCount()); assertTrue(stats.getQueryExecutionCount() <= 2);
+        criteria.setPage(0);
+        assertThrows(com.helishop.core.common.exception.AppException.class, () -> productService.searchProducts(criteria));
+    }
+
+    @Test void detailCanLoadMultipleSkusAndMultipleImagesWithoutBagFetchFailure() {
+        var sku = skus.findByIdWithProductAndShop(skuIds.getFirst()).orElseThrow();
+        Long productId = sku.getProduct().getId();
+        new org.springframework.transaction.support.TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            var product = products.findById(productId).orElseThrow();
+            product.getSkus().add(ProductSku.builder().product(product).skuCode("SECOND-" + UUID.randomUUID()).price(BigDecimal.valueOf(120000)).stockQuantity(5).build());
+            product.getImages().add(ProductImage.builder().product(product).imageUrl("/image-1.png").isThumbnail(true).displayOrder(1).build());
+            product.getImages().add(ProductImage.builder().product(product).imageUrl("/image-2.png").isThumbnail(false).displayOrder(2).build());
+            product.setStockQuantity(15);
+        });
+        var detail = productService.getById(productId);
+        assertEquals(2, detail.getSkus().size()); assertEquals(2, detail.getImages().size());
+    }
+
+    @Test void committedCheckoutAndCancellationInvalidateProductStockCache() {
+        var sku = skus.findByIdWithProductAndShop(skuIds.getFirst()).orElseThrow();
+        Long productId = sku.getProduct().getId();
+        assertEquals(10, productService.getById(productId).getSkus().getFirst().getStockQuantity());
+        var created = service.checkout(customerId, request(), "cache-checkout-0001");
+        assertEquals(9, productService.getById(productId).getSkus().getFirst().getStockQuantity());
+        Long orderId = created.stream().filter(order -> order.getItems().stream().anyMatch(item -> productId.equals(item.getProductId()))).findFirst().orElseThrow().getId();
+        authenticateAdmin();
+        try { lifecycle.update(orderId, OrderStatus.CANCELLED); }
+        finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
+        assertEquals(10, productService.getById(productId).getSkus().getFirst().getStockQuantity());
     }
 }

@@ -106,7 +106,7 @@ export const DashboardPage: React.FC = () => {
       // 5 concurrent requests sent at the exact same millisecond
       const results = await Promise.allSettled([
         api.get("/categories/tree"),
-        api.get("/products?page=0&size=2"),
+        api.get("/products?page=1&size=2"),
         api.get("/categories"),
         api.get("/cart"),
         api.get("/categories/tree"),

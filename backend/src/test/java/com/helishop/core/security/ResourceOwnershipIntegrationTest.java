@@ -141,4 +141,12 @@ class ResourceOwnershipIntegrationTest {
                         .content("{\"email\":\"admin@test.com\",\"password\":\"Password123!\",\"role\":\"ROLE_ADMIN\"}"))
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value(1005));
     }
+
+    @Test void inactiveProductIsVisibleOnlyToItsSellerOrAdmin() throws Exception {
+        when(products.getById(30L)).thenReturn(com.helishop.core.modules.product.dto.ProductResponse.builder()
+                .id(30L).shopId(20L).status(com.helishop.core.common.constants.ProductStatus.INACTIVE).build());
+        mvc.perform(get("/api/v1/products/30")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/products/30").header("Authorization", token(4, "SELLER"))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/products/30").header("Authorization", token(3, "SELLER"))).andExpect(status().isOk());
+    }
 }
