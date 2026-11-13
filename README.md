@@ -95,7 +95,7 @@ WebMall/
 │   ├── src/main/resources/
 │   │   ├── application.yml                   # Cấu hình MySQL, Redis, RabbitMQ, Mail, JWT
 │   │   └── seed-data.sql                     # Kịch bản nạp dữ liệu mẫu ban đầu
-│   ├── src/test/                             # 103 bài kiểm thử tự động toàn diện
+│   ├── src/test/                             # Kiểm thử backend tự động
 │   │   ├── CartAndStockConcurrencyStressTest # Stress test 200 threads chống âm kho
 │   │   ├── PaymentAndEmailDlqE2ETest.java    # E2E Webhook VNPAY & cơ chế chịu lỗi DLQ
 │   │   ├── PessimisticLockingIntegrationTest # Kiểm thử khóa bi quan dòng PESSIMISTIC_WRITE
@@ -223,20 +223,33 @@ npm run dev
 
 ## Kiểm Thử Hệ Thống (Testing)
 
-Dự án sở hữu bộ kiểm thử tự động toàn diện gồm **103 bài kiểm thử (100% Passed)**:
+Kiểm tra backend bằng Java 21 và frontend bằng Node 20 trở lên:
 
 ```powershell
 cd backend
-
-# Chạy toàn bộ 103 bài kiểm thử (Unit, Integration, Stress, E2E)
-.\mvnw.cmd test
-
-# Chạy kiểm thử tải 200 threads đồng thời chống âm kho
-.\mvnw.cmd test "-Dtest=CartAndStockConcurrencyStressTest"
+.\mvnw.cmd clean test
+cd ../frontend
+npm ci
+npm test
+npm run build
 ```
 
----
+Browser E2E sử dụng cụm Docker riêng, hai shop/SKU thử nghiệm và Mailpit thu email nội bộ. Không gửi email ra Internet hoặc giao dịch với ngân hàng. Từ thư mục gốc:
 
+```powershell
+.\scripts\Prepare-Integration.ps1
+cd frontend
+npx playwright install chromium
+npm run test:e2e
+```
+
+Trên Windows đã có Chrome, có thể đặt `$env:E2E_BROWSER_CHANNEL='chrome'` thay bước tải Chromium. Web thử: http://localhost:18000 ; hộp thư nội bộ: http://localhost:18025. Script chỉ nhận project/volume `helishop-integration` đã định trước, không nạp fixture vào dev/production. Chạy lại script sẽ đặt tồn kho hai SKU thử về 50.
+
+Các ca kiểm tra gồm mua COD, Redis TTL, quyền sở hữu đơn, hủy/hoàn kho, lưu phiên và refresh/logout, OTP qua SMTP, checkout nhiều shop chống trùng, Return chờ IPN, IPN đồng thời, outbox/RabbitMQ/email, avatar qua tạo lại backend và SMTP lỗi vào DLQ. Trong ca cuối, Mailpit của cụm thử được dừng rồi bật lại; thông điệp lỗi giữ trong `order.email.dlq` để kiểm tra/gửi lại có kiểm soát. Listener DLQ không tự tiêu thụ chỉ để ghi log. Email giao nhận theo cơ chế at least once, vẫn có thể trùng khi worker dừng sau khi SMTP đã nhận thư nhưng trước khi ACK.
+
+GitHub Actions chạy backend tests, frontend tests/build và toàn bộ cụm Docker/browser E2E cho PR và main, giữ báo cáo 7 ngày. Kết quả nghiệm thu và giới hạn nhà cung cấp nằm trong [bàn giao tích hợp](docs/sprints/integration-10-browser-ci.md).
+
+---
 ## Tài Liệu Tham Khảo
 
 - [Kiến Trúc Hệ Thống & Sơ Đồ Luồng (Architecture)](docs/ARCHITECTURE.md)

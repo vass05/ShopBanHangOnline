@@ -715,7 +715,7 @@ export const ProfilePage: React.FC = () => {
                     {/* Exact format notice from Shopee */}
                     <div className="text-[13px] text-[#888888] text-center mt-3.5 space-y-1 leading-snug">
                       <p>Dung lượng file tối đa 5 MB</p>
-                      <p>Định dạng:.JPEG, .PNG</p>
+                      <p>Định dạng: JPEG, PNG, WEBP</p>
                     </div>
                   </div>
                 </div>
