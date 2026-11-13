@@ -2,6 +2,23 @@
 
 Ngày rà soát: **13/11/2026 (Asia/Saigon)**. Baseline mã nguồn: `acdd254`.
 
+## Tiến độ triển khai theo chức năng
+
+Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm thử, PR vào main và merge trước khi bắt đầu chức năng tiếp theo. Quy trình PR này thay cho push trực tiếp main.
+
+| Chức năng | Nhánh | Trạng thái kiểm chứng |
+| --- | --- | --- |
+| Định danh và quyền sở hữu tài nguyên | `fix/identity-and-resource-ownership` | Đã triển khai; backend 109/109 tests pass; bàn giao qua PR |
+| Phiên đăng nhập và refresh token | Chưa tạo | Chờ triển khai |
+| OTP khôi phục mật khẩu | Chưa tạo | Chờ triển khai |
+| Giỏ hàng Redis | Chưa tạo | Chờ triển khai |
+| Checkout, voucher/phí và nhiều shop | Chưa tạo | Chờ triển khai |
+| Lịch sử đơn và hủy đơn | Chưa tạo | Chờ triển khai |
+| VNPAY và kết quả thanh toán | Chưa tạo | Chờ triển khai |
+| Catalog và phân trang | Chưa tạo | Chờ triển khai |
+| Docker và uploads | Chưa tạo | Chờ triển khai |
+| E2E và CI | Chưa tạo | Chờ triển khai |
+
 ## 1. Kết luận và phạm vi kiểm chứng
 
 **Frontend và backend chưa khớp hoàn chỉnh ở luồng mua hàng.** Catalog, xác thực cơ bản và hồ sơ đã có kết nối API; giỏ hàng, đặt hàng và lịch sử đơn vẫn phụ thuộc dữ liệu trong trình duyệt. Chưa đạt điều kiện bàn giao luồng mua hàng tích hợp hoặc triển khai cho người dùng thật.

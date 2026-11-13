@@ -6,6 +6,8 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
+**Triển khai chức năng 01 (13/11/2026):** nhánh `fix/identity-and-resource-ownership` sửa danh tính JWT và quyền truy cập giỏ/đơn/shop/sản phẩm, chặn tự đăng ký ADMIN; backend **109/109 tests pass**. User đã yêu cầu mỗi chức năng tạo nhánh → PR → merge main, thay cho push trực tiếp main. Còn phiên frontend, OTP và các luồng thương mại cần triển khai tiếp; chưa được đánh dấu tích hợp hoàn chỉnh.
+
 **Cập nhật 13/11/2026:** Đã rà soát hợp đồng frontend/backend; **chưa hoàn thành tích hợp luồng mua hàng**. Giỏ hàng, tạo đơn và lịch sử đơn còn chạy cục bộ; VNPAY gửi sai trường và có fallback success; checkout chưa dùng sổ địa chỉ hay phí/voucher tính bởi backend. Cần sửa quyền sở hữu đơn/giỏ và chặn tự cấp role quản trị trước khi triển khai.
 
 Đã chạy lại backend test: **103/103 pass** và frontend `npm run build`: **pass, 1707 modules**. Đây là bằng chứng build/test baseline; chưa có browser E2E hoặc kiểm chứng cả cụm production trong lần rà soát. Kế hoạch tiếp theo: [implementation_plan.md](../implementation_plan.md), các giai đoạn **chưa triển khai**. Các ghi nhận hoàn thành Project 2 phía dưới là lịch sử bàn giao, cần đọc cùng giới hạn này.

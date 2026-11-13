@@ -55,6 +55,9 @@ class SecurityRbacIntegrationTest {
     @MockBean
     private StringRedisTemplate stringRedisTemplate;
 
+    @MockBean
+    private com.helishop.core.modules.user.repository.ShopRepository shopRepository;
+
     @Test
     @DisplayName("Public Access: Người dùng chưa đăng nhập xem được chi tiết sản phẩm (HTTP 200)")
     void shouldAllowPublicAccessToGetProducts() throws Exception {
@@ -107,6 +110,11 @@ class SecurityRbacIntegrationTest {
     @Test
     @DisplayName("201 Created: SELLER được phép tạo mới sản phẩm thành công")
     void shouldAllowSellerToCreateProduct() throws Exception {
+        var owner = com.helishop.core.modules.user.entity.User.builder().build();
+        owner.setId(2L);
+        var shop = com.helishop.core.modules.user.entity.Shop.builder().owner(owner).build();
+        shop.setId(1L);
+        when(shopRepository.findById(1L)).thenReturn(java.util.Optional.of(shop));
         String sellerToken = jwtUtils.generateAccessToken("seller@test.com", 2L, "ROLE_SELLER", "Chủ Shop");
 
         ProductRequest request = ProductRequest.builder()
