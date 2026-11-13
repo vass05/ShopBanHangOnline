@@ -16,16 +16,18 @@ Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm t
 | Lịch sử đơn và hủy đơn | `feat/order-history-and-cancellation` | PR #6 đã merge; backend 132/132 tests; frontend 22/22 tests/build pass |
 | VNPAY và kết quả thanh toán | `fix/vnpay-return-and-ipn` | PR #7 đã merge; backend 144/144 tests; frontend 26/26 tests/build pass |
 | Catalog và phân trang | `feat/server-catalog-pagination` | PR #8 đã merge; backend 149/149 tests; frontend 30/30 tests/build pass |
-| Docker và uploads | `fix/docker-runtime-and-uploads` | Backend 152/152 tests; frontend 31/31 tests/build pass; 5/5 Docker healthy, upload giữ nguyên sau tạo lại backend; bàn giao qua PR |
-| E2E và CI | Chưa tạo | Chờ triển khai |
+| Docker và uploads | `fix/docker-runtime-and-uploads` | PR #9 đã merge; backend 152/152 tests; frontend 31/31 tests/build pass; 5/5 Docker healthy, upload giữ nguyên sau tạo lại backend |
+| E2E và CI | `test/browser-checkout-and-ci` | [PR #10](https://github.com/vass05/ShopBanHangOnline/pull/10); 7/7 browser E2E pass trên cụm thật; 152 backend tests, 31 frontend tests/build pass; workflow 3 jobs |
 
 ## 1. Kết luận và phạm vi kiểm chứng
 
-**Frontend và backend chưa khớp hoàn chỉnh ở luồng mua hàng.** Catalog, xác thực cơ bản và hồ sơ đã có kết nối API; giỏ hàng, đặt hàng và lịch sử đơn vẫn phụ thuộc dữ liệu trong trình duyệt. Chưa đạt điều kiện bàn giao luồng mua hàng tích hợp hoặc triển khai cho người dùng thật.
+**Luồng mua hàng khách hàng đã được đồng bộ và kiểm chứng trên Docker cục bộ:** catalog, phiên/OTP, giỏ Redis, địa chỉ/checkout, đơn mua/hủy, thanh toán chờ IPN và ảnh đại diện. Bộ browser E2E dùng MySQL, Redis, RabbitMQ, Nginx và SMTP Mailpit thật; không gọi ngân hàng hoặc gửi email ra ngoài. Chi tiết: [bàn giao E2E/CI](docs/sprints/integration-10-browser-ci.md).
+
+Điều kiện phát hành Internet còn cần merchant VNPAY/callback công khai, SMTP/Cloudinary của đơn vị vận hành, HTTPS, backup và migration có kiểm soát. Dashboard admin/seller, đánh giá, chat, vận chuyển ngoài và payment-group nhiều shop vẫn là phần mở rộng đã loại khỏi đợt này.
 
 Các ma trận và bằng chứng rà soát bên dưới ghi nhận baseline `acdd254`. Tiến độ sửa hiện tại nằm ở bảng theo chức năng phía trên; chỉ đánh dấu hoàn thành phần đã kiểm chứng và bàn giao qua PR.
 
-Đã chạy trong lần rà soát này:
+Bằng chứng baseline trước khi triển khai:
 
 - Backend: `cd backend; .\mvnw.cmd test` — **103 tests, 0 failures, 0 errors, 0 skipped**.
 - Frontend: `tsc --noEmit` ở thư mục frontend — exit 0; kiểm tra chính bằng `npm run build` (`tsc -b && vite build`) — **thành công, 1707 modules**. `tsconfig.json` gốc dùng project references nên không dùng riêng `--noEmit` để kết luận đã kiểm tra toàn bộ ứng dụng.
@@ -33,7 +35,7 @@ Các ma trận và bằng chứng rà soát bên dưới ghi nhận baseline `ac
 - Các test backend dùng cấu hình H2; bài test tên E2E payment/email có mock RabbitTemplate, EmailService và Redis. Kết quả này chưa chứng minh trình duyệt, MySQL, Redis, RabbitMQ, SMTP và cổng VNPAY thật hoạt động cùng nhau.
 - Chưa chạy browser E2E, chưa khởi động hoặc kiểm chứng toàn bộ cụm production Docker trong lần rà soát này.
 
-## 2. Ma trận mức độ khớp
+## 2. Ma trận baseline trước khi triển khai
 
 | Luồng | Frontend hiện tại | Backend hiện tại | Kết luận / việc cần làm |
 | --- | --- | --- | --- |

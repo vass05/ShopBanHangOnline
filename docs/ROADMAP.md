@@ -1,52 +1,29 @@
 # LỘ TRÌNH DỰ ÁN TỔNG THỂ: HELISHOP E-COMMERCE
 
-Chức năng 08 đã merge PR #8. Chức năng 09 trên `fix/docker-runtime-and-uploads`: backend 152/152 tests, frontend 31/31 tests/build pass; build image thành công, 5/5 Docker services healthy, API/ảnh qua Nginx và ảnh giữ nguyên sau tạo lại riêng backend. Cụm thử web 18000 dùng volume riêng, giữ nguyên dev. Chi tiết: [integration-09-docker-uploads.md](sprints/integration-09-docker-uploads.md).
+## Trạng thái tích hợp — 13/11/2026
 
-Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), các dự án (Projects) và Sprint chi tiết từ khởi tạo đến bàn giao hoàn thiện.
+Luồng khách hàng đã được kiểm chứng trên Docker cục bộ: catalog → xác thực/OTP → giỏ Redis → địa chỉ/checkout → đơn mua/hủy → Return/IPN → email/ảnh đại diện. Các chức năng 01–09 đã merge qua PR #1–#9; chức năng 10 trên `test/browser-checkout-and-ci` bổ sung browser E2E và ba job CI, bàn giao qua PR riêng.
 
-## Cập nhật rà soát tích hợp — 13/11/2026
+Kết quả: **152/152 backend tests, 31/31 frontend tests/build, 7/7 browser E2E pass**. Cụm thử web 18000 dùng MySQL, Redis, RabbitMQ, Nginx và Mailpit thật, volume riêng; không thay đổi container dev. Chi tiết từng chức năng và nhánh/PR: [implementation_plan.md](../implementation_plan.md). Tổng kết: [integration-10-browser-ci.md](sprints/integration-10-browser-ci.md).
 
-Chức năng 07 đã merge PR #7. Chức năng 08 trên `feat/server-catalog-pagination` đồng bộ catalog, phân trang/filter server, mapper chung, quyền xem hàng ngừng bán và xóa cache stock sau commit; **149/149 backend tests, 30/30 frontend tests/build pass**. Chi tiết: [integration-08-catalog.md](sprints/integration-08-catalog.md).
+Đợt này hoàn thành tích hợp cục bộ, chưa nghiệm thu nhà cung cấp thật hoặc phát hành Internet. Không đánh đồng các mốc lịch sử “100%” phía dưới với việc production đã sẵn sàng.
 
-Chức năng 06 đã merge PR #6. Chức năng 07 trên `fix/vnpay-return-and-ipn` hoàn thiện Return/IPN, trạng thái chờ xác nhận và outbox RabbitMQ; **144/144 backend tests, 26/26 frontend tests/build pass**. Chi tiết: [integration-07-vnpay.md](sprints/integration-07-vnpay.md). Giao dịch ngân hàng với merchant thật chưa nghiệm thu.
+| Phần tiếp theo | Điều kiện |
+| --- | --- |
+| VNPAY/SMTP/Cloudinary thật | Merchant/secret hợp lệ, callback HTTPS công khai, kiểm chứng giao dịch và lỗi nhà cung cấp |
+| Vận hành Internet | Domain/TLS, backup và thử khôi phục, migration schema có kiểm soát, giám sát outbox/DLQ |
+| Mở rộng seller/admin | Dashboard, kênh nhận seller-notify, đánh giá/chat/vận chuyển ngoài; lập kế hoạch riêng |
+| Thanh toán gộp nhiều shop | Payment-group riêng; hiện hỗ trợ thanh toán từng đơn theo shop |
 
-Chức năng 05 đã merge PR #5. Chức năng 06 trên `feat/order-history-and-cancellation` nối lịch sử/hủy đơn với API, bổ sung khóa vòng đời và kiểm tra hoàn kho đồng thời; backend 132/132 tests, frontend 22/22 tests và build pass. Chi tiết: [integration-06-order-history.md](sprints/integration-06-order-history.md).
-
-Chức năng 04 đã merge PR #4. Chức năng 05 trên `feat/server-checkout-and-pricing` triển khai báo giá/checkout thật, voucher/phí server, nhiều shop, receipt chống trùng và trừ giỏ sau commit. Frontend 18 tests/build pass, backend 130/130 tests pass. Chi tiết: [integration-05-server-checkout.md](sprints/integration-05-server-checkout.md).
-
-Chức năng 03 đã merge PR #3. Chức năng 04 (giỏ hàng Redis) trên `feat/redis-cart-integration` đã nối API và qua **15/15 frontend tests**, production build pass; xem [integration-04-redis-cart.md](sprints/integration-04-redis-cart.md).
-
-Chức năng 02 đã merge PR #2. Chức năng 03 (OTP khôi phục mật khẩu) trên `fix/password-reset-otp` qua **116/116 backend tests**; xem [integration-03-password-reset.md](sprints/integration-03-password-reset.md).
-
-Chức năng 01 đã merge qua PR #1. Chức năng 02 (phiên đăng nhập/refresh) trên nhánh `fix/auth-session-persistence` đã qua **10/10 frontend tests** và build production; chi tiết [integration-02-auth-session.md](sprints/integration-02-auth-session.md).
-
-Tiến độ triển khai: chức năng **định danh và quyền sở hữu tài nguyên** đã có trên nhánh `fix/identity-and-resource-ownership`, backend **109/109 tests pass**, bàn giao qua PR trước khi triển khai chức năng tiếp theo. Chi tiết: [integration-01-resource-ownership.md](sprints/integration-01-resource-ownership.md). Các phần khác tiếp tục theo bảng tiến độ trong implementation_plan.md.
-
-**Chưa đạt nghiệm thu tích hợp frontend/backend cho luồng mua hàng.** Các mốc “100%” bên dưới ghi nhận bàn giao lịch sử từng phần, không chứng minh luồng trình duyệt → API → dữ liệu production đã hoàn chỉnh.
-
-Rà soát mã nguồn xác nhận giỏ hàng và đơn mua đang lưu cục bộ; checkout chưa gọi API tạo đơn, payload VNPAY lệch và lỗi thanh toán có fallback thành công. Cần đồng bộ hợp đồng, quyền sở hữu dữ liệu, phí/voucher, nhiều shop và cấu hình Docker.
-
-Kế hoạch chi tiết và tiêu chí nghiệm thu: [implementation_plan.md](../implementation_plan.md). Trạng thái các giai đoạn dưới đây: **đã lập kế hoạch, chưa triển khai**.
-
-| Thứ tự | Giai đoạn tiếp theo | Ưu tiên |
-| --- | --- | --- |
-| 1 | Chốt hợp đồng API, sửa quyền truy cập và phiên đăng nhập | P0 |
-| 2 | Nối giỏ hàng frontend với Redis Cart API | P0 |
-| 3 | Checkout COD, tiền hàng server, nhiều shop và đơn mua thật | P0 |
-| 4 | VNPAY với orderCode thật, xác minh return và trạng thái IPN | P0 |
-| 5 | Catalog phân trang/lọc server và Docker/ảnh upload | P1 |
-| 6 | Browser E2E, dịch vụ thật, CI và bàn giao | P0 cho phát hành |
-
-Kiểm tra baseline lần này: backend **103/103 tests pass**, frontend **production build pass**. Chưa chạy browser E2E hoặc nghiệm thu toàn cụm Docker production.
+Các phần Project/Sprint phía dưới lưu lịch sử phát triển. Baseline trước đợt sửa `acdd254` có 103 backend tests và chưa nối giỏ/checkout; trạng thái hiện hành là kết quả ở trên.
 
 ---
-
 ## 🧭 TỔNG QUAN CÁC GIAI ĐOẠN (PROJECTS)
 
 ```mermaid
 graph TD
     P1[Project 1: HeliShop Core E-Commerce Backend] -->|Hoàn thành 100%| P2[Project 2: Shopee E-Commerce Integration & Automation]
-    P2 -->|Cần nghiệm thu tích hợp theo kế hoạch 13/11/2026| I[Đồng bộ Frontend / Backend]
+    P2 -->|Đã nghiệm thu tích hợp cục bộ 13/11/2026| I[Đồng bộ Frontend / Backend]
     I --> P3[Project 3: Production Hardening, Microservices & CI/CD Cloud]
 ```
 

@@ -1,43 +1,26 @@
-# BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE (LIVING MEMORY)
+# BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE
 
-Chức năng 08 đã merge PR #8. Chức năng 09 trên `fix/docker-runtime-and-uploads`: backend 152/152 tests, frontend 31/31 tests/build pass; build image thành công, 5/5 Docker services healthy, API/ảnh qua Nginx và ảnh giữ nguyên sau tạo lại riêng backend. Cụm thử web 18000 dùng volume riêng, giữ nguyên dev. Chi tiết: [integration-09-docker-uploads.md](sprints/integration-09-docker-uploads.md).
+## 1. Trạng thái hiện hành — 13/11/2026
 
-Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự án, các thông số kết nối, tài khoản kiểm thử, kiến trúc hiện thời và các bài học kỹ thuật quan trọng nhằm loại bỏ rủi ro quên ngữ cảnh giữa các phiên làm việc.
+Người dùng yêu cầu **mỗi chức năng tạo nhánh → PR → merge main**, thay cho push thẳng main trong quy tắc cũ. Các chức năng 01–09 đã merge PR #1–#9. Chức năng 10 bàn giao tại [PR #10](https://github.com/vass05/ShopBanHangOnline/pull/10), nhánh `test/browser-checkout-and-ci`; hoàn tất browser E2E và CI trước khi bàn giao PR. Không coi các ghi nhận baseline/Sprint phía dưới là nghiệm thu production.
 
----
+**Kiểm chứng:** backend 152/152 tests, frontend 31/31 tests và build pass; 7/7 Playwright E2E qua Chrome headless trên Docker thật. Cụm thử `helishop-integration`, container/volume `helishop_integration_*`, web 18000, API 18080, Mailpit 18025. Dev `eshop_*` vẫn chạy; không xóa/chuyển volume khi đổi môi trường.
 
-## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
+- JWT principal đã xác minh và ResourceAccess kiểm quyền tài nguyên; không tin customerId trong request, không cho tự đăng ký admin.
+- Phiên duy nhất `helishop-session-v3`, rememberMe chọn localStorage/sessionStorage, Axios refresh đồng bộ và chặn response sai tài khoản. OTP BCrypt trong Redis, cooldown/giới hạn thử, gửi qua SMTP; reset thu hồi refresh.
+- Giỏ tài khoản lấy Redis HASH `cart:user:{id}` TTL 30 ngày, nhóm shop. Giỏ khách khóa riêng, merge bằng max(quantity) và bỏ response cũ khi đổi phiên.
+- Quote/checkout batch tính giá, kho, phí, voucher và địa chỉ server; khóa customer/voucher/SKU/product theo thứ tự, receipt chống trùng. Mỗi shop một đơn trong cùng giao dịch; trừ lượng mua khỏi Redis sau commit.
+- Đơn mua đọc API; hủy theo state/owner, khóa vòng đời và hoàn kho một lần. Cache stock xóa sau commit. Không giả tạo ID, PAID, giá giảm/metrics/SKU thiếu từ API.
+- VNPAY Return chỉ xác minh; IPN mới ghi thanh toán, kiểm checksum/merchant/amount/status, khóa đơn và ledger/outbox chống trùng. `order_paid_outbox` retry với publisher confirms; RabbitMQ email gửi theo at least once. DLQ giữ thư lỗi, listener chẩn đoán không tự chạy. SMTP có timeout kết nối 3 giây, đọc/ghi 5 giây.
+- Frontend dùng `/api/v1` cùng origin; Nginx proxy cả API/uploads với Docker DNS refresh. Ảnh avatar 5 MB JPEG/PNG/WEBP, tên UUID và kiểm tra signature; volume giữ ảnh qua tạo lại backend, UID 10001, múi giờ +07.
+- Production tạo file riêng bằng `scripts/Initialize-Environment.ps1`; mật khẩu/JWT ngẫu nhiên và không commit. SMTP/Cloudinary cấu hình ngoài image, VNPAY mặc định khóa. `VITE_API_BASE_URL` là build arg. Hướng dẫn chạy: README gốc.
+- Browser E2E dùng fixture không chứa email cá nhân, SMTP Mailpit không relay và secret thanh toán thử; kiểm chứng COD, OTP/refresh, IPN đồng thời/outbox/email, avatar qua recreate và SMTP lỗi vào DLQ. CI ba job chạy PR/main, lưu báo cáo 7 ngày.
 
-**Chức năng 08:** catalog tìm/lọc/phân trang trên server, list DTO nhẹ, PDP mapper chung không tạo SKU/metrics/giá gốc giả; danh mục đệ quy, autocomplete API. Public chỉ hàng/shop ACTIVE, private detail kiểm quyền. Detail tránh multiple-bag fetch; cache stock xóa sau commit checkout/hủy. Backend 149/149 tests, frontend 30/30 tests/build pass. Chức năng 07 đã merge PR #7; tiếp theo Docker/uploads và E2E/CI.
+**Giới hạn còn lại:** chưa có nghiệm thu merchant/SMTP/Cloudinary thật, domain/TLS, backup/restore hay migration thay ddl-auto update. Seller-notify queue hiện giữ sự kiện; dashboard seller/admin, review/chat/vận chuyển ngoài và payment-group là đợt sau. Không gọi email là exactly once.
 
-**Chức năng 07:** Return chỉ xác minh/đọc; frontend tra đơn server và chờ IPN. IPN khóa đơn, xác minh merchant/checksum/amount/hai mã trạng thái, ledger/outbox chống lặp. `order_paid_outbox` + worker publisher confirms giữ sự kiện khi broker lỗi; giao nhận at least once. Tạo URL chuyển PENDING trong 15 phút, không tạo cho COD/đơn đóng. Backend 144/144 tests, frontend 26/26 tests/build pass; merchant/SMTP thật chưa nghiệm thu. Chức năng 06 đã merge PR #6.
-
-**Chức năng 06:** đơn mua dùng GET `/orders/me`, hủy qua PATCH status và khóa OrderLifecycleService; store không persist, response sai phiên bị bỏ qua, mua lại gọi Cart API bằng SKU thật. Hoàn kho khóa SKU/product theo thứ tự; không tự ghi REFUNDED. Backend 132/132 tests, frontend 22/22 tests/build pass. Chức năng 05 đã merge PR #5. Nhánh `feat/order-history-and-cancellation`.
-
-**Chức năng 05:** thêm `/orders/quote`, `/orders/checkout-batch`, bảng checkout_receipts, khóa customer/voucher/SKU/product và giao dịch tách đơn theo shop. Checkout dùng địa chỉ và giá/voucher/phí thật, giữ idempotency key khi retry; trừ lượng mua khỏi Redis sau commit. Frontend 18 tests/build pass, backend 130/130 tests pass (bao gồm API, DB concurrency/rollback). Chức năng 04 đã merge PR #4; còn lịch sử đơn, vòng đời/hủy, payment return/IPN, catalog và Docker/E2E.
-
-**Chức năng 04:** giỏ đăng nhập dùng Redis API, cartService DTO mapper và store có queue/kiểm tra phiên; giỏ khách riêng, ghép bằng max(quantity), xóa guest SKU sau khi server xác nhận. Không giữ giỏ tài khoản trong localStorage; đổi tài khoản bỏ response cũ; PDP/Cart chờ và báo lỗi thực. Frontend **15 tests/build pass**, nhánh `feat/redis-cart-integration`. Chức năng 03 đã merge PR #3; checkout/đơn mua vẫn cần triển khai tiếp.
-
-**Chức năng 03:** OTP chuyển sang PasswordResetService, SecureRandom/BCrypt/Redis Lua, TTL 10 phút, cooldown 60 giây, 5 lần gửi/giờ và 5 lần thử sai. API không lộ mã, SMTP lỗi trả 503, vượt giới hạn trả 429, reset thu hồi refresh token. Backend **116 tests pass**; SMTP thật chưa kiểm chứng. Nhánh `fix/password-reset-otp`; chức năng 02 đã merge PR #2.
-
-**Chức năng 02:** phiên frontend chuyển sang một nguồn dữ liệu `helishop-session-v3`, lưu localStorage hoặc sessionStorage theo rememberMe, đồng bộ store khi refresh, chặn retry 401 lặp/đổi tài khoản; **10 frontend tests và build pass**. Nhánh `fix/auth-session-persistence`, theo quy trình PR. Chức năng 01 đã merge PR #1.
-
-**Triển khai chức năng 01 (13/11/2026):** nhánh `fix/identity-and-resource-ownership` sửa danh tính JWT và quyền truy cập giỏ/đơn/shop/sản phẩm, chặn tự đăng ký ADMIN; backend **109/109 tests pass**. User đã yêu cầu mỗi chức năng tạo nhánh → PR → merge main, thay cho push trực tiếp main. Còn phiên frontend, OTP và các luồng thương mại cần triển khai tiếp; chưa được đánh dấu tích hợp hoàn chỉnh.
-
-**Cập nhật 13/11/2026:** Đã rà soát hợp đồng frontend/backend; **chưa hoàn thành tích hợp luồng mua hàng**. Giỏ hàng, tạo đơn và lịch sử đơn còn chạy cục bộ; VNPAY gửi sai trường và có fallback success; checkout chưa dùng sổ địa chỉ hay phí/voucher tính bởi backend. Cần sửa quyền sở hữu đơn/giỏ và chặn tự cấp role quản trị trước khi triển khai.
-
-Đã chạy lại backend test: **103/103 pass** và frontend `npm run build`: **pass, 1707 modules**. Đây là bằng chứng build/test baseline; chưa có browser E2E hoặc kiểm chứng cả cụm production trong lần rà soát. Kế hoạch tiếp theo: [implementation_plan.md](../implementation_plan.md), các giai đoạn **chưa triển khai**. Các ghi nhận hoàn thành Project 2 phía dưới là lịch sử bàn giao, cần đọc cùng giới hạn này.
-
-- **Giai đoạn đang thi công**: **Project 2: Shopee E-Commerce Integration & Automation (HOÀN THÀNH 100% 6/6 SPRINTS)**
-- **Sprint hiện tại**: Hoàn thành **Sprint 6 (End-to-End Testing, CI/CD & Đóng gói Docker Production)**.
-- **Nhánh Git**: `main` (đồng bộ hoàn toàn với `https://github.com/vass05/ShopBanHangOnline.git`).
-- **Backend Tests**: **103 bài kiểm thử - 100% PASSED** (Bao gồm E2E VNPAY, Idempotent Webhook, SMTP Fault Tolerance DLQ, và Concurrency Stress Test 200 Threads).
-- **Frontend Build**: **Vite Production Bundle Built Successfully (0 TypeScript errors, 1704 modules)**.
-- **Production Infrastructure**: `docker-compose.production.yml` tích hợp 5 dịch vụ khép kín (`frontend` Nginx reverse proxy, `backend` Spring Boot, `mysql` 8.0, `redis` 7 AOF, `rabbitmq` 3.13 DLQ).
-- **Tone màu thương hiệu**: Ocean Blue (`#0284C7`, `#0369A1`, `#0EA5E9`), nền xám mềm (`#F5F5FA`), phối viền sạch sẽ. Mọi thành phần đều tuân thủ màu sắc đặc trưng của HeliShop.
+Tham chiếu: [kế hoạch và tiến độ](../implementation_plan.md), [bàn giao Docker](sprints/integration-09-docker-uploads.md), [bàn giao E2E/CI](sprints/integration-10-browser-ci.md). Phần thông số/Sprint dưới đây là ghi nhận lịch sử; cấu hình hiện hành đọc từ Compose và file env riêng, không dùng mật khẩu mẫu làm production.
 
 ---
-
 ## 💻 2. CÔNG NGHỆ VÀ PHIÊN BẢN (TECH STACK MATRIX)
 
 | Thành phần | Công nghệ / Thư viện | Phiên bản | Ghi chú cấu hình |

@@ -11,10 +11,11 @@ import org.springframework.stereotype.Component;
 public class OrderDlqConsumer {
 
     /**
-     * Lắng nghe Dead Letter Queue 'order.email.dlq'
-     * Ghi log cảnh báo và lưu trữ các thông điệp gửi email thất bại sau toàn bộ số lần thử lại (Retry x3)
+     * Listener chẩn đoán được giữ ở trạng thái dừng. Broker giữ thông điệp trong DLQ
+     * để người vận hành kiểm tra/gửi lại; chỉ ghi log rồi ACK sẽ làm mất thông điệp lỗi.
      */
-    @RabbitListener(queues = RabbitMQConfig.QUEUE_ORDER_EMAIL_DLQ)
+    // Failed messages must remain available for inspection/replay, rather than being acknowledged after logging.
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_ORDER_EMAIL_DLQ, autoStartup = "false")
     public void handleDeadLetterMessage(OrderPaidEvent event) {
         log.error("[DLQ ALERT] Phát hiện thông điệp lỗi trong Dead Letter Queue '{}'! Mã đơn hàng: '{}', Email khách hàng: '{}', Số tiền: '{}'",
                 RabbitMQConfig.QUEUE_ORDER_EMAIL_DLQ,

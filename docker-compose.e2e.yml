@@ -1,0 +1,29 @@
+# Test-only overlay: local captured SMTP, no outbound mail and no bank connection.
+services:
+  backend:
+    environment:
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: "1025"
+      SPRING_MAIL_USERNAME: helishop@example.test
+      SPRING_MAIL_PASSWORD: ""
+      SPRING_MAIL_SMTP_AUTH: "false"
+      SPRING_MAIL_STARTTLS: "false"
+      APP_VNPAY_DISABLED: "false"
+      VNP_TMN_CODE: E2E0001
+      VNP_HASH_SECRET: integration-only-vnpay-secret-not-for-production
+      VNP_RETURN_URL: http://localhost:18000/payment-result
+    depends_on:
+      mailpit:
+        condition: service_healthy
+  mailpit:
+    image: axllent/mailpit:v1.26.0
+    container_name: ${CONTAINER_PREFIX:-helishop_integration}_mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18025:8025"
+    networks: [helishop]
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
