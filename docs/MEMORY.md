@@ -6,6 +6,10 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
+**Cập nhật 13/11/2026:** Đã rà soát hợp đồng frontend/backend; **chưa hoàn thành tích hợp luồng mua hàng**. Giỏ hàng, tạo đơn và lịch sử đơn còn chạy cục bộ; VNPAY gửi sai trường và có fallback success; checkout chưa dùng sổ địa chỉ hay phí/voucher tính bởi backend. Cần sửa quyền sở hữu đơn/giỏ và chặn tự cấp role quản trị trước khi triển khai.
+
+Đã chạy lại backend test: **103/103 pass** và frontend `npm run build`: **pass, 1707 modules**. Đây là bằng chứng build/test baseline; chưa có browser E2E hoặc kiểm chứng cả cụm production trong lần rà soát. Kế hoạch tiếp theo: [implementation_plan.md](../implementation_plan.md), các giai đoạn **chưa triển khai**. Các ghi nhận hoàn thành Project 2 phía dưới là lịch sử bàn giao, cần đọc cùng giới hạn này.
+
 - **Giai đoạn đang thi công**: **Project 2: Shopee E-Commerce Integration & Automation (HOÀN THÀNH 100% 6/6 SPRINTS)**
 - **Sprint hiện tại**: Hoàn thành **Sprint 6 (End-to-End Testing, CI/CD & Đóng gói Docker Production)**.
 - **Nhánh Git**: `main` (đồng bộ hoàn toàn với `https://github.com/vass05/ShopBanHangOnline.git`).
@@ -122,10 +126,10 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 ---
 
 ## 📋 5. BÀN GIAO & VẬN HÀNH HỆ THỐNG
-- **Loại bỏ hoàn toàn mockData**: Tệp `frontend/src/data/mockData.ts` đã được xóa bỏ hoàn toàn. Frontend hiện kết nối 100% trực tiếp với cơ sở dữ liệu MySQL 8.0 thông qua hệ thống REST APIs của Spring Boot (`/api/v1/products`, `/api/v1/categories/tree`, `/api/v1/orders`).
+- **Dữ liệu thực tế (rà soát 13/11/2026)**: Catalog, auth và hồ sơ có gọi API; xóa tệp mockData không đồng nghĩa toàn bộ frontend đã dùng dữ liệu backend. Giỏ hàng và lịch sử đơn hiện dùng Zustand persist; checkout tự tạo đơn cục bộ và chưa gọi `/orders/checkout`.
 - **Giao diện khi Backend chưa bật / chưa nạp data**: Hiển thị bảng thông báo trạng thái kết nối máy chủ rõ ràng kèm hướng dẫn khởi động Spring Boot và nạp `seed-data.sql`, tích hợp nút "Thử kết nối lại" (Retry).
-- **Trạng thái giỏ hàng & Đơn hàng**: Khởi tạo ban đầu sạch sẽ (rỗng), chỉ hiển thị các sản phẩm và đơn hàng thực tế do người dùng thêm hoặc đặt hàng qua API.
-- **Tình trạng kiểm thử**: 100% kiểm thử Backend (103/103 tests) và đóng gói Frontend (`vite build`) đạt chuẩn tuyệt đối. Toàn bộ mã nguồn đã đồng bộ với GitHub `origin/main`.
+- **Trạng thái giỏ hàng & Đơn hàng**: Store khởi tạo rỗng nhưng lưu ở trình duyệt, chưa đồng bộ Redis/MySQL hoặc phân tách theo tài khoản; trang hủy đơn chỉ cập nhật store cục bộ.
+- **Tình trạng kiểm thử**: Backend 103/103 tests và build frontend đạt ở baseline ngày 13/11/2026. Test backend dùng H2 và có mock dịch vụ ngoài; chưa đủ để khẳng định đã nghiệm thu end-to-end frontend/backend hoặc production Docker.
 
 
 

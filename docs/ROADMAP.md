@@ -2,6 +2,25 @@
 
 Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), các dự án (Projects) và Sprint chi tiết từ khởi tạo đến bàn giao hoàn thiện.
 
+## Cập nhật rà soát tích hợp — 13/11/2026
+
+**Chưa đạt nghiệm thu tích hợp frontend/backend cho luồng mua hàng.** Các mốc “100%” bên dưới ghi nhận bàn giao lịch sử từng phần, không chứng minh luồng trình duyệt → API → dữ liệu production đã hoàn chỉnh.
+
+Rà soát mã nguồn xác nhận giỏ hàng và đơn mua đang lưu cục bộ; checkout chưa gọi API tạo đơn, payload VNPAY lệch và lỗi thanh toán có fallback thành công. Cần đồng bộ hợp đồng, quyền sở hữu dữ liệu, phí/voucher, nhiều shop và cấu hình Docker.
+
+Kế hoạch chi tiết và tiêu chí nghiệm thu: [implementation_plan.md](../implementation_plan.md). Trạng thái các giai đoạn dưới đây: **đã lập kế hoạch, chưa triển khai**.
+
+| Thứ tự | Giai đoạn tiếp theo | Ưu tiên |
+| --- | --- | --- |
+| 1 | Chốt hợp đồng API, sửa quyền truy cập và phiên đăng nhập | P0 |
+| 2 | Nối giỏ hàng frontend với Redis Cart API | P0 |
+| 3 | Checkout COD, tiền hàng server, nhiều shop và đơn mua thật | P0 |
+| 4 | VNPAY với orderCode thật, xác minh return và trạng thái IPN | P0 |
+| 5 | Catalog phân trang/lọc server và Docker/ảnh upload | P1 |
+| 6 | Browser E2E, dịch vụ thật, CI và bàn giao | P0 cho phát hành |
+
+Kiểm tra baseline lần này: backend **103/103 tests pass**, frontend **production build pass**. Chưa chạy browser E2E hoặc nghiệm thu toàn cụm Docker production.
+
 ---
 
 ## 🧭 TỔNG QUAN CÁC GIAI ĐOẠN (PROJECTS)
@@ -9,7 +28,8 @@ Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), c
 ```mermaid
 graph TD
     P1[Project 1: HeliShop Core E-Commerce Backend] -->|Hoàn thành 100%| P2[Project 2: Shopee E-Commerce Integration & Automation]
-    P2 -->|Đang thi công Sprint 1/6| P3[Project 3: Production Hardening, Microservices & CI/CD Cloud]
+    P2 -->|Cần nghiệm thu tích hợp theo kế hoạch 13/11/2026| I[Đồng bộ Frontend / Backend]
+    I --> P3[Project 3: Production Hardening, Microservices & CI/CD Cloud]
 ```
 
 ---
