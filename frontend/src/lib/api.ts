@@ -1,6 +1,7 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios from "axios";
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { readAuthSession, writeAuthSession, updateSessionAccessToken } from "@/lib/authSession";
 
-// Callback type for live debug logger in UI
 export type InterceptorLogCallback = (log: {
   timestamp: string;
   type: "401_DETECTED" | "QUEUE_WAIT" | "REFRESHING" | "QUEUE_RESOLVED" | "REFRESH_SUCCESS" | "REFRESH_FAILED" | "REQUEST";
@@ -8,157 +9,76 @@ export type InterceptorLogCallback = (log: {
   details?: Record<string, unknown>;
 }) => void;
 
-let logListeners: InterceptorLogCallback[] = [];
-
-export const registerInterceptorLogger = (callback: InterceptorLogCallback) => {
-  logListeners.push(callback);
-  return () => {
-    logListeners = logListeners.filter(cb => cb !== callback);
-  };
+const listeners = new Set<InterceptorLogCallback>();
+export function registerInterceptorLogger(callback: InterceptorLogCallback) {
+  listeners.add(callback);
+  return () => { listeners.delete(callback); };
+}
+const notifyLog = (type: Parameters<InterceptorLogCallback>[0]["type"], message: string) => {
+  const timestamp = new Date().toLocaleTimeString("vi-VN", { hour12: false });
+  listeners.forEach(listener => listener({ timestamp, type, message }));
 };
 
-const notifyLog = (
-  type: "401_DETECTED" | "QUEUE_WAIT" | "REFRESHING" | "QUEUE_RESOLVED" | "REFRESH_SUCCESS" | "REFRESH_FAILED" | "REQUEST",
-  message: string,
-  details?: Record<string, unknown>
-) => {
-  const timestamp = new Date().toLocaleTimeString('vi-VN', { hour12: false }) + '.' + String(new Date().getMilliseconds()).padStart(3, '0');
-  logListeners.forEach(listener => listener({ timestamp, type, message, details }));
-};
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+export const api = axios.create({ baseURL, timeout: 15000 });
+const refreshClient = axios.create({ baseURL, timeout: 15000 });
+let refreshPromise: Promise<string> | null = null;
+type SessionRequest = InternalAxiosRequestConfig & { _retry?: boolean; _sessionRefreshToken?: string | null };
 
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
+export const getStoredAccessToken = () => readAuthSession()?.accessToken || null;
+export const getStoredRefreshToken = () => readAuthSession()?.refreshToken || null;
+export const setStoredAccessToken = updateSessionAccessToken;
+export const clearStoredAuthTokens = () => writeAuthSession(null);
 
-const processQueue = (error: Error | null, token: string | null = null) => {
-  const queueLength = failedQueue.length;
-  if (queueLength > 0) {
-    notifyLog("QUEUE_RESOLVED", `Giải phóng ${queueLength} request trong hàng đợi failedQueue`, {
-      resolvedCount: queueLength,
-      hasError: !!error,
-    });
-  }
-
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1",
-  headers: { "Content-Type": "application/json" },
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const session = readAuthSession();
+  const request = config as SessionRequest;
+  if (!("_sessionRefreshToken" in request)) request._sessionRefreshToken = session?.refreshToken || null;
+  const token = session?.accessToken;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  else delete config.headers.Authorization;
+  notifyLog("REQUEST", `${config.method?.toUpperCase()} ${config.url}`);
+  return config;
 });
 
-export const getStoredAccessToken = (): string | null => {
-  return localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
-};
+api.interceptors.response.use(response => response, async (error: AxiosError) => {
+  const request = error.config as SessionRequest | undefined;
+  if (!request || error.response?.status !== 401 || request.url?.includes("/auth/")) return Promise.reject(error);
+  if (request._retry) return Promise.reject(error);
+  const session = readAuthSession();
+  if (!session || request._sessionRefreshToken !== session.refreshToken) return Promise.reject(error);
+  request._retry = true;
+  // A late 401 can belong to a request sent before another request refreshed the token.
+  if (request.headers.Authorization !== `Bearer ${session.accessToken}`) return api(request);
+  notifyLog("401_DETECTED", `Phiên hết hạn tại ${request.url}`);
 
-export const getStoredRefreshToken = (): string | null => {
-  return localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
-};
-
-export const setStoredAccessToken = (token: string) => {
-  if (localStorage.getItem("refreshToken")) {
-    localStorage.setItem("accessToken", token);
-  } else {
-    sessionStorage.setItem("accessToken", token);
-  }
-};
-
-export const clearStoredAuthTokens = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("helishop-auth-storage");
-  sessionStorage.removeItem("accessToken");
-  sessionStorage.removeItem("refreshToken");
-  sessionStorage.removeItem("helishop-auth-storage");
-};
-
-// Request Interceptor: Tự động đính kèm Bearer Token vào headers
-api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = getStoredAccessToken();
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    notifyLog("REQUEST", `Gửi request ${config.method?.toUpperCase()} ${config.url}`, {
-      url: config.url,
-      method: config.method,
-      hasToken: !!token,
-    });
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response Interceptor: Xử lý 401 và Silent Token Refresh với failedQueue
-api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      notifyLog("401_DETECTED", `Phát hiện lỗi 401 Unauthorized tại ${originalRequest.url}`, {
-        url: originalRequest.url,
-        isRefreshing,
-      });
-
-      if (isRefreshing) {
-        notifyLog("QUEUE_WAIT", `Hệ thống đang refresh token. Đẩy request ${originalRequest.url} vào failedQueue (Queue size: ${failedQueue.length + 1})`);
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-      notifyLog("REFRESHING", "Kích hoạt luồng làm mới token duy nhất tới /auth/refresh-token");
-
-      try {
-        const refreshToken = getStoredRefreshToken();
-        if (!refreshToken) {
-          throw new Error("Không tìm thấy refreshToken trong bộ nhớ");
+  if (!refreshPromise) {
+    const refreshToken = session.refreshToken;
+    notifyLog("REFRESHING", "Đang làm mới phiên đăng nhập");
+    refreshPromise = refreshClient.post("/auth/refresh-token", { refreshToken })
+      .then(({ data }) => {
+        const token = data?.data?.accessToken;
+        if (typeof token !== "string" || !token) throw new Error("Phản hồi refresh không hợp lệ");
+        if (readAuthSession()?.refreshToken !== refreshToken) throw new Error("Phiên đăng nhập đã thay đổi");
+        updateSessionAccessToken(token);
+        notifyLog("REFRESH_SUCCESS", "Đã làm mới phiên đăng nhập");
+        return token;
+      })
+      .catch((refreshError: unknown) => {
+        if (readAuthSession()?.refreshToken === refreshToken) {
+          writeAuthSession(null);
+          notifyLog("REFRESH_FAILED", "Phiên đã hết hạn, vui lòng đăng nhập lại");
+          window.location.href = "/login?expired=true";
         }
-
-        const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1"}/auth/refresh-token`, {
-          refreshToken,
-        });
-
-        const newAccessToken = data.data.accessToken;
-        setStoredAccessToken(newAccessToken);
-
-        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-        notifyLog("REFRESH_SUCCESS", "Làm mới Access Token thành công từ máy chủ!", {
-          newTokenPrefix: newAccessToken.substring(0, 15) + "...",
-        });
-
-        processQueue(null, newAccessToken);
-        return api(originalRequest);
-      } catch (refreshError) {
-        notifyLog("REFRESH_FAILED", "Refresh Token không hợp lệ hoặc đã hết hạn. Chuyển hướng về trang đăng nhập.");
-        processQueue(refreshError as Error, null);
-        clearStoredAuthTokens();
-        delete api.defaults.headers.common.Authorization;
-        window.location.href = "/login?expired=true";
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-    return Promise.reject(error);
+        throw refreshError;
+      })
+      .finally(() => { refreshPromise = null; });
+  } else {
+    notifyLog("QUEUE_WAIT", "Request đang chờ làm mới phiên");
   }
-);
+
+  await refreshPromise;
+  if (readAuthSession()?.refreshToken !== session.refreshToken) return Promise.reject(error);
+  notifyLog("QUEUE_RESOLVED", "Gửi lại request với phiên mới");
+  return api(request);
+});
