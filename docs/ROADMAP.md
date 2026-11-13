@@ -4,6 +4,8 @@ Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), c
 
 ## Cập nhật rà soát tích hợp — 13/11/2026
 
+Chức năng 01 đã merge qua PR #1. Chức năng 02 (phiên đăng nhập/refresh) trên nhánh `fix/auth-session-persistence` đã qua **10/10 frontend tests** và build production; chi tiết [integration-02-auth-session.md](sprints/integration-02-auth-session.md).
+
 Tiến độ triển khai: chức năng **định danh và quyền sở hữu tài nguyên** đã có trên nhánh `fix/identity-and-resource-ownership`, backend **109/109 tests pass**, bàn giao qua PR trước khi triển khai chức năng tiếp theo. Chi tiết: [integration-01-resource-ownership.md](sprints/integration-01-resource-ownership.md). Các phần khác tiếp tục theo bảng tiến độ trong implementation_plan.md.
 
 **Chưa đạt nghiệm thu tích hợp frontend/backend cho luồng mua hàng.** Các mốc “100%” bên dưới ghi nhận bàn giao lịch sử từng phần, không chứng minh luồng trình duyệt → API → dữ liệu production đã hoàn chỉnh.

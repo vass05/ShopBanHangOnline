@@ -68,9 +68,10 @@ export const LoginPage: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated && !isExpired) {
-      navigate("/");
+      const redirect = searchParams.get("redirect");
+      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : "/");
     }
-  }, [isAuthenticated, isExpired, navigate]);
+  }, [isAuthenticated, isExpired, navigate, searchParams]);
 
   // Khi tải trang: nếu đã có tài khoản ghi nhớ thì tự động focus vào ô Mật khẩu
   useEffect(() => {
@@ -135,7 +136,8 @@ export const LoginPage: React.FC = () => {
       }
 
       setAuth({ user, accessToken, refreshToken, rememberMe });
-      navigate("/");
+      const redirect = searchParams.get("redirect");
+      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : "/");
     } catch (err: any) {
       const msg = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
       setErrorMessage(msg);

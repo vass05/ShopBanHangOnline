@@ -1,140 +1,50 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { api } from "@/lib/api";
+import { readAuthSession, writeAuthSession, updateSessionAccessToken, subscribeAuthSession } from "@/lib/authSession";
+import type { SessionUser } from "@/lib/authSession";
 
-export interface User {
-  id: number;
-  fullName: string;
-  email: string;
-  phone?: string;
-  role: "ROLE_CUSTOMER" | "ROLE_SELLER" | "ROLE_ADMIN";
-  status: "ACTIVE" | "INACTIVE" | "BLOCKED";
-  avatarUrl?: string;
-}
+export type User = SessionUser;
 
 interface AuthState {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-
   setAuth: (payload: { user: User; accessToken: string; refreshToken: string; rememberMe?: boolean }) => void;
   updateUser: (partialUser: Partial<User>) => void;
-  updateAccessToken: (newAccessToken: string) => void;
+  updateAccessToken: (token: string) => void;
   corruptAccessToken: () => void;
   logout: () => Promise<void>;
   clearAuth: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      accessToken: localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken"),
-      refreshToken: localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken"),
-      isAuthenticated: !!(localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken")),
+const sessionState = (session: ReturnType<typeof readAuthSession>) => ({
+  user: session?.user || null,
+  accessToken: session?.accessToken || null,
+  refreshToken: session?.refreshToken || null,
+  isAuthenticated: !!session,
+});
 
-      setAuth: ({ user, accessToken, refreshToken, rememberMe = true }) => {
-        if (rememberMe) {
-          localStorage.setItem("accessToken", accessToken);
-          localStorage.setItem("refreshToken", refreshToken);
-          sessionStorage.removeItem("accessToken");
-          sessionStorage.removeItem("refreshToken");
-        } else {
-          sessionStorage.setItem("accessToken", accessToken);
-          sessionStorage.setItem("refreshToken", refreshToken);
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-        }
-        api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-
-        set({
-          user,
-          accessToken,
-          refreshToken,
-          isAuthenticated: true,
-        });
-      },
-
-      updateUser: (partialUser) => {
-        const currentUser = get().user;
-        if (currentUser) {
-          const updated = { ...currentUser, ...partialUser };
-          set({ user: updated });
-        }
-      },
-
-      updateAccessToken: (newAccessToken: string) => {
-        if (localStorage.getItem("refreshToken")) {
-          localStorage.setItem("accessToken", newAccessToken);
-        } else {
-          sessionStorage.setItem("accessToken", newAccessToken);
-        }
-        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-
-        set({
-          accessToken: newAccessToken,
-          isAuthenticated: true,
-        });
-      },
-
-      /**
-       * Phương thức phục vụ kiểm thử: Cố tình làm hỏng Access Token để kích hoạt lỗi 401 khi gọi API
-       */
-      corruptAccessToken: () => {
-        const corrupted = "corrupted_token_test_401_simulation";
-        localStorage.setItem("accessToken", corrupted);
-        api.defaults.headers.common.Authorization = `Bearer ${corrupted}`;
-        set({ accessToken: corrupted });
-      },
-
-      logout: async () => {
-        const { refreshToken } = get();
-        try {
-          if (refreshToken) {
-            await api.post("/auth/logout", { refreshToken });
-          }
-        } catch {
-          // Ignore network logout error
-        } finally {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          sessionStorage.removeItem("accessToken");
-          sessionStorage.removeItem("refreshToken");
-          delete api.defaults.headers.common.Authorization;
-
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-          });
-        }
-      },
-
-      clearAuth: () => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        sessionStorage.removeItem("accessToken");
-        sessionStorage.removeItem("refreshToken");
-        delete api.defaults.headers.common.Authorization;
-
-        set({
-          user: null,
-          accessToken: null,
-          refreshToken: null,
-          isAuthenticated: false,
-        });
-      },
-    }),
-    {
-      name: "helishop-auth-storage",
-      partialize: (state) => ({
-        user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
-        isAuthenticated: state.isAuthenticated,
-      }),
+export const useAuthStore = create<AuthState>()(() => ({
+  ...sessionState(readAuthSession()),
+  setAuth: ({ rememberMe = true, ...session }) => writeAuthSession({ ...session, rememberMe }),
+  updateUser: (partialUser) => {
+    const session = readAuthSession();
+    if (session) writeAuthSession({ ...session, user: { ...session.user, ...partialUser } });
+  },
+  updateAccessToken: updateSessionAccessToken,
+  corruptAccessToken: () => updateSessionAccessToken("corrupted_token_test_401_simulation"),
+  logout: async () => {
+    const refreshToken = readAuthSession()?.refreshToken;
+    writeAuthSession(null);
+    try {
+      if (refreshToken) await api.post("/auth/logout", { refreshToken });
+    } catch {
+      // Local logout is complete even if the server is unavailable.
     }
-  )
-);
+  },
+  clearAuth: () => writeAuthSession(null),
+}));
+
+subscribeAuthSession(session => useAuthStore.setState(sessionState(session)));
+window.addEventListener("storage", () => useAuthStore.setState(sessionState(readAuthSession())));
