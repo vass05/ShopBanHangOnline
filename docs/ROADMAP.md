@@ -4,6 +4,8 @@ Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), c
 
 ## Cập nhật rà soát tích hợp — 13/11/2026
 
+Chức năng 03 đã merge PR #3. Chức năng 04 (giỏ hàng Redis) trên `feat/redis-cart-integration` đã nối API và qua **15/15 frontend tests**, production build pass; xem [integration-04-redis-cart.md](sprints/integration-04-redis-cart.md).
+
 Chức năng 02 đã merge PR #2. Chức năng 03 (OTP khôi phục mật khẩu) trên `fix/password-reset-otp` qua **116/116 backend tests**; xem [integration-03-password-reset.md](sprints/integration-03-password-reset.md).
 
 Chức năng 01 đã merge qua PR #1. Chức năng 02 (phiên đăng nhập/refresh) trên nhánh `fix/auth-session-persistence` đã qua **10/10 frontend tests** và build production; chi tiết [integration-02-auth-session.md](sprints/integration-02-auth-session.md).

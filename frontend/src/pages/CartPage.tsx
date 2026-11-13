@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -33,12 +33,14 @@ export const CartPage: React.FC = () => {
     toggleSelectAll,
     isAllSelected,
     isShopSelected,
+    loading,
+    error,
+    fetchCart,
   } = useCartStore();
 
   const [voucherCode, setVoucherCode] = useState("HELI50K");
   const [voucherApplied, setVoucherApplied] = useState(false);
-  const [debouncedQuantities, setDebouncedQuantities] = useState<Record<number, number>>({});
-  const debounceTimers = useRef<Record<number, any>>({});
+  useEffect(() => { void fetchCart(); }, [fetchCart]);
 
   const shopGroups = getShopGroups();
   const selectedCount = getSelectedCount();
@@ -49,15 +51,7 @@ export const CartPage: React.FC = () => {
   // Debounced quantity updates
   const handleQuantityChange = (skuId: number, currentQty: number, delta: number, stock: number) => {
     const newQty = Math.min(Math.max(1, currentQty + delta), stock);
-    setDebouncedQuantities((prev) => ({ ...prev, [skuId]: newQty }));
-
-    if (debounceTimers.current[skuId]) {
-      clearTimeout(debounceTimers.current[skuId]);
-    }
-
-    debounceTimers.current[skuId] = setTimeout(() => {
-      updateQuantity(skuId, newQty);
-    }, 300); // 300ms debounce
+    if (!loading) void updateQuantity(skuId, newQty);
   };
 
   const handleApplyVoucher = (e: React.FormEvent) => {
@@ -72,6 +66,7 @@ export const CartPage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
 
   const handleProceedCheckout = () => {
+    if (loading || error) return;
     if (selectedCount === 0) {
       alert("Vui lòng chọn ít nhất 1 sản phẩm để tiến hành đặt hàng!");
       return;
@@ -104,7 +99,9 @@ export const CartPage: React.FC = () => {
           </span>
         </div>
 
-        {items.length === 0 ? (
+        {error && <div role="alert" className="bg-red-50 text-red-700 rounded-xl p-4 text-sm">{error} <button onClick={() => void fetchCart()} className="underline ml-2">Thử lại</button></div>}
+        {loading && <p role="status" className="text-sm text-slate-500">Đang đồng bộ giỏ hàng…</p>}
+        {!loading && items.length === 0 ? (
           <div className="bg-white rounded-2xl p-16 text-center shadow-sm border border-slate-200/80 space-y-4">
             <div className="w-20 h-20 rounded-full bg-sky-50 text-[#0284C7] flex items-center justify-center mx-auto">
               <ShoppingBag className="w-10 h-10 opacity-30" />
@@ -176,10 +173,7 @@ export const CartPage: React.FC = () => {
                   <div className="divide-y divide-slate-100">
                     {group.items.map((item) => {
                       const isItemChecked = selectedSkuIds.includes(item.skuId);
-                      const displayQty =
-                        debouncedQuantities[item.skuId] !== undefined
-                          ? debouncedQuantities[item.skuId]
-                          : item.quantity;
+                      const displayQty = item.quantity;
                       const itemSubtotal = item.price * displayQty;
 
                       return (
@@ -241,7 +235,7 @@ export const CartPage: React.FC = () => {
                                 onClick={() =>
                                   handleQuantityChange(item.skuId, item.quantity, -1, item.stockQuantity)
                                 }
-                                disabled={displayQty <= 1}
+                                disabled={loading || displayQty <= 1}
                                 className="p-1.5 hover:bg-slate-100 text-slate-600 disabled:opacity-30 transition-colors"
                               >
                                 <Minus className="w-3.5 h-3.5" />
@@ -253,7 +247,7 @@ export const CartPage: React.FC = () => {
                                 onClick={() =>
                                   handleQuantityChange(item.skuId, item.quantity, 1, item.stockQuantity)
                                 }
-                                disabled={displayQty >= item.stockQuantity}
+                                disabled={loading || displayQty >= item.stockQuantity}
                                 className="p-1.5 hover:bg-slate-100 text-slate-600 disabled:opacity-30 transition-colors"
                               >
                                 <Plus className="w-3.5 h-3.5" />
@@ -333,7 +327,7 @@ export const CartPage: React.FC = () => {
 
               <button
                 onClick={removeSelected}
-                disabled={selectedCount === 0}
+                disabled={loading || selectedCount === 0}
                 className="text-slate-500 hover:text-red-600 font-medium disabled:opacity-40"
               >
                 Xóa các mục đã chọn
@@ -357,7 +351,7 @@ export const CartPage: React.FC = () => {
 
               <button
                 onClick={handleProceedCheckout}
-                disabled={selectedCount === 0}
+                disabled={loading || !!error || selectedCount === 0}
                 className="py-3 px-8 bg-gradient-to-r from-[#0284C7] to-[#0369A1] hover:opacity-95 text-white font-extrabold rounded-xl text-sm shadow-md shadow-sky-600/25 disabled:opacity-50 transition-all shrink-0"
               >
                 Mua Hàng ({selectedCount})

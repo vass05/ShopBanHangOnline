@@ -25,7 +25,7 @@ import {
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCartStore();
+  const { addToCart, loading: cartLoading, error: cartError } = useCartStore();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -201,10 +201,10 @@ export const ProductDetailPage: React.FC = () => {
     setSelectedAttributes((prev) => ({ ...prev, [key]: val }));
   };
 
-  const handleAddToCart = () => {
-    if (!product || !currentSku) return;
+  const handleAddToCart = async () => {
+    if (!product || !currentSku || cartLoading || stockAvailable < 1) return false;
 
-    addToCart(
+    const added = await addToCart(
       {
         skuId: currentSku.id,
         productId: product.id,
@@ -221,13 +221,14 @@ export const ProductDetailPage: React.FC = () => {
       quantity
     );
 
+    if (!added) return false;
     setIsAddedToast(true);
     setTimeout(() => setIsAddedToast(false), 2500);
+    return true;
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
-    navigate("/checkout");
+  const handleBuyNow = async () => {
+    if (await handleAddToCart()) navigate("/checkout");
   };
 
   if (isLoading) {
@@ -517,9 +518,11 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Action Buttons: Add to Cart & Buy Now */}
+            {cartError && <p role="alert" className="text-sm text-red-600">{cartError}</p>}
             <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
               <button
                 onClick={handleAddToCart}
+                disabled={cartLoading || stockAvailable < 1}
                 className="flex-1 py-3 px-4 bg-sky-50 text-[#0284C7] border-2 border-[#0284C7] hover:bg-sky-100 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
               >
                 <ShoppingCart className="w-4 h-4" />
@@ -528,6 +531,7 @@ export const ProductDetailPage: React.FC = () => {
 
               <button
                 onClick={handleBuyNow}
+                disabled={cartLoading || stockAvailable < 1}
                 className="flex-1 py-3 px-4 bg-gradient-to-r from-[#0284C7] to-[#0369A1] hover:opacity-95 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-sky-600/25"
               >
                 <Zap className="w-4 h-4" />
