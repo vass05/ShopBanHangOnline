@@ -89,6 +89,7 @@ public class OrderController {
     }
 
     @PostMapping("/checkout")
+    @org.springframework.cache.annotation.CacheEvict(value = "products", allEntries = true)
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(

@@ -18,6 +18,7 @@ public interface ProductMapper {
 
     @Mapping(source = "shop.id", target = "shopId")
     @Mapping(source = "shop.shopName", target = "shopName")
+    @Mapping(source = "shop.status", target = "shopStatus")
     @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "category.name", target = "categoryName")
     @Mapping(target = "skus", expression = "java(mapSkus(product.getSkus()))")

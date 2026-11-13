@@ -13,6 +13,10 @@ interface SidebarFilterProps {
   onResetFilters: () => void;
 }
 
+function containsCategory(category: Category, id: number): boolean {
+  return category.id === id || (category.children || []).some(child => containsCategory(child, id));
+}
+
 export const SidebarFilter: React.FC<SidebarFilterProps> = ({
   categories,
   selectedCategoryId,
@@ -33,18 +37,17 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
     setMaxPrice(priceRange.max);
   }, [priceRange.min, priceRange.max]);
 
-  // Auto-expand category if selected category is a child or root
   useEffect(() => {
     if (!selectedCategoryId) return;
-    for (const cat of categories) {
-      if (
-        cat.id === selectedCategoryId ||
-        cat.children?.some((sub) => sub.id === selectedCategoryId)
-      ) {
-        setExpandedCategories((prev) => ({ ...prev, [cat.id]: true }));
-        break;
+    const expanded: Record<number, boolean> = {};
+    const walk = (list: Category[]) => list.forEach(category => {
+      if (containsCategory(category, selectedCategoryId)) {
+        expanded[category.id] = true;
+        walk(category.children || []);
       }
-    }
+    });
+    walk(categories);
+    setExpandedCategories(previous => ({ ...previous, ...expanded }));
   }, [selectedCategoryId, categories]);
 
   const toggleCategoryExpand = (id: number) => {
@@ -55,6 +58,16 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
     e.preventDefault();
     onPriceChange(minPrice, maxPrice);
   };
+
+  const renderCategory = (category: Category): React.ReactNode => (
+    <div key={category.id} className="space-y-1">
+      <div className={`flex items-center rounded-lg text-xs ${selectedCategoryId === category.id ? "bg-sky-50 text-sky-700 font-bold" : "text-slate-700 hover:bg-slate-50"}`}>
+        <button type="button" onClick={() => onSelectCategory(selectedCategoryId === category.id ? null : category.id)} className="flex-1 text-left px-2 py-2">{category.name}</button>
+        {!!category.children?.length && <button type="button" aria-label={`Mở danh mục ${category.name}`} onClick={() => toggleCategoryExpand(category.id)} className="p-2">{expandedCategories[category.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}</button>}
+      </div>
+      {!!category.children?.length && expandedCategories[category.id] && <div className="pl-3 border-l ml-2">{category.children.map(renderCategory)}</div>}
+    </div>
+  );
 
   return (
     <aside className="bg-white rounded-xl border border-slate-200/80 p-4 space-y-6 text-sm text-slate-700 shadow-sm">
@@ -90,69 +103,7 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
             {selectedCategoryId === null && <Check className="w-3.5 h-3.5" />}
           </div>
 
-          {categories.map((cat) => {
-            const hasChildren = cat.children && cat.children.length > 0;
-            const isSelected = selectedCategoryId === cat.id;
-            const isChildSelected = cat.children?.some((c) => c.id === selectedCategoryId);
-            const isExpanded = !!expandedCategories[cat.id];
-
-            return (
-              <div key={cat.id} className="space-y-1">
-                <div
-                  className={`px-2 py-1.5 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-colors ${
-                    isSelected
-                      ? "bg-sky-50 text-[#0284C7] font-bold"
-                      : isChildSelected
-                      ? "bg-sky-50/50 text-[#0284C7] font-semibold"
-                      : "hover:bg-slate-50 text-slate-700"
-                  }`}
-                >
-                  <span
-                    onClick={() => onSelectCategory(isSelected ? null : cat.id)}
-                    className="flex-1 cursor-pointer select-none"
-                  >
-                    {cat.name}
-                  </span>
-                  {hasChildren && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleCategoryExpand(cat.id);
-                      }}
-                      className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
-                      aria-label="Thu gọn hoặc mở rộng danh mục"
-                    >
-                      {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                    </button>
-                  )}
-                </div>
-
-                {/* Subcategories */}
-                {hasChildren && isExpanded && (
-                  <div className="pl-4 space-y-1 border-l-2 border-slate-100 ml-2">
-                    {cat.children!.map((sub) => {
-                      const isSubSelected = selectedCategoryId === sub.id;
-                      return (
-                        <div
-                          key={sub.id}
-                          onClick={() => onSelectCategory(isSubSelected ? null : sub.id)}
-                          className={`px-2 py-1.5 rounded-lg cursor-pointer text-xs transition-colors flex items-center justify-between ${
-                            isSubSelected
-                              ? "bg-sky-50 text-[#0284C7] font-bold"
-                              : "hover:bg-slate-50 text-slate-600"
-                          }`}
-                        >
-                          <span>{sub.name}</span>
-                          {isSubSelected && <Check className="w-3.5 h-3.5 text-[#0284C7]" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {categories.map(renderCategory)}
         </div>
       </div>
 
@@ -222,24 +173,6 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
         </div>
       </div>
 
-      {/* 4. Service & Promotion Tags */}
-      <div className="space-y-2 pt-3 border-t border-slate-100">
-        <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Dịch Vụ & Khuyến Mãi</h4>
-        <div className="space-y-1.5 text-xs text-slate-600">
-          <label className="flex items-center gap-2 cursor-pointer hover:text-[#0284C7]">
-            <input type="checkbox" className="rounded border-slate-300 text-[#0284C7] focus:ring-[#0284C7]" />
-            <span>Freeship Xtra</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer hover:text-[#0284C7]">
-            <input type="checkbox" className="rounded border-slate-300 text-[#0284C7] focus:ring-[#0284C7]" />
-            <span>Chính hãng HeliMall</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer hover:text-[#0284C7]">
-            <input type="checkbox" className="rounded border-slate-300 text-[#0284C7] focus:ring-[#0284C7]" />
-            <span>Đang giảm giá Flash Sale</span>
-          </label>
-        </div>
-      </div>
     </aside>
   );
 };

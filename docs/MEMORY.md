@@ -6,6 +6,8 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
+**Chức năng 08:** catalog tìm/lọc/phân trang trên server, list DTO nhẹ, PDP mapper chung không tạo SKU/metrics/giá gốc giả; danh mục đệ quy, autocomplete API. Public chỉ hàng/shop ACTIVE, private detail kiểm quyền. Detail tránh multiple-bag fetch; cache stock xóa sau commit checkout/hủy. Backend 149/149 tests, frontend 30/30 tests/build pass. Chức năng 07 đã merge PR #7; tiếp theo Docker/uploads và E2E/CI.
+
 **Chức năng 07:** Return chỉ xác minh/đọc; frontend tra đơn server và chờ IPN. IPN khóa đơn, xác minh merchant/checksum/amount/hai mã trạng thái, ledger/outbox chống lặp. `order_paid_outbox` + worker publisher confirms giữ sự kiện khi broker lỗi; giao nhận at least once. Tạo URL chuyển PENDING trong 15 phút, không tạo cho COD/đơn đóng. Backend 144/144 tests, frontend 26/26 tests/build pass; merchant/SMTP thật chưa nghiệm thu. Chức năng 06 đã merge PR #6.
 
 **Chức năng 06:** đơn mua dùng GET `/orders/me`, hủy qua PATCH status và khóa OrderLifecycleService; store không persist, response sai phiên bị bỏ qua, mua lại gọi Cart API bằng SKU thật. Hoàn kho khóa SKU/product theo thứ tự; không tự ghi REFUNDED. Backend 132/132 tests, frontend 22/22 tests/build pass. Chức năng 05 đã merge PR #5. Nhánh `feat/order-history-and-cancellation`.

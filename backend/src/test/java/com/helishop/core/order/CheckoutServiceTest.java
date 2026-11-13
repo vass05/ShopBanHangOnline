@@ -45,7 +45,7 @@ class CheckoutServiceTest {
         vouchers = mock(VoucherRepository.class); orders = mock(OrderRepository.class);
         receipts = mock(CheckoutReceiptRepository.class); cart = mock(RedisCartService.class);
         service = new CheckoutService(users, addresses, skus, products, vouchers, orders, receipts,
-                new OrderService(orders, skus, products, users), cart, new ObjectMapper());
+                new OrderService(orders, skus, products, users), cart, new ObjectMapper(), event -> {});
         inventory = new TreeMap<>(); saved = new HashMap<>(); attempts = new HashMap<>();
         User customer = User.builder().status(UserStatus.ACTIVE).build(); customer.setId(1L);
         when(users.findByIdWithLock(1L)).thenReturn(Optional.of(customer));

@@ -46,7 +46,9 @@ public class ProductController {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<ProductResponse> getProductById(@PathVariable Long id) {
-        return ApiResponse.success(productService.getById(id));
+        ProductResponse product = productService.getById(id);
+        resourceAccess.requireVisibleProduct(product);
+        return ApiResponse.success(product);
     }
 
     @GetMapping("/slug/{slug}")
@@ -61,7 +63,9 @@ public class ProductController {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<ProductResponse> getProductBySlug(@PathVariable String slug) {
-        return ApiResponse.success(productService.getBySlug(slug));
+        ProductResponse product = productService.getBySlug(slug);
+        resourceAccess.requireVisibleProduct(product);
+        return ApiResponse.success(product);
     }
 
     @GetMapping
@@ -73,7 +77,7 @@ public class ProductController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Truy vấn danh sách sản phẩm thành công",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<PageResponse<ProductResponse>> searchProducts(ProductFilterCriteria criteria) {
+    public ApiResponse<PageResponse<ProductResponse>> searchProducts(@Valid ProductFilterCriteria criteria) {
         return ApiResponse.success(productService.searchProducts(criteria));
     }
 
