@@ -11,6 +11,14 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select o from Order o where o.id = :id")
+    Optional<Order> findByIdWithLock(@org.springframework.data.repository.query.Param("id") Long id);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select o from Order o where o.orderCode = :code")
+    Optional<Order> findByOrderCodeWithLock(@org.springframework.data.repository.query.Param("code") String code);
+
     @EntityGraph(attributePaths = {"orderItems", "orderItems.productSku", "orderItems.productSku.product", "customer", "shop"})
     Optional<Order> findByOrderCode(String orderCode);
 

@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { readAuthSession, writeAuthSession, updateSessionAccessToken } from "@/lib/authSession";
 
 export type InterceptorLogCallback = (log: {
@@ -24,8 +24,9 @@ export const api = axios.create({ baseURL, timeout: 15000 });
 const refreshClient = axios.create({ baseURL, timeout: 15000 });
 let refreshPromise: Promise<string> | null = null;
 type SessionRequest = InternalAxiosRequestConfig & { _retry?: boolean; _sessionRefreshToken?: string | null };
-export const sessionRequestConfig = (): AxiosRequestConfig & { _sessionRefreshToken: string | null } => ({
+export const sessionRequestConfig = () => ({
   _sessionRefreshToken: getStoredRefreshToken(),
+  headers: {} as Record<string, string>,
 });
 
 export const getStoredAccessToken = () => readAuthSession()?.accessToken || null;

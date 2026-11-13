@@ -6,6 +6,8 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
+**Chức năng 06:** đơn mua dùng GET `/orders/me`, hủy qua PATCH status và khóa OrderLifecycleService; store không persist, response sai phiên bị bỏ qua, mua lại gọi Cart API bằng SKU thật. Hoàn kho khóa SKU/product theo thứ tự; không tự ghi REFUNDED. Backend 132/132 tests, frontend 22/22 tests/build pass. Chức năng 05 đã merge PR #5. Nhánh `feat/order-history-and-cancellation`.
+
 **Chức năng 05:** thêm `/orders/quote`, `/orders/checkout-batch`, bảng checkout_receipts, khóa customer/voucher/SKU/product và giao dịch tách đơn theo shop. Checkout dùng địa chỉ và giá/voucher/phí thật, giữ idempotency key khi retry; trừ lượng mua khỏi Redis sau commit. Frontend 18 tests/build pass, backend 130/130 tests pass (bao gồm API, DB concurrency/rollback). Chức năng 04 đã merge PR #4; còn lịch sử đơn, vòng đời/hủy, payment return/IPN, catalog và Docker/E2E.
 
 **Chức năng 04:** giỏ đăng nhập dùng Redis API, cartService DTO mapper và store có queue/kiểm tra phiên; giỏ khách riêng, ghép bằng max(quantity), xóa guest SKU sau khi server xác nhận. Không giữ giỏ tài khoản trong localStorage; đổi tài khoản bỏ response cũ; PDP/Cart chờ và báo lỗi thực. Frontend **15 tests/build pass**, nhánh `feat/redis-cart-integration`. Chức năng 03 đã merge PR #3; checkout/đơn mua vẫn cần triển khai tiếp.

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { api } from "@/lib/api";
-import { readAuthSession, writeAuthSession, updateSessionAccessToken, subscribeAuthSession } from "@/lib/authSession";
+import { readAuthSession, writeAuthSession, updateSessionAccessToken, subscribeAuthSession, synchronizeAuthSession } from "@/lib/authSession";
 import type { SessionUser } from "@/lib/authSession";
 
 export type User = SessionUser;
@@ -47,4 +47,4 @@ export const useAuthStore = create<AuthState>()(() => ({
 }));
 
 subscribeAuthSession(session => useAuthStore.setState(sessionState(session)));
-window.addEventListener("storage", () => useAuthStore.setState(sessionState(readAuthSession())));
+window.addEventListener("storage", synchronizeAuthSession);

@@ -64,3 +64,12 @@ test('migrates a valid legacy tab session without copying credentials to persist
   assert.equal(localStorage.getItem('helishop-session-v3'), null);
   assert.ok(sessionStorage.getItem('helishop-session-v3'));
 });
+
+test('storage synchronization notifies all identity subscribers after a cross-tab account change', () => {
+  const updates = [];
+  const unsubscribe = auth.subscribeAuthSession(value => updates.push(value));
+  localStorage.setItem('helishop-session-v3', JSON.stringify({ ...session, user: { ...user, id: 2 }, rememberMe: true }));
+  auth.synchronizeAuthSession();
+  unsubscribe();
+  assert.equal(updates[0].user.id, 2);
+});

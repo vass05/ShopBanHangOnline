@@ -6,6 +6,7 @@ import com.helishop.core.modules.order.dto.CheckoutRequest;
 import com.helishop.core.modules.order.dto.OrderResponse;
 import com.helishop.core.modules.order.service.OrderService;
 import com.helishop.core.modules.order.service.CheckoutService;
+import com.helishop.core.modules.order.service.OrderLifecycleService;
 import com.helishop.core.modules.order.dto.CheckoutBatchRequest;
 import com.helishop.core.modules.order.dto.CheckoutQuoteResponse;
 import com.helishop.core.security.SecurityUtils;
@@ -42,6 +43,18 @@ public class OrderController {
     private final SecurityUtils securityUtils;
     private final ResourceAccess resourceAccess;
     private final CheckoutService checkoutService;
+    private final OrderLifecycleService lifecycleService;
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Đơn mua của tài khoản hiện tại", description = "Lấy đơn theo danh tính đã xác minh trong access token, không nhận customerId từ client")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách đơn mua"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa đăng nhập")
+    })
+    public ApiResponse<List<OrderResponse>> myOrders() {
+        return ApiResponse.success(orderService.getByCustomerId(securityUtils.getCurrentUserId(null)));
+    }
 
     @PostMapping("/quote")
     @PreAuthorize("hasRole('CUSTOMER')")
@@ -79,7 +92,8 @@ public class OrderController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(
-            summary = "Tiến hành đặt hàng và trừ kho an toàn",
+            summary = "Đặt một đơn hàng tương thích (khuyến nghị checkout-batch)",
+            deprecated = true,
             description = "Tạo đơn cho khách hàng đang đăng nhập, kiểm tra customerId tương thích nếu được gửi, khóa PESSIMISTIC_WRITE trên từng SKU và trừ tồn kho"
     )
     @ApiResponses({
@@ -175,6 +189,6 @@ public class OrderController {
     public ApiResponse<OrderResponse> updateOrderStatus(@PathVariable Long id,
                                                         @RequestParam OrderStatus status) {
         resourceAccess.requireOrderStatus(id, status);
-        return ApiResponse.success(orderService.updateOrderStatus(id, status), "Cập nhật trạng thái đơn hàng thành công");
+        return ApiResponse.success(lifecycleService.update(id, status), "Cập nhật trạng thái đơn hàng thành công");
     }
 }
