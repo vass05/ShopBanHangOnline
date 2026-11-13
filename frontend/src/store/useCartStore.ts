@@ -9,6 +9,7 @@ interface CartState {
   loading: boolean;
   error: string | null;
   fetchCart: () => Promise<boolean>;
+  addSku: (skuId: number, quantity: number) => Promise<boolean>;
   addToCart: (item: Omit<CartItem, "quantity">, quantity: number) => Promise<boolean>;
   updateQuantity: (skuId: number, quantity: number) => Promise<boolean>;
   removeFromCart: (skuId: number) => Promise<boolean>;
@@ -86,6 +87,12 @@ export const useCartStore = create<CartState>()((set, get) => {
     items: owner === "guest" ? guestItems() : [],
     selectedSkuIds: owner === "guest" ? guestItems().map(item => item.skuId) : [],
     loading: false, error: null,
+    addSku: (skuId, quantity) => run(async isCurrent => {
+      if (!readAuthSession()) throw new Error("Vui lòng đăng nhập để mua lại");
+      if (!Number.isInteger(quantity) || quantity < 1) throw new Error("Số lượng không hợp lệ");
+      const dto = await cartService.add(skuId, quantity);
+      if (isCurrent()) applyItems(mapCart(dto), skuId);
+    }),
     fetchCart: () => run(async isCurrent => {
       if (!readAuthSession()) { applyItems(guestItems(), undefined, true); return; }
       let dto = await cartService.get();

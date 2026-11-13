@@ -69,6 +69,17 @@ public class OrderService {
             ProductSku sku = productSkuRepository.findByIdWithLock(itemReq.getSkuId())
                     .orElseThrow(() -> new ResourceNotFoundException("SKU", "id", itemReq.getSkuId()));
 
+            if (sku.getProduct() != null && sku.getProduct().getShop() != null) {
+                var shop = sku.getProduct().getShop();
+                if (request.getShopId() != null && !request.getShopId().equals(shop.getId())) {
+                    throw new AppException(ErrorCode.INVALID_REQUEST, "SKU không thuộc gian hàng đã chọn");
+                }
+                if (order.getShop() != null && !order.getShop().getId().equals(shop.getId())) {
+                    throw new AppException(ErrorCode.INVALID_REQUEST, "Vui lòng dùng checkout-batch khi mua nhiều shop");
+                }
+                order.setShop(shop);
+            }
+
             if (sku.getStockQuantity() < itemReq.getQuantity()) {
                 throw new InsufficientStockException(sku.getSkuCode(), itemReq.getQuantity(), sku.getStockQuantity());
             }
@@ -137,15 +148,24 @@ public class OrderService {
                 && order.getOrderStatus() != OrderStatus.RETURNED;
 
         if (isRollingBack) {
+            // Match batch checkout's lock order: all SKU rows, then all product rows.
+            java.util.Map<Long, ProductSku> lockedSkus = new java.util.TreeMap<>();
+            order.getItems().stream().filter(item -> item.getProductSku() != null)
+                    .map(item -> item.getProductSku().getId()).distinct().sorted().forEach(skuId ->
+                    productSkuRepository.findByIdWithLock(skuId).ifPresent(sku -> lockedSkus.put(skuId, sku)));
+            java.util.Map<Long, Product> lockedProducts = new java.util.TreeMap<>();
+            lockedSkus.values().stream().filter(sku -> sku.getProduct() != null).map(sku -> sku.getProduct().getId())
+                    .distinct().sorted().forEach(productId -> productRepository.findByIdWithLock(productId)
+                    .ifPresent(product -> lockedProducts.put(productId, product)));
             for (OrderItem item : order.getItems()) {
                 if (item.getProductSku() != null) {
-                    ProductSku sku = productSkuRepository.findByIdWithLock(item.getProductSku().getId()).orElse(null);
+                    ProductSku sku = lockedSkus.get(item.getProductSku().getId());
                     if (sku != null) {
                         sku.setStockQuantity(sku.getStockQuantity() + item.getQuantity());
                         productSkuRepository.save(sku);
 
                         if (sku.getProduct() != null) {
-                            Product product = productRepository.findByIdWithLock(sku.getProduct().getId()).orElse(null);
+                            Product product = lockedProducts.get(sku.getProduct().getId());
                             if (product != null && product.getStockQuantity() != null) {
                                 product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
                                 productRepository.save(product);

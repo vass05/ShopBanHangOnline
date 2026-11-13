@@ -4,6 +4,8 @@ Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), c
 
 ## Cập nhật rà soát tích hợp — 13/11/2026
 
+Chức năng 05 đã merge PR #5. Chức năng 06 trên `feat/order-history-and-cancellation` nối lịch sử/hủy đơn với API, bổ sung khóa vòng đời và kiểm tra hoàn kho đồng thời; backend 132/132 tests, frontend 22/22 tests và build pass. Chi tiết: [integration-06-order-history.md](sprints/integration-06-order-history.md).
+
 Chức năng 04 đã merge PR #4. Chức năng 05 trên `feat/server-checkout-and-pricing` triển khai báo giá/checkout thật, voucher/phí server, nhiều shop, receipt chống trùng và trừ giỏ sau commit. Frontend 18 tests/build pass, backend 130/130 tests pass. Chi tiết: [integration-05-server-checkout.md](sprints/integration-05-server-checkout.md).
 
 Chức năng 03 đã merge PR #3. Chức năng 04 (giỏ hàng Redis) trên `feat/redis-cart-integration` đã nối API và qua **15/15 frontend tests**, production build pass; xem [integration-04-redis-cart.md](sprints/integration-04-redis-cart.md).

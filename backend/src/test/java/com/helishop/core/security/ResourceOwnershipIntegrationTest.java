@@ -41,6 +41,7 @@ class ResourceOwnershipIntegrationTest {
     @MockBean ProductRepository productRepository;
     @MockBean ShopRepository shopRepository;
     @MockBean OrderService orders;
+    @MockBean com.helishop.core.modules.order.service.OrderLifecycleService lifecycle;
     @MockBean ProductService products;
     @MockBean RedisCartService carts;
     @MockBean RefreshTokenService refreshTokens;
@@ -116,7 +117,7 @@ class ResourceOwnershipIntegrationTest {
                         .header("Authorization", token(2, "CUSTOMER"))).andExpect(status().isForbidden());
         mvc.perform(patch("/api/v1/orders/10/status").param("status", "CANCELLED")
                         .header("Authorization", token(1, "CUSTOMER"))).andExpect(status().isOk());
-        verify(orders).updateOrderStatus(10L, OrderStatus.CANCELLED);
+        verify(lifecycle).update(10L, OrderStatus.CANCELLED);
     }
 
     @Test

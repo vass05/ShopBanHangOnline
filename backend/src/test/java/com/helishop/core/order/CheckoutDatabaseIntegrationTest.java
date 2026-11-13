@@ -32,6 +32,7 @@ class CheckoutDatabaseIntegrationTest {
     @Autowired ProductRepository products;
     @Autowired ProductSkuRepository skus;
     @Autowired OrderRepository orders;
+    @Autowired com.helishop.core.modules.order.service.OrderLifecycleService lifecycle;
     @MockBean RedisCartService cart;
     Long customerId;
     Long addressId;
@@ -91,5 +92,47 @@ class CheckoutDatabaseIntegrationTest {
         assertEquals(0, orders.findByCustomerId(customerId).size());
         for (Long skuId : skuIds) assertEquals(10, skus.findById(skuId).orElseThrow().getStockQuantity());
         verifyNoInteractions(cart);
+    }
+
+    @Test void simultaneousCancellationsRestoreStockOnceAndCannotReactivateOrder() throws Exception {
+        var created = service.checkout(customerId, request(), "cancellation-checkout-0001");
+        Long orderId = created.getFirst().getId();
+        Long skuId = created.getFirst().getItems().getFirst().getSkuId();
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            List<Future<OrderResponse>> calls = new ArrayList<>();
+            for (int i = 0; i < 2; i++) calls.add(executor.submit(() -> {
+                authenticateAdmin();
+                try { return lifecycle.update(orderId, OrderStatus.CANCELLED); }
+                finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
+            }));
+            for (var call : calls) assertEquals(OrderStatus.CANCELLED, call.get(10, TimeUnit.SECONDS).getOrderStatus());
+        }
+        assertEquals(10, skus.findById(skuId).orElseThrow().getStockQuantity());
+        authenticateAdmin();
+        try { assertThrows(com.helishop.core.common.exception.AppException.class, () -> lifecycle.update(orderId, OrderStatus.CONFIRMED)); }
+        finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
+        assertEquals(10, skus.findById(skuId).orElseThrow().getStockQuantity());
+    }
+
+    private void authenticateAdmin() {
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("admin", null,
+                        List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"))));
+    }
+
+    @Test void customerCannotAdvanceDeliveryOrCancelPaidOrder() {
+        var created = service.checkout(customerId, request(), "customer-policy-checkout-0001");
+        Long id = created.getFirst().getId();
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        new com.helishop.core.security.AuthenticatedUser(customerId, "buyer@test.com"), null,
+                        List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CUSTOMER"))));
+        try {
+            assertThrows(com.helishop.core.common.exception.AppException.class, () -> lifecycle.update(id, OrderStatus.DELIVERED));
+            var order = orders.findById(id).orElseThrow();
+            order.setPaymentStatus(PaymentStatus.PAID); orders.save(order);
+            assertThrows(com.helishop.core.common.exception.AppException.class, () -> lifecycle.update(id, OrderStatus.CANCELLED));
+        } finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
+        assertEquals(OrderStatus.PENDING, orders.findById(id).orElseThrow().getOrderStatus());
     }
 }

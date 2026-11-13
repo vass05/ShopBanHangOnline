@@ -70,3 +70,8 @@ export function subscribeAuthSession(listener: (session: AuthSession | null) => 
   listeners.add(listener);
   return () => { listeners.delete(listener); };
 }
+
+export function synchronizeAuthSession() {
+  const session = readAuthSession();
+  listeners.forEach(listener => listener(session));
+}
