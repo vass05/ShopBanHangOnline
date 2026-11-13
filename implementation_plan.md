@@ -13,8 +13,8 @@ Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm t
 | OTP khôi phục mật khẩu | `fix/password-reset-otp` | PR #3 đã merge; backend 116/116 tests pass |
 | Giỏ hàng Redis | `feat/redis-cart-integration` | PR #4 đã merge; frontend 15/15 tests và production build pass |
 | Checkout, voucher/phí và nhiều shop | `feat/server-checkout-and-pricing` | PR #5 đã merge; backend 130/130 tests pass; frontend 18/18 tests và build pass |
-| Lịch sử đơn và hủy đơn | `feat/order-history-and-cancellation` | Đã triển khai; backend 132/132 tests; frontend 22/22 tests và build pass; bàn giao qua PR |
-| VNPAY và kết quả thanh toán | Chưa tạo | Chờ triển khai |
+| Lịch sử đơn và hủy đơn | `feat/order-history-and-cancellation` | PR #6 đã merge; backend 132/132 tests; frontend 22/22 tests/build pass |
+| VNPAY và kết quả thanh toán | `fix/vnpay-return-and-ipn` | Đã triển khai; backend 144/144 tests; frontend 26/26 tests/build pass; bàn giao qua PR |
 | Catalog và phân trang | Chưa tạo | Chờ triển khai |
 | Docker và uploads | Chưa tạo | Chờ triển khai |
 | E2E và CI | Chưa tạo | Chờ triển khai |

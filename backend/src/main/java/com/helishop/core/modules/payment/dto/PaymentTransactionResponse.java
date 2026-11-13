@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 @Schema(description = "Kết quả giao dịch thanh toán gửi về cho người dùng")
 public class PaymentTransactionResponse {
 
+    private boolean verified;
+
     @Schema(description = "Mã đơn hàng", example = "ORD-20260910-A1B2")
     private String orderCode;
 

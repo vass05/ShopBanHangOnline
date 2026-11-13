@@ -234,6 +234,7 @@ public class OrderService {
                 .orderStatus(order.getOrderStatus())
                 .paymentStatus(order.getPaymentStatus())
                 .paymentMethod(order.getPaymentMethod())
+                .paymentExpiresAt(order.getPaymentExpiresAt())
                 .shippingAddressSnapshot(order.getShippingAddressSnapshot())
                 .note(order.getNote())
                 .createdAt(order.getCreatedAt())

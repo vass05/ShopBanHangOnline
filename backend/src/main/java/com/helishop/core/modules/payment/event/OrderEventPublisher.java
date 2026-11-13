@@ -1,43 +1,25 @@
 package com.helishop.core.modules.payment.event;
 
-import com.helishop.core.config.RabbitMQConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.helishop.core.common.exception.AppException;
+import com.helishop.core.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
-@Component
-@RequiredArgsConstructor
+@Component @RequiredArgsConstructor
 public class OrderEventPublisher {
+    private final OrderPaidOutboxRepository outbox;
+    private final ObjectMapper json;
 
-    private final RabbitTemplate rabbitTemplate;
-
-    /**
-     * Bắn sự kiện đơn hàng đã thanh toán thành công vào RabbitMQ Exchange
-     */
+    @Transactional
     public void publishOrderPaidEvent(OrderPaidEvent event) {
-        log.info("Phát sự kiện OrderPaidEvent cho đơn hàng '{}' (ID: {}) tới exchange '{}'",
-                event.getOrderCode(), event.getOrderId(), RabbitMQConfig.EXCHANGE_ORDER_DIRECT);
-
         try {
-            // 1. Gửi tới queue xử lý gửi Email xác nhận
-            rabbitTemplate.convertAndSend(
-                    RabbitMQConfig.EXCHANGE_ORDER_DIRECT,
-                    RabbitMQConfig.ROUTING_ORDER_PAID_EMAIL,
-                    event
-            );
-
-            // 2. Gửi tới queue thông báo cho Seller (nếu có shopId)
-            if (event.getShopId() != null) {
-                rabbitTemplate.convertAndSend(
-                        RabbitMQConfig.EXCHANGE_ORDER_DIRECT,
-                        RabbitMQConfig.ROUTING_ORDER_PAID_SELLER,
-                        event
-                );
-            }
-        } catch (Exception e) {
-            log.error("Lỗi khi bắn sự kiện OrderPaidEvent vào RabbitMQ: {}", e.getMessage(), e);
+            outbox.save(OrderPaidOutbox.builder().orderId(event.getOrderId()).payload(json.writeValueAsString(event))
+                    .sellerPublished(event.getShopId() == null).build());
+        } catch (JsonProcessingException exception) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Không thể lưu sự kiện thanh toán");
         }
     }
 }

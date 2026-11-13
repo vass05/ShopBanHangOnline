@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helishop.core.common.constants.OrderStatus;
 import com.helishop.core.common.constants.PaymentStatus;
+import com.helishop.core.common.constants.PaymentMethod;
 import com.helishop.core.common.exception.AppException;
 import com.helishop.core.common.exception.ErrorCode;
 import com.helishop.core.modules.order.entity.Order;
@@ -49,16 +50,18 @@ public class PaymentService {
     /**
      * 1. Sinh URL thanh toán VNPAY Sandbox kèm chữ ký HMAC-SHA512
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public PaymentUrlResponse createVnPayPaymentUrl(Long userId, CreatePaymentUrlRequest request, HttpServletRequest servletRequest) {
-        Order order = orderRepository.findByOrderCode(request.getOrderCode())
+        Order order = orderRepository.findByOrderCodeWithLock(request.getOrderCode())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn hàng với mã: " + request.getOrderCode()));
 
-        if (order.getCustomer() != null && !order.getCustomer().getId().equals(userId)) {
+        if (order.getCustomer() == null || !order.getCustomer().getId().equals(userId)) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Bạn không có quyền thanh toán cho đơn hàng này");
         }
 
-        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+        if (order.getPaymentMethod() != PaymentMethod.VNPAY || order.getOrderStatus() == OrderStatus.CANCELLED
+                || order.getOrderStatus() == OrderStatus.RETURNED || order.getOrderStatus() == OrderStatus.DELIVERED
+                || order.getPaymentStatus() == PaymentStatus.REFUNDED || order.getPaymentStatus() == PaymentStatus.PAID) {
             throw new AppException(ErrorCode.INVALID_REQUEST, "Đơn hàng này đã được thanh toán thành công trước đó");
         }
 
@@ -67,7 +70,10 @@ public class PaymentService {
         String expireDate = now.plusMinutes(15).format(VNPAY_DATE_FORMAT);
 
         // Số tiền theo chuẩn VNPAY: VND nhân 100 và không có phần thập phân
-        long vnpAmount = order.getFinalAmount().multiply(BigDecimal.valueOf(100)).longValue();
+        long vnpAmount;
+        try { vnpAmount = order.getFinalAmount().multiply(BigDecimal.valueOf(100)).longValueExact(); }
+        catch (ArithmeticException exception) { throw new AppException(ErrorCode.INVALID_REQUEST, "Số tiền thanh toán không hợp lệ"); }
+        if (vnpAmount <= 0) throw new AppException(ErrorCode.INVALID_REQUEST, "Số tiền thanh toán phải lớn hơn 0");
 
         Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", "2.1.0");
@@ -92,6 +98,9 @@ public class PaymentService {
         String secureHash = VnPayUtils.hashAllFields(vnpParams, vnPayConfig.getHashSecret());
         String queryUrl = VnPayUtils.buildQueryUrl(vnpParams);
         String paymentUrl = vnPayConfig.getPayUrl() + "?" + queryUrl + "&vnp_SecureHash=" + secureHash;
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        order.setPaymentExpiresAt(now.plusMinutes(15).toLocalDateTime());
+        orderRepository.save(order);
 
         log.info("Đã tạo VNPAY Payment URL thành công cho đơn hàng '{}'", order.getOrderCode());
 
@@ -109,144 +118,85 @@ public class PaymentService {
      */
     @Transactional
     public VnPayIpnResponse processVnPayIpn(Map<String, String> allParams) {
-        log.info("Nhận Webhook IPN từ VNPAY: {}", allParams);
-
-        Map<String, String> fields = new HashMap<>(allParams);
-        String vnpSecureHash = fields.remove("vnp_SecureHash");
-        fields.remove("vnp_SecureHashType");
-
-        // Bước 1: Validate Checksum (Xác minh chữ ký số tránh giả mạo)
-        String signValue = VnPayUtils.hashAllFields(fields, vnPayConfig.getHashSecret());
-        if (vnpSecureHash == null || !vnpSecureHash.equalsIgnoreCase(signValue)) {
-            log.warn("Cảnh báo: Sai mã checksum VNPAY IPN! Nhận: '{}', Tính toán: '{}'", vnpSecureHash, signValue);
-            return VnPayIpnResponse.invalidChecksum();
-        }
-
-        // Bước 2: Tìm kiếm thông tin đơn hàng
+        Map<String, String> fields = signedFields(allParams);
+        if (!validSignature(allParams, fields) || !vnPayConfig.getTmnCode().equals(fields.get("vnp_TmnCode"))) return VnPayIpnResponse.invalidChecksum();
         String orderCode = fields.get("vnp_TxnRef");
-        Order order = orderRepository.findByOrderCode(orderCode).orElse(null);
-        if (order == null) {
-            log.warn("IPN thông báo cho đơn hàng không tồn tại: '{}'", orderCode);
-            return VnPayIpnResponse.orderNotFound();
-        }
-
-        // Kiểm tra tính chính xác của số tiền thanh toán
-        String amountStr = fields.get("vnp_Amount");
-        long incomingAmount = amountStr != null ? Long.parseLong(amountStr) : 0L;
-        long expectedAmount = order.getFinalAmount().multiply(BigDecimal.valueOf(100)).longValue();
-        if (incomingAmount != expectedAmount) {
-            log.warn("IPN số tiền không khớp cho đơn hàng '{}'. Nhận: {}, Kỳ vọng: {}", orderCode, incomingAmount, expectedAmount);
-            return VnPayIpnResponse.invalidAmount();
-        }
-
-        // Bước 3: Idempotency Check (Kiểm tra trạng thái đơn hàng để chống xử lý trùng lặp)
-        if (order.getPaymentStatus() == PaymentStatus.PAID) {
-            log.info("Đơn hàng '{}' đã ở trạng thái PAID. Bỏ qua xử lý lặp lại (Idempotent response 02)", orderCode);
-            return VnPayIpnResponse.orderAlreadyConfirmed();
-        }
-
-        // Bước 4: Cập nhật trạng thái và Lưu lịch sử giao dịch
+        if (orderCode == null || orderCode.isBlank()) return VnPayIpnResponse.orderNotFound();
+        Order order = orderRepository.findByOrderCodeWithLock(orderCode).orElse(null);
+        if (order == null) return VnPayIpnResponse.orderNotFound();
+        if (order.getPaymentMethod() != PaymentMethod.VNPAY) return VnPayIpnResponse.unknownError("Payment method mismatch");
+        BigDecimal incomingAmount = callbackAmount(fields.get("vnp_Amount"));
+        if (incomingAmount == null || order.getFinalAmount().compareTo(incomingAmount) != 0) return VnPayIpnResponse.invalidAmount();
+        if (order.getPaymentStatus() == PaymentStatus.PAID || order.getPaymentStatus() == PaymentStatus.REFUNDED) return VnPayIpnResponse.orderAlreadyConfirmed();
         String responseCode = fields.get("vnp_ResponseCode");
+        String gatewayStatus = fields.get("vnp_TransactionStatus");
+        if (responseCode == null || !responseCode.matches("[0-9]{2}") || gatewayStatus == null || !gatewayStatus.matches("[0-9]{2}")) return VnPayIpnResponse.unknownError("Invalid callback fields");
+        boolean success = "00".equals(responseCode) && "00".equals(gatewayStatus);
         String transactionNo = fields.get("vnp_TransactionNo");
-        String payDateStr = fields.get("vnp_PayDate");
-
-        LocalDateTime transactionTime = parsePayDate(payDateStr);
-        String gatewayResponseJson = serializeToJson(fields);
-
-        String txCode = (transactionNo != null && !transactionNo.isBlank())
-                ? transactionNo
-                : orderCode + "_" + System.currentTimeMillis();
-
-        if ("00".equals(responseCode)) {
-            // Thanh toán thành công
-            order.setPaymentStatus(PaymentStatus.PAID);
-            order.setOrderStatus(OrderStatus.PROCESSING);
-            orderRepository.save(order);
-
-            PaymentTransaction transaction = PaymentTransaction.builder()
-                    .order(order)
-                    .transactionCode(txCode)
-                    .paymentGateway("VNPAY")
-                    .amount(order.getFinalAmount())
-                    .status(PaymentStatus.PAID)
-                    .transactionTime(transactionTime)
-                    .gatewayResponse(gatewayResponseJson)
-                    .build();
-            paymentTransactionRepository.save(transaction);
-
-            log.info("Cập nhật đơn hàng '{}' sang PAID và PROCESSING thành công", orderCode);
-
-            // Bước 5: Bắn sự kiện OrderPaidEvent vào RabbitMQ Exchange
-            fireOrderPaidEvent(order, txCode, transactionTime);
-
-            return VnPayIpnResponse.success();
-        } else {
-            // Thanh toán thất bại hoặc người dùng hủy giao dịch
-            log.warn("Giao dịch VNPAY cho đơn hàng '{}' thất bại với mã lỗi: {}", orderCode, responseCode);
-            order.setPaymentStatus(PaymentStatus.FAILED);
-            orderRepository.save(order);
-
-            PaymentTransaction transaction = PaymentTransaction.builder()
-                    .order(order)
-                    .transactionCode(txCode)
-                    .paymentGateway("VNPAY")
-                    .amount(order.getFinalAmount())
-                    .status(PaymentStatus.FAILED)
-                    .transactionTime(transactionTime)
-                    .gatewayResponse(gatewayResponseJson)
-                    .build();
-            paymentTransactionRepository.save(transaction);
-
-            return VnPayIpnResponse.success();
+        if (success && (transactionNo == null || !transactionNo.matches("[0-9]{1,30}") || transactionNo.matches("0+"))) return VnPayIpnResponse.unknownError("Invalid transaction number");
+        String txCode = transactionNo != null && transactionNo.matches("[0-9]{1,30}") && !transactionNo.matches("0+")
+                ? transactionNo : orderCode + "_" + VnPayUtils.hashAllFields(fields, vnPayConfig.getHashSecret()).substring(0, 24);
+        var existing = paymentTransactionRepository.findByTransactionCode(txCode);
+        PaymentStatus target = success ? PaymentStatus.PAID : PaymentStatus.FAILED;
+        if (existing.isPresent()) {
+            if (!existing.get().getOrder().getId().equals(order.getId())) return VnPayIpnResponse.unknownError("Transaction belongs to another order");
+            if (existing.get().getStatus() == target) return VnPayIpnResponse.orderAlreadyConfirmed();
         }
+        LocalDateTime paidAt = parsePayDate(fields.get("vnp_PayDate"));
+        PaymentTransaction transaction = existing.orElseGet(() -> PaymentTransaction.builder().order(order).transactionCode(txCode).paymentGateway("VNPAY").build());
+        transaction.setAmount(order.getFinalAmount());
+        transaction.setStatus(target);
+        transaction.setTransactionTime(paidAt);
+        transaction.setGatewayResponse(serializeToJson(fields));
+        paymentTransactionRepository.save(transaction);
+        order.setPaymentStatus(target);
+        boolean closed = order.getOrderStatus() == OrderStatus.CANCELLED || order.getOrderStatus() == OrderStatus.RETURNED;
+        if (success && !closed && (order.getOrderStatus() == OrderStatus.PENDING || order.getOrderStatus() == OrderStatus.CONFIRMED)) order.setOrderStatus(OrderStatus.PROCESSING);
+        orderRepository.save(order);
+        if (success && !closed) fireOrderPaidEvent(order, txCode, paidAt);
+        if (success && closed) log.warn("Thanh toán đến sau khi đóng đơn {}; cần đối soát/hoàn tiền, không kích hoạt lại đơn", orderCode);
+        return VnPayIpnResponse.success();
     }
 
-    /**
-     * 3. Xử lý Return URL (Người dùng quay về sau thanh toán)
-     */
     @Transactional(readOnly = true)
     public PaymentTransactionResponse processVnPayReturn(Map<String, String> allParams) {
-        Map<String, String> fields = new HashMap<>(allParams);
-        String vnpSecureHash = fields.remove("vnp_SecureHash");
-        fields.remove("vnp_SecureHashType");
-
-        String signValue = VnPayUtils.hashAllFields(fields, vnPayConfig.getHashSecret());
-        boolean isValidHash = vnpSecureHash != null && vnpSecureHash.equalsIgnoreCase(signValue);
-
+        Map<String, String> fields = signedFields(allParams);
+        if (!validSignature(allParams, fields) || !vnPayConfig.getTmnCode().equals(fields.get("vnp_TmnCode"))) return invalidReturn("Chữ ký phản hồi không hợp lệ");
         String orderCode = fields.get("vnp_TxnRef");
-        String transactionNo = fields.get("vnp_TransactionNo");
-        String responseCode = fields.get("vnp_ResponseCode");
-        String amountStr = fields.get("vnp_Amount");
-        String payDateStr = fields.get("vnp_PayDate");
+        Order order = orderCode != null ? orderRepository.findByOrderCode(orderCode).orElse(null) : null;
+        BigDecimal amount = callbackAmount(fields.get("vnp_Amount"));
+        if (order == null || order.getPaymentMethod() != PaymentMethod.VNPAY || amount == null || amount.compareTo(order.getFinalAmount()) != 0) return invalidReturn("Đơn hàng hoặc số tiền phản hồi không hợp lệ");
+        boolean gatewaySuccess = "00".equals(fields.get("vnp_ResponseCode")) && "00".equals(fields.get("vnp_TransactionStatus"));
+        PaymentStatus status = order.getPaymentStatus() == PaymentStatus.PAID || order.getPaymentStatus() == PaymentStatus.REFUNDED
+                ? order.getPaymentStatus() : gatewaySuccess ? PaymentStatus.PENDING : PaymentStatus.FAILED;
+        return PaymentTransactionResponse.builder().verified(true).orderCode(orderCode).paymentGateway("VNPAY")
+                .transactionCode(fields.get("vnp_TransactionNo")).amount(order.getFinalAmount()).status(status)
+                .responseCode(fields.get("vnp_ResponseCode")).transactionTime(parsePayDate(fields.get("vnp_PayDate")))
+                .message(status == PaymentStatus.PAID ? "Đã nhận xác nhận thanh toán từ máy chủ"
+                        : gatewaySuccess ? "Đang chờ xác nhận thanh toán từ máy chủ" : "Giao dịch chưa thành công").build();
+    }
 
-        BigDecimal amount = (amountStr != null)
-                ? BigDecimal.valueOf(Long.parseLong(amountStr)).divide(BigDecimal.valueOf(100))
-                : BigDecimal.ZERO;
+    private Map<String, String> signedFields(Map<String, String> allParams) {
+        Map<String, String> fields = new HashMap<>(allParams);
+        fields.remove("vnp_SecureHash"); fields.remove("vnp_SecureHashType");
+        return fields;
+    }
 
-        if (!isValidHash) {
-            return PaymentTransactionResponse.builder()
-                    .orderCode(orderCode)
-                    .transactionCode(transactionNo)
-                    .paymentGateway("VNPAY")
-                    .amount(amount)
-                    .status(PaymentStatus.FAILED)
-                    .responseCode(responseCode)
-                    .message("Chữ ký phản hồi không hợp lệ")
-                    .transactionTime(parsePayDate(payDateStr))
-                    .build();
-        }
+    private boolean validSignature(Map<String, String> allParams, Map<String, String> fields) {
+        String expected = VnPayUtils.hashAllFields(fields, vnPayConfig.getHashSecret());
+        String received = allParams.get("vnp_SecureHash");
+        return received != null && java.security.MessageDigest.isEqual(
+                expected.toLowerCase(java.util.Locale.ROOT).getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+                received.toLowerCase(java.util.Locale.ROOT).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+    }
 
-        boolean isSuccess = "00".equals(responseCode);
-        return PaymentTransactionResponse.builder()
-                .orderCode(orderCode)
-                .transactionCode(transactionNo)
-                .paymentGateway("VNPAY")
-                .amount(amount)
-                .status(isSuccess ? PaymentStatus.PAID : PaymentStatus.FAILED)
-                .responseCode(responseCode)
-                .message(isSuccess ? "Giao dịch thanh toán thành công" : "Giao dịch thanh toán không thành công (Mã lỗi: " + responseCode + ")")
-                .transactionTime(parsePayDate(payDateStr))
-                .build();
+    private BigDecimal callbackAmount(String amount) {
+        if (amount == null || !amount.matches("[0-9]{1,18}")) return null;
+        return new BigDecimal(amount).divide(BigDecimal.valueOf(100));
+    }
+
+    private PaymentTransactionResponse invalidReturn(String message) {
+        return PaymentTransactionResponse.builder().verified(false).status(PaymentStatus.FAILED).amount(BigDecimal.ZERO).message(message).build();
     }
 
     // --- Helper Methods ---

@@ -75,7 +75,7 @@ public class PaymentController {
     @GetMapping("/vnpay-return")
     @Operation(
             summary = "Nhận kết quả điều hướng trở về từ cổng VNPAY (Client Return)",
-            description = "Trang tiếp nhận người dùng quay trở lại hệ thống sau khi thanh toán trên cổng VNPAY, hiển thị thông báo trạng thái giao dịch"
+            description = "Frontend /payment-result gửi tham số VNPAY về đây để xác minh chữ ký, merchant và tiền VND; chỉ đọc trạng thái, không đánh dấu PAID từ Return URL. Kết quả cuối theo IPN và đơn hàng."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Xử lý kết quả trả về từ VNPAY thành công",

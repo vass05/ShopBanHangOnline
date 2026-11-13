@@ -69,6 +69,7 @@ class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().when(vnPayConfig.getTmnCode()).thenReturn("HELI0001");
         paymentService = new PaymentService(
                 vnPayConfig,
                 orderRepository,
@@ -134,7 +135,7 @@ class PaymentServiceTest {
                 .language("vn")
                 .build();
 
-        when(orderRepository.findByOrderCode("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
+        when(orderRepository.findByOrderCodeWithLock("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
         when(vnPayConfig.getTmnCode()).thenReturn("HELI0001");
         when(vnPayConfig.getHashSecret()).thenReturn(secretKey);
         when(vnPayConfig.getPayUrl()).thenReturn("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html");
@@ -162,7 +163,7 @@ class PaymentServiceTest {
                 .orderCode("ORD-20260910-A1B2")
                 .build();
 
-        when(orderRepository.findByOrderCode("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
+        when(orderRepository.findByOrderCodeWithLock("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
 
         assertThatThrownBy(() -> paymentService.createVnPayPaymentUrl(1L, request, new MockHttpServletRequest()))
                 .isInstanceOf(AppException.class)
@@ -192,13 +193,15 @@ class PaymentServiceTest {
         when(vnPayConfig.getHashSecret()).thenReturn(secretKey);
 
         Map<String, String> fields = new HashMap<>();
+        fields.put("vnp_TmnCode", "HELI0001");
+        fields.put("vnp_TransactionStatus", "00");
         fields.put("vnp_TxnRef", "ORD-NONEXISTENT");
         fields.put("vnp_Amount", "50000000");
 
         String validHash = VnPayUtils.hashAllFields(fields, secretKey);
         fields.put("vnp_SecureHash", validHash);
 
-        when(orderRepository.findByOrderCode("ORD-NONEXISTENT")).thenReturn(Optional.empty());
+        when(orderRepository.findByOrderCodeWithLock("ORD-NONEXISTENT")).thenReturn(Optional.empty());
 
         VnPayIpnResponse response = paymentService.processVnPayIpn(fields);
 
@@ -212,13 +215,15 @@ class PaymentServiceTest {
         when(vnPayConfig.getHashSecret()).thenReturn(secretKey);
 
         Map<String, String> fields = new HashMap<>();
+        fields.put("vnp_TmnCode", "HELI0001");
+        fields.put("vnp_TransactionStatus", "00");
         fields.put("vnp_TxnRef", "ORD-20260910-A1B2");
         fields.put("vnp_Amount", "99999999"); // Sai số tiền (kỳ vọng 50,000,000)
 
         String validHash = VnPayUtils.hashAllFields(fields, secretKey);
         fields.put("vnp_SecureHash", validHash);
 
-        when(orderRepository.findByOrderCode("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
+        when(orderRepository.findByOrderCodeWithLock("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
 
         VnPayIpnResponse response = paymentService.processVnPayIpn(fields);
 
@@ -233,13 +238,15 @@ class PaymentServiceTest {
         when(vnPayConfig.getHashSecret()).thenReturn(secretKey);
 
         Map<String, String> fields = new HashMap<>();
+        fields.put("vnp_TmnCode", "HELI0001");
+        fields.put("vnp_TransactionStatus", "00");
         fields.put("vnp_TxnRef", "ORD-20260910-A1B2");
         fields.put("vnp_Amount", "50000000");
 
         String validHash = VnPayUtils.hashAllFields(fields, secretKey);
         fields.put("vnp_SecureHash", validHash);
 
-        when(orderRepository.findByOrderCode("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
+        when(orderRepository.findByOrderCodeWithLock("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
 
         VnPayIpnResponse response = paymentService.processVnPayIpn(fields);
 
@@ -258,6 +265,8 @@ class PaymentServiceTest {
         when(vnPayConfig.getHashSecret()).thenReturn(secretKey);
 
         Map<String, String> fields = new HashMap<>();
+        fields.put("vnp_TmnCode", "HELI0001");
+        fields.put("vnp_TransactionStatus", "00");
         fields.put("vnp_TxnRef", "ORD-20260910-A1B2");
         fields.put("vnp_Amount", "50000000");
         fields.put("vnp_ResponseCode", "00");
@@ -267,7 +276,7 @@ class PaymentServiceTest {
         String validHash = VnPayUtils.hashAllFields(fields, secretKey);
         fields.put("vnp_SecureHash", validHash);
 
-        when(orderRepository.findByOrderCode("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
+        when(orderRepository.findByOrderCodeWithLock("ORD-20260910-A1B2")).thenReturn(Optional.of(testOrder));
 
         VnPayIpnResponse response = paymentService.processVnPayIpn(fields);
 
@@ -295,5 +304,68 @@ class PaymentServiceTest {
         assertThat(event.getCustomerEmail()).isEqualTo("customer@gmail.com");
         assertThat(event.getTotalAmount()).isEqualByComparingTo(BigDecimal.valueOf(500000));
         assertThat(event.getItems()).hasSize(1);
+    }
+    private Map<String, String> callback(String response, String status) {
+        Map<String, String> fields = new HashMap<>();
+        fields.put("vnp_TmnCode", "HELI0001"); fields.put("vnp_TxnRef", testOrder.getOrderCode());
+        fields.put("vnp_Amount", "50000000"); fields.put("vnp_ResponseCode", response);
+        fields.put("vnp_TransactionStatus", status); fields.put("vnp_TransactionNo", "14567890");
+        fields.put("vnp_PayDate", "20260910153000");
+        return fields;
+    }
+
+    private void sign(Map<String, String> fields) {
+        when(vnPayConfig.getHashSecret()).thenReturn(secretKey);
+        fields.put("vnp_SecureHash", VnPayUtils.hashAllFields(fields, secretKey));
+    }
+
+    @Test void malformedAmountReturnsProviderErrorInsteadOfThrowing() {
+        var fields = callback("00", "00"); fields.put("vnp_Amount", "not-a-number"); sign(fields);
+        when(orderRepository.findByOrderCodeWithLock(testOrder.getOrderCode())).thenReturn(Optional.of(testOrder));
+        assertThat(paymentService.processVnPayIpn(fields).getRspCode()).isEqualTo("04");
+        verify(paymentTransactionRepository, never()).save(any());
+    }
+
+    @Test void gatewayTransactionStatusMustAlsoIndicateSuccess() {
+        var fields = callback("00", "02"); sign(fields);
+        when(orderRepository.findByOrderCodeWithLock(testOrder.getOrderCode())).thenReturn(Optional.of(testOrder));
+        assertThat(paymentService.processVnPayIpn(fields).getRspCode()).isEqualTo("00");
+        assertThat(testOrder.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
+        verify(orderEventPublisher, never()).publishOrderPaidEvent(any());
+    }
+
+    @Test void latePaymentIsRecordedWithoutReactivatingCancelledOrder() {
+        testOrder.setOrderStatus(OrderStatus.CANCELLED);
+        var fields = callback("00", "00"); sign(fields);
+        when(orderRepository.findByOrderCodeWithLock(testOrder.getOrderCode())).thenReturn(Optional.of(testOrder));
+        assertThat(paymentService.processVnPayIpn(fields).getRspCode()).isEqualTo("00");
+        assertThat(testOrder.getPaymentStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(testOrder.getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(orderEventPublisher, never()).publishOrderPaidEvent(any());
+    }
+
+    @Test void verifiedReturnWaitsForIpnAndDoesNotMutateOrder() {
+        var fields = callback("00", "00"); sign(fields);
+        when(orderRepository.findByOrderCode(testOrder.getOrderCode())).thenReturn(Optional.of(testOrder));
+        var result = paymentService.processVnPayReturn(fields);
+        assertThat(result.isVerified()).isTrue();
+        assertThat(result.getStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(result.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(500000));
+        assertThat(testOrder.getPaymentStatus()).isEqualTo(PaymentStatus.UNPAID);
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test void forgedReturnCannotClaimPaymentSuccess() {
+        when(vnPayConfig.getHashSecret()).thenReturn(secretKey);
+        var fields = callback("00", "00"); fields.put("vnp_SecureHash", "forged");
+        assertThat(paymentService.processVnPayReturn(fields).isVerified()).isFalse();
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test void codOrderCannotGenerateVnpayUrl() {
+        testOrder.setPaymentMethod(PaymentMethod.COD);
+        when(orderRepository.findByOrderCodeWithLock(testOrder.getOrderCode())).thenReturn(Optional.of(testOrder));
+        assertThatThrownBy(() -> paymentService.createVnPayPaymentUrl(1L, CreatePaymentUrlRequest.builder().orderCode(testOrder.getOrderCode()).build(), new MockHttpServletRequest()))
+                .isInstanceOf(AppException.class);
     }
 }

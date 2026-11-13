@@ -9,6 +9,7 @@ export interface OrderDto {
   id: number; orderCode: string; customerId: number; shopId: number; shopName: string;
   totalAmount: number; shippingFee: number; discountAmount: number; finalAmount: number;
   orderStatus: string; paymentStatus: string; paymentMethod: "COD" | "VNPAY";
+  paymentExpiresAt?: string;
   shippingAddressSnapshot: string; note?: string; createdAt: string;
   items: { id: number; skuId: number; productId: number; skuCode: string; imageUrl: string;
     productNameSnapshot: string; skuVariantSnapshot: string; quantity: number; priceAtPurchase: number; subtotal: number }[];

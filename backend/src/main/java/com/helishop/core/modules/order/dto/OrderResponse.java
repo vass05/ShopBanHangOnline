@@ -58,6 +58,7 @@ public class OrderResponse {
 
     @Schema(description = "Phương thức thanh toán", example = "COD")
     private PaymentMethod paymentMethod;
+    private LocalDateTime paymentExpiresAt;
 
     @Schema(description = "Địa chỉ nhận hàng snapshot", example = "Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội")
     private String shippingAddressSnapshot;
