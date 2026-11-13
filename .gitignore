@@ -51,3 +51,10 @@ backend/uploads/**
 !backend/uploads/**/.gitkeep
 uploads/**
 !uploads/**/.gitkeep
+
+# Private runtime configuration and integration artifacts
+.env.production
+.env.*.local
+frontend/test-results/
+frontend/playwright-report/
+.integration/

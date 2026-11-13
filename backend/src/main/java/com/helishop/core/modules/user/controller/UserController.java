@@ -84,7 +84,7 @@ public class UserController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Tải ảnh đại diện lên thành công",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Tệp không hợp lệ hoặc quá dung lượng cho phép",
+              @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "413", description = "Tệp vượt 5 MB hoặc yêu cầu vượt 6 MB",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa đăng nhập",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))

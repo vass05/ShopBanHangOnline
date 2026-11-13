@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 @Configuration
 public class VnPayConfig {
+    @Value("${app.vnpay.disabled:false}")
+    private boolean disabled;
 
     @Value("${app.vnpay.tmn-code:HELI0001}")
     private String tmnCode;

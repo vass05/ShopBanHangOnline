@@ -18,6 +18,12 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFileTooLarge(Exception exception) {
+        ErrorCode error = ErrorCode.FILE_TOO_LARGE;
+        return ResponseEntity.status(error.getStatusCode()).body(ApiResponse.error(error.getCode(), error.getMessage()));
+    }
+
     @ExceptionHandler({org.springframework.web.bind.MissingRequestHeaderException.class,
             org.springframework.web.bind.MissingServletRequestParameterException.class,
             org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,

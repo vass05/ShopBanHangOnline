@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useAuthStore } from "@/store/useAuthStore";
+import { mediaUrl as resolveAvatar } from "@/lib/mediaUrl";
 import {
   profileService,
   UserProfile,
@@ -90,14 +91,6 @@ export const ProfilePage: React.FC = () => {
     setAvatarError(false);
     setSidebarAvatarError(false);
   }, [avatarUrl]);
-
-  const resolveAvatar = (url?: string) => {
-    if (!url) return "";
-    if (url.startsWith("/uploads/")) {
-      return `http://localhost:8080${url}`;
-    }
-    return url;
-  };
 
   // Addresses State
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
@@ -188,8 +181,8 @@ export const ProfilePage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1 * 1024 * 1024) {
-      setProfileErrorMsg("Dụng lượng file tối đa 1 MB. Vui lòng chọn ảnh nhỏ hơn!");
+    if (file.size > 5 * 1024 * 1024) {
+      setProfileErrorMsg("Dung lượng file tối đa 5 MB. Vui lòng chọn ảnh nhỏ hơn!");
       return;
     }
 
@@ -721,7 +714,7 @@ export const ProfilePage: React.FC = () => {
 
                     {/* Exact format notice from Shopee */}
                     <div className="text-[13px] text-[#888888] text-center mt-3.5 space-y-1 leading-snug">
-                      <p>Dụng lượng file tối đa 1 MB</p>
+                      <p>Dung lượng file tối đa 5 MB</p>
                       <p>Định dạng:.JPEG, .PNG</p>
                     </div>
                   </div>

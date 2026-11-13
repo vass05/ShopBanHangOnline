@@ -2,6 +2,10 @@ server:
   port: 8080
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   application:
     name: helishop-core
 
@@ -44,9 +48,9 @@ spring:
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${SPRING_MAIL_SMTP_AUTH:true}
           starttls:
-            enable: true
+            enable: ${SPRING_MAIL_STARTTLS:true}
 
   rabbitmq:
     publisher-confirm-type: simple
@@ -72,7 +76,7 @@ logging:
 # JWT Configuration
 app:
   jwt:
-    secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
     access-token-expiration-ms: 900000 # 15 minutes (15 * 60 * 1000)
     refresh-token-expiration-sec: 604800 # 7 days (7 * 24 * 60 * 60)
     expiration-ms: 900000 # fallback compatibility

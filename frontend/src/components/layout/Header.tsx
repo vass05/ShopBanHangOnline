@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { formatVND } from "@/lib/formatters";
+import { mediaUrl } from "@/lib/mediaUrl";
 import { catalogService } from "@/services/catalogService";
 import { HeliShopLogo } from "./HeliShopLogo";
 import {
@@ -124,7 +125,7 @@ export const Header: React.FC = () => {
                 >
                   {user?.avatarUrl && !avatarError ? (
                     <img
-                      src={user.avatarUrl.startsWith("/uploads/") ? `http://localhost:8080${user.avatarUrl}` : user.avatarUrl}
+                      src={mediaUrl(user.avatarUrl)}
                       alt={user.fullName || "Avatar"}
                       onError={() => setAvatarError(true)}
                       className="w-5 h-5 rounded-full object-cover ring-1 ring-white/60"
