@@ -31,6 +31,17 @@ public class RedisCartService {
     public static final String CART_KEY_PREFIX = "cart:user:";
     public static final long CART_TTL_SECONDS = 2592000L; // 30 ngày (30 * 24 * 3600)
 
+    private static final org.springframework.data.redis.core.script.DefaultRedisScript<Long> CONSUME =
+            new org.springframework.data.redis.core.script.DefaultRedisScript<>("""
+                    local raw = redis.call('HGET', KEYS[1], ARGV[1])
+                    if not raw then return 0 end
+                    local item = cjson.decode(raw)
+                    item.quantity = item.quantity - tonumber(ARGV[2])
+                    if item.quantity <= 0 then redis.call('HDEL', KEYS[1], ARGV[1])
+                    else redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(item)) end
+                    return 1
+                    """, Long.class);
+
     private final StringRedisTemplate stringRedisTemplate;
     private final ProductSkuRepository productSkuRepository;
     private final ObjectMapper objectMapper;
@@ -229,6 +240,11 @@ public class RedisCartService {
         validateUserId(userId);
         String cartKey = buildCartKey(userId);
         stringRedisTemplate.delete(cartKey);
+    }
+
+    public void consumePurchasedItems(Long userId, Map<Long, Integer> quantities) {
+        quantities.forEach((skuId, quantity) -> stringRedisTemplate.execute(CONSUME,
+                List.of(buildCartKey(userId)), skuId.toString(), quantity.toString()));
     }
 
     // --- Helper Methods ---

@@ -5,6 +5,9 @@ import com.helishop.core.common.response.ApiResponse;
 import com.helishop.core.modules.order.dto.CheckoutRequest;
 import com.helishop.core.modules.order.dto.OrderResponse;
 import com.helishop.core.modules.order.service.OrderService;
+import com.helishop.core.modules.order.service.CheckoutService;
+import com.helishop.core.modules.order.dto.CheckoutBatchRequest;
+import com.helishop.core.modules.order.dto.CheckoutQuoteResponse;
 import com.helishop.core.security.SecurityUtils;
 import com.helishop.core.security.ResourceAccess;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -37,6 +41,39 @@ public class OrderController {
     private final OrderService orderService;
     private final SecurityUtils securityUtils;
     private final ResourceAccess resourceAccess;
+    private final CheckoutService checkoutService;
+
+    @PostMapping("/quote")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Báo giá giỏ hàng nhiều shop", description = "Tính giá SKU, phí giao mỗi shop, điều kiện và phân bổ voucher; địa chỉ phải thuộc tài khoản hiện tại")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Báo giá thành công"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Voucher hoặc dữ liệu không hợp lệ"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa đăng nhập"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Chỉ dành cho khách hàng"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "SKU hoặc địa chỉ không tồn tại"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Không đủ tồn kho")
+    })
+    public ApiResponse<CheckoutQuoteResponse> quote(@Valid @RequestBody CheckoutBatchRequest request) {
+        return ApiResponse.success(checkoutService.quote(securityUtils.getCurrentUserId(null), request));
+    }
+
+    @PostMapping("/checkout-batch")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Đặt đơn nhiều shop", description = "Tính lại báo giá, khóa SKU, tạo một đơn mỗi shop trong cùng giao dịch. Idempotency-Key giữ nguyên khi thử lại cùng nội dung; giỏ được trừ sau commit.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Đã tạo đơn hoặc trả lại đơn của yêu cầu trùng"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Nội dung hoặc mã chống trùng không hợp lệ"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa đăng nhập"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Chỉ dành cho khách hàng"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "SKU hoặc địa chỉ không tồn tại"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Không đủ tồn kho")
+    })
+    public ApiResponse<List<OrderResponse>> checkoutBatch(@RequestHeader("Idempotency-Key") String requestKey,
+                                                         @Valid @RequestBody CheckoutBatchRequest request) {
+        return ApiResponse.success(checkoutService.checkout(securityUtils.getCurrentUserId(null), request, requestKey), "Đặt hàng thành công");
+    }
 
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)

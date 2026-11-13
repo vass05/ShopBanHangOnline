@@ -36,6 +36,7 @@ public class OrderResponse {
 
     @Schema(description = "ID gian hàng", example = "1")
     private Long shopId;
+    private String shopName;
 
     @Schema(description = "Tổng tiền hàng ban đầu (VNĐ)", example = "40000000")
     private BigDecimal totalAmount;
@@ -82,6 +83,9 @@ public class OrderResponse {
 
         @Schema(description = "ID biến thể SKU", example = "10")
         private Long skuId;
+        private Long productId;
+        private String skuCode;
+        private String imageUrl;
 
         @Schema(description = "Tên sản phẩm snapshot lúc mua", example = "iPhone 16 Pro Max 256GB")
         private String productNameSnapshot;

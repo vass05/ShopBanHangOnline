@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -56,6 +57,7 @@ public class CheckoutRequest {
 
         @Schema(description = "Số lượng muốn mua (phải > 0)", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull(message = "Số lượng mua không được để trống")
+        @Min(value = 1, message = "Số lượng mua phải lớn hơn 0")
         private Integer quantity;
     }
 }
