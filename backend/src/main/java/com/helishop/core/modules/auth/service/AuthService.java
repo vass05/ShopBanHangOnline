@@ -39,6 +39,9 @@ public class AuthService {
 
     @Transactional // giúp đảm bảo tính toàn vẽn dữ liệu
     public AuthResponse register(RegisterRequest request) {
+        if (request.getRole() == UserRole.ROLE_ADMIN) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Không được tự đăng ký quyền quản trị viên");
+        }
         boolean hasEmail = request.getEmail() != null && !request.getEmail().trim().isBlank();
         boolean hasPhone = request.getPhone() != null && !request.getPhone().trim().isBlank();
 

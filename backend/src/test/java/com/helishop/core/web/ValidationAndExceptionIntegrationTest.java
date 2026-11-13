@@ -47,6 +47,16 @@ class ValidationAndExceptionIntegrationTest {
     @MockBean
     private OrderService orderService;
 
+    @MockBean
+    private com.helishop.core.modules.user.repository.UserRepository userRepository;
+
+    @org.junit.jupiter.api.BeforeEach
+    void authenticatedCustomer() {
+        var customer = com.helishop.core.modules.user.entity.User.builder().email("user").build();
+        customer.setId(1L);
+        when(userRepository.findByEmail("user")).thenReturn(java.util.Optional.of(customer));
+    }
+
     @Test
     @DisplayName("Validation @Valid: Gửi body rỗng/sai trả về HTTP 400 và map lỗi từng field")
     void shouldReturn400WithFieldErrorsMapWhenValidationFails() throws Exception {

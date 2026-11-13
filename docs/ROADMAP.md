@@ -4,6 +4,8 @@ Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), c
 
 ## Cập nhật rà soát tích hợp — 13/11/2026
 
+Tiến độ triển khai: chức năng **định danh và quyền sở hữu tài nguyên** đã có trên nhánh `fix/identity-and-resource-ownership`, backend **109/109 tests pass**, bàn giao qua PR trước khi triển khai chức năng tiếp theo. Chi tiết: [integration-01-resource-ownership.md](sprints/integration-01-resource-ownership.md). Các phần khác tiếp tục theo bảng tiến độ trong implementation_plan.md.
+
 **Chưa đạt nghiệm thu tích hợp frontend/backend cho luồng mua hàng.** Các mốc “100%” bên dưới ghi nhận bàn giao lịch sử từng phần, không chứng minh luồng trình duyệt → API → dữ liệu production đã hoàn chỉnh.
 
 Rà soát mã nguồn xác nhận giỏ hàng và đơn mua đang lưu cục bộ; checkout chưa gọi API tạo đơn, payload VNPAY lệch và lỗi thanh toán có fallback thành công. Cần đồng bộ hợp đồng, quyền sở hữu dữ liệu, phí/voucher, nhiều shop và cấu hình Docker.

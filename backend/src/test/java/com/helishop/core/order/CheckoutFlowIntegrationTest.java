@@ -43,6 +43,16 @@ class CheckoutFlowIntegrationTest {
     @MockBean
     private OrderService orderService;
 
+    @MockBean
+    private com.helishop.core.modules.user.repository.UserRepository userRepository;
+
+    @org.junit.jupiter.api.BeforeEach
+    void authenticatedCustomer() {
+        var customer = com.helishop.core.modules.user.entity.User.builder().email("customer@helishop.com").build();
+        customer.setId(1L);
+        when(userRepository.findByEmail("customer@helishop.com")).thenReturn(java.util.Optional.of(customer));
+    }
+
     @Test
     @WithMockUser(username = "customer@helishop.com", roles = "CUSTOMER")
     @DisplayName("Integration Test 1: Khách hàng (ROLE_CUSTOMER) checkout hợp lệ -> Trả về HTTP 201 Created và ApiResponse<OrderResponse>")

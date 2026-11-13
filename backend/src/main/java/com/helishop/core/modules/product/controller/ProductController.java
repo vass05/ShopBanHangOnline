@@ -6,6 +6,7 @@ import com.helishop.core.modules.product.dto.ProductFilterCriteria;
 import com.helishop.core.modules.product.dto.ProductRequest;
 import com.helishop.core.modules.product.dto.ProductResponse;
 import com.helishop.core.modules.product.service.ProductService;
+import com.helishop.core.security.ResourceAccess;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductService productService;
+    private final ResourceAccess resourceAccess;
 
     @GetMapping("/{id}")
     @Operation(
@@ -93,6 +95,7 @@ public class ProductController {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
+        resourceAccess.requireShop(request.getShopId());
         return ApiResponse.success(productService.createProduct(request), "Tạo sản phẩm thành công");
     }
 
@@ -115,6 +118,7 @@ public class ProductController {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<ProductResponse> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        resourceAccess.requireProduct(id, request.getShopId());
         return ApiResponse.success(productService.updateProduct(id, request), "Cập nhật sản phẩm thành công");
     }
 }

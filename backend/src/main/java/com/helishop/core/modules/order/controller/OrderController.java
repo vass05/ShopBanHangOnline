@@ -5,6 +5,8 @@ import com.helishop.core.common.response.ApiResponse;
 import com.helishop.core.modules.order.dto.CheckoutRequest;
 import com.helishop.core.modules.order.dto.OrderResponse;
 import com.helishop.core.modules.order.service.OrderService;
+import com.helishop.core.security.SecurityUtils;
+import com.helishop.core.security.ResourceAccess;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -33,13 +35,15 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final SecurityUtils securityUtils;
+    private final ResourceAccess resourceAccess;
 
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(
             summary = "Tiến hành đặt hàng và trừ kho an toàn",
-            description = "Tạo đơn hàng mới, áp dụng Khóa bi quan (PESSIMISTIC_WRITE) trên từng SKU để ngăn chặn race condition trong Flash Sale và trừ tồn kho ngay lập tức"
+            description = "Tạo đơn cho khách hàng đang đăng nhập, kiểm tra customerId tương thích nếu được gửi, khóa PESSIMISTIC_WRITE trên từng SKU và trừ tồn kho"
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Đặt hàng thành công, tạo snapshot giá và trừ kho thành công",
@@ -53,16 +57,18 @@ public class OrderController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Sản phẩm không đủ số lượng tồn kho (InsufficientStockException)",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<OrderResponse> checkout(@RequestParam Long customerId,
+    public ApiResponse<OrderResponse> checkout(@RequestParam(required = false) Long customerId,
                                               @Valid @RequestBody CheckoutRequest request) {
-        return ApiResponse.success(orderService.checkout(customerId, request), "Đặt hàng thành công");
+        Long currentId = securityUtils.getCurrentUserId(customerId);
+        securityUtils.getCurrentUserId(request.getCustomerId());
+        return ApiResponse.success(orderService.checkout(currentId, request), "Đặt hàng thành công");
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Xem chi tiết đơn hàng theo ID",
-            description = "Tra cứu toàn bộ thông tin đơn hàng và danh sách sản phẩm chi tiết theo Order ID"
+            description = "Tra cứu đơn theo ID, chỉ dành cho khách sở hữu đơn, người bán của shop hoặc quản trị viên"
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Tìm thấy đơn hàng",
@@ -73,6 +79,7 @@ public class OrderController {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<OrderResponse> getOrderById(@PathVariable Long id) {
+        resourceAccess.requireOrder(id);
         return ApiResponse.success(orderService.getById(id));
     }
 
@@ -80,7 +87,7 @@ public class OrderController {
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Xem chi tiết đơn hàng theo mã Order Code",
-            description = "Tra cứu thông tin đơn hàng theo mã công khai (VD: ORD-A1B2C3D4)"
+            description = "Tra cứu theo mã đơn, chỉ dành cho khách sở hữu đơn, người bán của shop hoặc quản trị viên"
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Tìm thấy đơn hàng",
@@ -91,6 +98,7 @@ public class OrderController {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<OrderResponse> getOrderByCode(@PathVariable String orderCode) {
+        resourceAccess.requireOrderCode(orderCode);
         return ApiResponse.success(orderService.getByOrderCode(orderCode));
     }
 
@@ -98,7 +106,7 @@ public class OrderController {
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Lấy danh sách đơn hàng theo khách hàng",
-            description = "Truy xuất lịch sử mua hàng của khách hàng theo Customer ID"
+            description = "Truy xuất lịch sử mua hàng của chính khách hàng đang đăng nhập; quản trị viên được tra cứu khách hàng khác"
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lấy danh sách đơn hàng thành công",
@@ -107,6 +115,7 @@ public class OrderController {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<List<OrderResponse>> getOrdersByCustomer(@PathVariable Long customerId) {
+        resourceAccess.requireCustomer(customerId);
         return ApiResponse.success(orderService.getByCustomerId(customerId));
     }
 
@@ -114,7 +123,7 @@ public class OrderController {
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Cập nhật trạng thái đơn hàng",
-            description = "Cập nhật trạng thái (PENDING, CONFIRMED, SHIPPING, DELIVERED, CANCELLED, RETURNED). Tự động hoàn kho nguyên tử nếu chuyển sang CANCELLED hoặc RETURNED."
+            description = "Khách sở hữu chỉ được hủy đơn PENDING/CONFIRMED; người bán quản lý đơn của shop, quản trị viên quản lý toàn sàn. Hủy hoặc trả hàng sẽ hoàn kho."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cập nhật trạng thái đơn hàng thành công",
@@ -128,6 +137,7 @@ public class OrderController {
     })
     public ApiResponse<OrderResponse> updateOrderStatus(@PathVariable Long id,
                                                         @RequestParam OrderStatus status) {
+        resourceAccess.requireOrderStatus(id, status);
         return ApiResponse.success(orderService.updateOrderStatus(id, status), "Cập nhật trạng thái đơn hàng thành công");
     }
 }
