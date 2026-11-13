@@ -4,6 +4,8 @@ Tài liệu quản lý vòng đời phát triển, các giai đoạn (Phases), c
 
 ## Cập nhật rà soát tích hợp — 13/11/2026
 
+Chức năng 02 đã merge PR #2. Chức năng 03 (OTP khôi phục mật khẩu) trên `fix/password-reset-otp` qua **116/116 backend tests**; xem [integration-03-password-reset.md](sprints/integration-03-password-reset.md).
+
 Chức năng 01 đã merge qua PR #1. Chức năng 02 (phiên đăng nhập/refresh) trên nhánh `fix/auth-session-persistence` đã qua **10/10 frontend tests** và build production; chi tiết [integration-02-auth-session.md](sprints/integration-02-auth-session.md).
 
 Tiến độ triển khai: chức năng **định danh và quyền sở hữu tài nguyên** đã có trên nhánh `fix/identity-and-resource-ownership`, backend **109/109 tests pass**, bàn giao qua PR trước khi triển khai chức năng tiếp theo. Chi tiết: [integration-01-resource-ownership.md](sprints/integration-01-resource-ownership.md). Các phần khác tiếp tục theo bảng tiến độ trong implementation_plan.md.

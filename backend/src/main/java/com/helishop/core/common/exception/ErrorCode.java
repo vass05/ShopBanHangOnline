@@ -18,7 +18,9 @@ public enum ErrorCode {
     INSUFFICIENT_STOCK(1008, "Sản phẩm trong kho không đủ đáp ứng", HttpStatus.CONFLICT),
     OPTIMISTIC_LOCK_CONFLICT(1009, "Xung đột đồng thời dữ liệu khi thanh toán/cập nhật", HttpStatus.CONFLICT),
     INVALID_REQUEST(1010, "Dữ liệu yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST),
-    BAD_REQUEST(1011, "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST);
+    BAD_REQUEST(1011, "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST),
+    TOO_MANY_REQUESTS(1012, "Đã vượt giới hạn yêu cầu", HttpStatus.TOO_MANY_REQUESTS),
+    EMAIL_DELIVERY_FAILED(1013, "Không thể gửi email", HttpStatus.SERVICE_UNAVAILABLE);
 
     private final int code;
     private final String message;

@@ -3,6 +3,7 @@ package com.helishop.core.modules.auth.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class ResetPasswordRequest {
 
     @NotBlank(message = "Mã xác thực OTP không được để trống")
     @Size(min = 6, max = 6, message = "Mã OTP phải có đúng 6 chữ số")
+    @Pattern(regexp = "[0-9]{6}", message = "Mã OTP chỉ được chứa 6 chữ số")
     @Schema(description = "Mã OTP xác thực 6 chữ số", example = "123456")
     private String otp;
 

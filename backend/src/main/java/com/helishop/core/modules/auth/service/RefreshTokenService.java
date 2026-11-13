@@ -71,7 +71,7 @@ public class RefreshTokenService {
         if (email != null) {
             stringRedisTemplate.delete(USER_RT_PREFIX + email);
         }
-        log.info("Đã thu hồi Refresh Token khỏi Redis: {}", refreshToken);
+        log.info("Đã thu hồi Refresh Token khỏi Redis");
     }
 
     /**
