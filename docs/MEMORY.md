@@ -6,6 +6,8 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
+**Chức năng 03:** OTP chuyển sang PasswordResetService, SecureRandom/BCrypt/Redis Lua, TTL 10 phút, cooldown 60 giây, 5 lần gửi/giờ và 5 lần thử sai. API không lộ mã, SMTP lỗi trả 503, vượt giới hạn trả 429, reset thu hồi refresh token. Backend **116 tests pass**; SMTP thật chưa kiểm chứng. Nhánh `fix/password-reset-otp`; chức năng 02 đã merge PR #2.
+
 **Chức năng 02:** phiên frontend chuyển sang một nguồn dữ liệu `helishop-session-v3`, lưu localStorage hoặc sessionStorage theo rememberMe, đồng bộ store khi refresh, chặn retry 401 lặp/đổi tài khoản; **10 frontend tests và build pass**. Nhánh `fix/auth-session-persistence`, theo quy trình PR. Chức năng 01 đã merge PR #1.
 
 **Triển khai chức năng 01 (13/11/2026):** nhánh `fix/identity-and-resource-ownership` sửa danh tính JWT và quyền truy cập giỏ/đơn/shop/sản phẩm, chặn tự đăng ký ADMIN; backend **109/109 tests pass**. User đã yêu cầu mỗi chức năng tạo nhánh → PR → merge main, thay cho push trực tiếp main. Còn phiên frontend, OTP và các luồng thương mại cần triển khai tiếp; chưa được đánh dấu tích hợp hoàn chỉnh.

@@ -194,7 +194,7 @@ export const LoginPage: React.FC = () => {
       await api.post("/auth/reset-password", {
         email: forgotEmail.trim(),
         otp: forgotOtp.trim(),
-        newPassword: newPassword.trim(),
+        newPassword,
       });
 
       setForgotStep(3);

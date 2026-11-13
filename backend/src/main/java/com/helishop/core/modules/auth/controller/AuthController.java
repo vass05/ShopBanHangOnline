@@ -77,14 +77,15 @@ public class AuthController {
         }
 
         @PostMapping("/forgot-password")
-        @Operation(summary = "Yêu cầu mã OTP khôi phục mật khẩu", description = "Tạo mã OTP 6 chữ số lưu vào Redis với TTL 10 phút và gửi thông báo qua Email đăng ký")
+        @Operation(summary = "Yêu cầu mã OTP khôi phục mật khẩu", description = "Gửi OTP qua email, chỉ lưu bản băm TTL 10 phút; chờ 60 giây giữa hai lần gửi, tối đa 5 lần mỗi giờ. Không trả mã trong API.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Gửi mã xác thực OTP thành công", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "429", description = "Vượt giới hạn gửi OTP", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "Dịch vụ gửi email chưa sẵn sàng", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
         })
         public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
                 String result = authService.sendForgotPasswordOtp(request);
-                return ApiResponse.success(result, "Mã xác thực OTP đã được gửi");
+                return ApiResponse.success(result, result);
         }
 
         @PostMapping("/reset-password")

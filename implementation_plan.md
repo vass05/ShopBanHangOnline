@@ -9,8 +9,8 @@ Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm t
 | Chức năng | Nhánh | Trạng thái kiểm chứng |
 | --- | --- | --- |
 | Định danh và quyền sở hữu tài nguyên | `fix/identity-and-resource-ownership` | PR #1 đã merge; backend 109/109 tests pass |
-| Phiên đăng nhập và refresh token | `fix/auth-session-persistence` | Đã triển khai; frontend 10/10 tests và production build pass; bàn giao qua PR |
-| OTP khôi phục mật khẩu | Chưa tạo | Chờ triển khai |
+| Phiên đăng nhập và refresh token | `fix/auth-session-persistence` | PR #2 đã merge; frontend 10/10 tests và production build pass |
+| OTP khôi phục mật khẩu | `fix/password-reset-otp` | Đã triển khai; backend 116/116 tests pass; bàn giao qua PR |
 | Giỏ hàng Redis | Chưa tạo | Chờ triển khai |
 | Checkout, voucher/phí và nhiều shop | Chưa tạo | Chờ triển khai |
 | Lịch sử đơn và hủy đơn | Chưa tạo | Chờ triển khai |
