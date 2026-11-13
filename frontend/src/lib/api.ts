@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import type { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { readAuthSession, writeAuthSession, updateSessionAccessToken } from "@/lib/authSession";
 
 export type InterceptorLogCallback = (log: {
@@ -24,6 +24,9 @@ export const api = axios.create({ baseURL, timeout: 15000 });
 const refreshClient = axios.create({ baseURL, timeout: 15000 });
 let refreshPromise: Promise<string> | null = null;
 type SessionRequest = InternalAxiosRequestConfig & { _retry?: boolean; _sessionRefreshToken?: string | null };
+export const sessionRequestConfig = (): AxiosRequestConfig & { _sessionRefreshToken: string | null } => ({
+  _sessionRefreshToken: getStoredRefreshToken(),
+});
 
 export const getStoredAccessToken = () => readAuthSession()?.accessToken || null;
 export const getStoredRefreshToken = () => readAuthSession()?.refreshToken || null;
@@ -33,6 +36,9 @@ export const clearStoredAuthTokens = () => writeAuthSession(null);
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const session = readAuthSession();
   const request = config as SessionRequest;
+  if ("_sessionRefreshToken" in request && request._sessionRefreshToken !== (session?.refreshToken || null)) {
+    throw new axios.CanceledError("Phiên đăng nhập đã thay đổi");
+  }
   if (!("_sessionRefreshToken" in request)) request._sessionRefreshToken = session?.refreshToken || null;
   const token = session?.accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;

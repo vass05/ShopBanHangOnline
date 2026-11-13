@@ -76,6 +76,7 @@ public class RedisCartService {
                 .shopId(sku.getProduct().getShop().getId())
                 .shopName(sku.getProduct().getShop().getShopName())
                 .productTitle(sku.getProduct().getName())
+                .skuCode(sku.getSkuCode())
                 .skuVariant(variant)
                 .imageUrl(imageUrl)
                 .price(sku.getPrice())
@@ -119,6 +120,7 @@ public class RedisCartService {
         }
 
         existingItem.setQuantity(quantity);
+        existingItem.setSkuCode(sku.getSkuCode());
         existingItem.setPrice(sku.getPrice());
         existingItem.setStockAvailable(sku.getStockQuantity());
         existingItem.setUpdatedAt(Instant.now().getEpochSecond());

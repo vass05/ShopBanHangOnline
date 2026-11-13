@@ -10,8 +10,8 @@ Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm t
 | --- | --- | --- |
 | Định danh và quyền sở hữu tài nguyên | `fix/identity-and-resource-ownership` | PR #1 đã merge; backend 109/109 tests pass |
 | Phiên đăng nhập và refresh token | `fix/auth-session-persistence` | PR #2 đã merge; frontend 10/10 tests và production build pass |
-| OTP khôi phục mật khẩu | `fix/password-reset-otp` | Đã triển khai; backend 116/116 tests pass; bàn giao qua PR |
-| Giỏ hàng Redis | Chưa tạo | Chờ triển khai |
+| OTP khôi phục mật khẩu | `fix/password-reset-otp` | PR #3 đã merge; backend 116/116 tests pass |
+| Giỏ hàng Redis | `feat/redis-cart-integration` | Đã nối API; frontend 15/15 tests và production build pass; bàn giao qua PR |
 | Checkout, voucher/phí và nhiều shop | Chưa tạo | Chờ triển khai |
 | Lịch sử đơn và hủy đơn | Chưa tạo | Chờ triển khai |
 | VNPAY và kết quả thanh toán | Chưa tạo | Chờ triển khai |

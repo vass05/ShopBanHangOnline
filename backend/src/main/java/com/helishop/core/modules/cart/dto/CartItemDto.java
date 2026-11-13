@@ -21,6 +21,7 @@ public class CartItemDto implements Serializable {
     private Long shopId;
     private String shopName;
     private String productTitle;
+    private String skuCode;
     private String skuVariant;
     private String imageUrl;
     private BigDecimal price;

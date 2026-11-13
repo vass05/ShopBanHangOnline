@@ -6,6 +6,8 @@ Tài liệu này lưu trữ trạng thái ngữ cảnh thực tế của dự á
 
 ## 📌 1. TRẠNG THÁI HIỆN THỜI (CURRENT STATE)
 
+**Chức năng 04:** giỏ đăng nhập dùng Redis API, cartService DTO mapper và store có queue/kiểm tra phiên; giỏ khách riêng, ghép bằng max(quantity), xóa guest SKU sau khi server xác nhận. Không giữ giỏ tài khoản trong localStorage; đổi tài khoản bỏ response cũ; PDP/Cart chờ và báo lỗi thực. Frontend **15 tests/build pass**, nhánh `feat/redis-cart-integration`. Chức năng 03 đã merge PR #3; checkout/đơn mua vẫn cần triển khai tiếp.
+
 **Chức năng 03:** OTP chuyển sang PasswordResetService, SecureRandom/BCrypt/Redis Lua, TTL 10 phút, cooldown 60 giây, 5 lần gửi/giờ và 5 lần thử sai. API không lộ mã, SMTP lỗi trả 503, vượt giới hạn trả 429, reset thu hồi refresh token. Backend **116 tests pass**; SMTP thật chưa kiểm chứng. Nhánh `fix/password-reset-otp`; chức năng 02 đã merge PR #2.
 
 **Chức năng 02:** phiên frontend chuyển sang một nguồn dữ liệu `helishop-session-v3`, lưu localStorage hoặc sessionStorage theo rememberMe, đồng bộ store khi refresh, chặn retry 401 lặp/đổi tài khoản; **10 frontend tests và build pass**. Nhánh `fix/auth-session-persistence`, theo quy trình PR. Chức năng 01 đã merge PR #1.
