@@ -8,9 +8,9 @@ export async function data(response, status = 200) {
   expect(response.status()).toBe(status);
   return (await response.json()).data;
 }
-export async function register(request, name = 'customer') {
+export async function register(request, name = 'customer', role = 'ROLE_CUSTOMER') {
   const email = `${name}-${randomUUID()}@example.test`;
-  const auth = await data(await request.post('/api/v1/auth/register', { data: { email, password, fullName: 'E2E Customer' } }), 201);
+  const auth = await data(await request.post('/api/v1/auth/register', { data: { email, password, fullName: 'E2E Customer', role } }), 201);
   return { ...auth, password };
 }
 export async function addAddress(request, user) {
@@ -26,7 +26,7 @@ export async function login(page, user, remember = true, origin) {
   const response = page.waitForResponse(result => result.url().endsWith('/auth/login') && result.request().method() === 'POST');
   await page.getByRole('button', { name: 'Đăng Nhập', exact: true }).click();
   expect((await response).status()).toBe(200);
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(user.role === 'ROLE_SELLER' ? /\/seller\/shop$/ : /\/$/);
 }
 export async function browserUser(page) {
   return page.evaluate(() => JSON.parse(sessionStorage.getItem('helishop-session-v3') || localStorage.getItem('helishop-session-v3')));

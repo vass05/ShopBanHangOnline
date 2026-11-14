@@ -1,5 +1,14 @@
 # Kế hoạch đồng bộ frontend và backend HeliShop
 
+## Mở gian hàng — 14/11/2026
+
+Nhánh `feat/seller-shop-onboarding`. Theo yêu cầu mới, chỉ triển khai mở gian hàng; các chức năng seller tiếp theo và thay đổi theme chờ người dùng yêu cầu.
+
+- Backend: GET/POST `/api/v1/shops/me`, DTO chuẩn ApiResponse/OpenAPI; chỉ SELLER đang hoạt động, chủ shop lấy từ danh tính đã xác minh; một tài khoản một shop, tên shop duy nhất, khóa tài khoản và ràng buộc database chống tạo trùng đồng thời.
+- Frontend: trang `/seller/shop` có form tên/mô tả, trạng thái loading/error/success và xem shop đã lưu; đăng ký/đăng nhập seller cùng liên kết Kênh người bán trỏ vào đúng luồng. Giữ giao diện hiện có.
+- Kiểm chứng: API validation/phân quyền, persistence/concurrency/duplicate, frontend service và browser đăng ký seller → mở shop → tải lại/đăng nhập lại. Chạy backend tests, frontend tests/TypeScript/build, PR riêng và merge main trước khi bàn giao.
+- Chính sách đợt này: một SELLER một shop; shop mới ACTIVE ngay, chưa thêm luồng admin duyệt. Không nâng vai trò CUSTOMER tự động, không nhận ownerId/status từ form.
+
 Ngày rà soát: **13/11/2026 (Asia/Saigon)**. Baseline mã nguồn: `acdd254`.
 
 ## Tiến độ triển khai theo chức năng
@@ -18,6 +27,7 @@ Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm t
 | Catalog và phân trang | `feat/server-catalog-pagination` | PR #8 đã merge; backend 149/149 tests; frontend 30/30 tests/build pass |
 | Docker và uploads | `fix/docker-runtime-and-uploads` | PR #9 đã merge; backend 152/152 tests; frontend 31/31 tests/build pass; 5/5 Docker healthy, upload giữ nguyên sau tạo lại backend |
 | E2E và CI | `test/browser-checkout-and-ci` | [PR #10](https://github.com/vass05/ShopBanHangOnline/pull/10); 7/7 browser E2E pass trên cụm thật; 152 backend tests, 31 frontend tests/build pass; workflow 3 jobs |
+| Mở gian hàng | `feat/seller-shop-onboarding` | GET/POST shop của mình, đăng ký/đăng nhập seller → `/seller/shop`; 157 backend tests pass, 1 test MySQL dev skip; 35 frontend tests/TypeScript/build pass; 11/11 browser E2E pass (4 ca mới trên MySQL thật). Bàn giao qua PR riêng; phần seller tiếp theo chờ yêu cầu. |
 
 ## 1. Kết luận và phạm vi kiểm chứng
 

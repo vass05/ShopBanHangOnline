@@ -22,7 +22,9 @@ public enum ErrorCode {
     TOO_MANY_REQUESTS(1012, "Đã vượt giới hạn yêu cầu", HttpStatus.TOO_MANY_REQUESTS),
     EMAIL_DELIVERY_FAILED(1013, "Không thể gửi email", HttpStatus.SERVICE_UNAVAILABLE),
     FILE_TOO_LARGE(1014, "Dung lượng ảnh tối đa 5 MB, toàn bộ yêu cầu tối đa 6 MB", HttpStatus.PAYLOAD_TOO_LARGE),
-    PAYMENT_UNAVAILABLE(1015, "Cổng thanh toán chưa được cấu hình", HttpStatus.SERVICE_UNAVAILABLE);
+    PAYMENT_UNAVAILABLE(1015, "Cổng thanh toán chưa được cấu hình", HttpStatus.SERVICE_UNAVAILABLE),
+    SHOP_ALREADY_EXISTS(1016, "Tài khoản đã có gian hàng", HttpStatus.CONFLICT),
+    SHOP_NAME_TAKEN(1017, "Tên gian hàng đã được sử dụng", HttpStatus.CONFLICT);
 
     private final int code;
     private final String message;

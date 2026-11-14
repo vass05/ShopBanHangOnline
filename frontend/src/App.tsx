@@ -13,6 +13,7 @@ import { CheckoutPage } from "@/pages/CheckoutPage";
 import { PaymentResultPage } from "@/pages/PaymentResultPage";
 import { OrdersPage } from "@/pages/OrdersPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { SellerShopPage } from "@/pages/SellerShopPage";
 
 // Scroll to top helper on route change
 const ScrollToTop: React.FC = () => {
@@ -71,6 +72,7 @@ export const App: React.FC = () => {
           {/* Authentication & Admin/Seller Dashboard */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/seller/shop" element={<ProtectedRoute><SellerShopPage /></ProtectedRoute>} />
           <Route
             path="/dashboard"
             element={
