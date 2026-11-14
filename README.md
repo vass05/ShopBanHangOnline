@@ -10,7 +10,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?style=flat-square&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-152_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
+[![Tests](https://img.shields.io/badge/Tests-158_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
 
 **Hệ thống Thương mại Điện tử Đa Nhà bán hàng (Multi-vendor Shopee Mall) chuẩn Doanh nghiệp.**  
 *Tối ưu xử lý tải cao, giỏ hàng phân tán tốc độ cao, chống âm kho Flash Sale và tích hợp thanh toán trực tuyến.*
@@ -27,6 +27,13 @@
 - **Thanh Toán VNPAY Idempotent**: Tích hợp VNPAY Sandbox HMAC-SHA512, Webhook IPN chuẩn Idempotent chống xử lý lặp đơn hàng.
 - **Frontend Shopee Mall UI**: React 18, Vite, Tailwind CSS (theme Ocean Blue), Zustand, TanStack Query, Axios Silent Refresh Token.
 - **Tối Ưu Truy Vấn & Cache**: Triệt tiêu lỗi N+1 Query với `@EntityGraph`, áp dụng Redis Cache-Aside cho danh mục và sản phẩm.
+- **Mở Gian Hàng**: Đăng ký tài khoản người bán, mở và xem shop đã lưu tại `/seller/shop`; một shop cho mỗi seller, kiểm tra quyền sở hữu và chống tạo trùng đồng thời.
+
+## Sử dụng chức năng mở gian hàng
+
+Sau khi chạy frontend và backend theo hướng dẫn bên dưới, chọn **Kênh Người Bán** trên header hoặc mở `/register?role=seller`. Đăng ký tài khoản người bán, nhập tên gian hàng (3–150 ký tự, chưa được sử dụng) và mô tả tùy chọn (tối đa 2000 ký tự), rồi bấm **Mở gian hàng**. Trang `/seller/shop` hiển thị shop đã lưu; tải lại trang hoặc đăng nhập lại bằng tài khoản SELLER vẫn trở về shop đó.
+
+Người bán đã có tài khoản chỉ cần đăng nhập. Shop mới hoạt động ngay, chưa có bước admin duyệt; tài khoản CUSTOMER không tự chuyển thành SELLER. Đợt này chỉ có mở và xem gian hàng của mình. Quản lý sản phẩm, đơn bán và dashboard sẽ triển khai trong các chức năng tiếp theo khi được yêu cầu.
 
 ---
 

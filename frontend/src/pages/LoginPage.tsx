@@ -25,7 +25,7 @@ const REMEMBER_ME_FLAG_KEY = "helishop_remember_me";
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setAuth, isAuthenticated } = useAuthStore();
+  const { setAuth, isAuthenticated, user } = useAuthStore();
 
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
@@ -69,9 +69,9 @@ export const LoginPage: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated && !isExpired) {
       const redirect = searchParams.get("redirect");
-      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : "/");
+      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : user?.role === "ROLE_SELLER" ? "/seller/shop" : "/");
     }
-  }, [isAuthenticated, isExpired, navigate, searchParams]);
+  }, [isAuthenticated, isExpired, navigate, searchParams, user?.role]);
 
   // Khi tải trang: nếu đã có tài khoản ghi nhớ thì tự động focus vào ô Mật khẩu
   useEffect(() => {
@@ -137,7 +137,7 @@ export const LoginPage: React.FC = () => {
 
       setAuth({ user, accessToken, refreshToken, rememberMe });
       const redirect = searchParams.get("redirect");
-      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : "/");
+      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : user.role === "ROLE_SELLER" ? "/seller/shop" : "/");
     } catch (err: any) {
       const msg = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
       setErrorMessage(msg);

@@ -1,5 +1,13 @@
 # BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE
 
+## Mở gian hàng — 14/11/2026
+
+- Phạm vi đã triển khai: GET/POST `/api/v1/shops/me`, `ShopService`, DTO ApiResponse/OpenAPI và trang `/seller/shop`. Header Kênh Người Bán đưa đến đăng ký seller; đăng ký/đăng nhập SELLER mặc định vào shop, vẫn giữ redirect hợp lệ khi có.
+- Một SELLER đang ACTIVE có một shop. Server lấy owner từ principal JWT, kiểm tra role/status database (không tin claim cũ), khóa user khi tạo; unique `owner_id` và `shop_name` ngăn race. Tên trim, 3–150 ký tự, trùng không phân biệt hoa thường trả 409; mô tả tùy chọn ≤2000 ký tự. Shop mới ACTIVE, chưa có admin duyệt; CUSTOMER không tự nâng role.
+- GET khi chưa có shop trả ApiResponse 200 với data rỗng (NON_NULL bỏ trường data). Frontend quy về null và chỉ hiện form sau khi GET thành công; lỗi tải có nút thử lại, lỗi lưu giữ form, xung đột do tab khác tạo sẽ đọc shop thật. Không cho tạo thêm khi shop INACTIVE/BANNED. Bỏ kết quả request cũ khi đổi phiên.
+- Kiểm chứng: backend clean test 157 pass, 1 test MySQL dev skip, không failure/error; frontend 35 tests và TypeScript/build pass; toàn bộ 11/11 browser E2E pass. Bốn E2E mới kiểm chứng mở shop thật, reload/relogin, trùng tên/quyền, concurrency MySQL và lỗi tải/phục hồi tab khác.
+- Bàn giao `feat/seller-shop-onboarding` → PR → main. Dừng tại chức năng này theo yêu cầu; quản lý sản phẩm/đơn bán/dashboard/theme là phần sau. Hướng dẫn và bằng chứng: [seller-shop-onboarding.md](sprints/seller-shop-onboarding.md).
+
 ## Bảo trì IDE — 14/11/2026
 
 Sửa gốc lỗi Problems đỏ hàng loạt: bỏ lifecycle mapping m2e `<ignore />` cho `maven-compiler-plugin` trong pom. Mapping đó làm import mới mất Java nature/builder và classpath, dù Maven CLI vẫn build được. Bật m2e JDT APT và bỏ build-helper khai báo generated-sources trùng compiler để MapStruct được IDE quản lý đúng sau clean. Đã dựng lại Java model của VS Code, xác nhận No Problems với JavaSE-21 và classpath Maven thật; dọn 4 import test không dùng, tắt Oracle Java riêng workspace trên máy hiện tại. Backend clean test: 151 pass, 1 test MySQL skip, 0 failure/error. Chi tiết: [Java IDE troubleshooting](java-ide-troubleshooting.md). Bàn giao theo nhánh `fix/java-ide-project-import` → PR → main.

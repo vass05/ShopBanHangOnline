@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore, User } from "@/store/useAuthStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,10 @@ type RoleType = "ROLE_CUSTOMER" | "ROLE_SELLER";
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setAuth } = useAuthStore();
 
-  const [role, setRole] = useState<RoleType>("ROLE_CUSTOMER");
+  const [role, setRole] = useState<RoleType>(() => searchParams.get("role") === "seller" ? "ROLE_SELLER" : "ROLE_CUSTOMER");
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -85,9 +86,9 @@ export const RegisterPage: React.FC = () => {
 
       setAuth({ user, accessToken: data.accessToken, refreshToken: data.refreshToken });
 
-      // If seller, navigate to dashboard, else home
+      // Seller onboarding continues by opening a persisted shop.
       if (user.role === "ROLE_SELLER") {
-        navigate("/dashboard");
+        navigate("/seller/shop");
       } else {
         navigate("/");
       }

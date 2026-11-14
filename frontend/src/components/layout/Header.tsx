@@ -19,6 +19,7 @@ import {
   Sliders,
   ChevronDown,
   Sparkles,
+  Store,
 } from "lucide-react";
 
 export const Header: React.FC = () => {
@@ -92,7 +93,7 @@ export const Header: React.FC = () => {
       <div className="bg-[#0369A1] text-sky-100 text-xs py-1.5 px-4 sm:px-8 border-b border-sky-800/40">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <span className="hover:text-white cursor-pointer transition-colors">Kênh Người Bán</span>
+            <Link to={user?.role === "ROLE_SELLER" ? "/seller/shop" : "/register?role=seller"} className="hover:text-white transition-colors">Kênh Người Bán</Link>
             <span className="hidden md:inline hover:text-white cursor-pointer transition-colors">Tải ứng dụng</span>
             <div className="hidden sm:flex items-center gap-1.5">
               <span>Kết nối:</span>
@@ -164,6 +165,9 @@ export const Header: React.FC = () => {
                       <Package className="w-4 h-4 text-sky-600" />
                       <span>Đơn mua của tôi</span>
                     </Link>
+                    {user?.role === "ROLE_SELLER" && <Link to="/seller/shop" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 px-3 py-2 hover:bg-sky-50 hover:text-sky-600">
+                      <Store className="w-4 h-4 text-sky-600" /><span>Gian hàng của tôi</span>
+                    </Link>}
                     <button
                       onClick={() => {
                         setShowUserMenu(false);

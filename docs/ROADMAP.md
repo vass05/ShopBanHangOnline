@@ -1,5 +1,11 @@
 # LỘ TRÌNH DỰ ÁN TỔNG THỂ: HELISHOP E-COMMERCE
 
+## Mở gian hàng — 14/11/2026
+
+Đã triển khai chức năng mở và xem shop của người bán: đăng ký SELLER → `/seller/shop` → nhập tên/mô tả → lưu shop thật; đăng nhập lại và tải lại trang vẫn đọc shop đã lưu. API GET/POST `/api/v1/shops/me` lấy owner từ JWT đã xác minh, kiểm tra vai trò/trạng thái trong database; khóa tài khoản và unique constraints chống tạo trùng.
+
+Bàn giao nhánh `feat/seller-shop-onboarding` qua PR vào `main`. Kiểm chứng và giới hạn chi tiết: [seller-shop-onboarding.md](sprints/seller-shop-onboarding.md). Chỉ làm mở gian hàng trong đợt này. Quản lý sản phẩm, đơn bán, dashboard và thay đổi theme chờ người dùng yêu cầu tiếp.
+
 ## Trạng thái tích hợp — 13/11/2026
 
 Luồng khách hàng đã được kiểm chứng trên Docker cục bộ: catalog → xác thực/OTP → giỏ Redis → địa chỉ/checkout → đơn mua/hủy → Return/IPN → email/ảnh đại diện. Các chức năng 01–09 đã merge qua PR #1–#9; chức năng 10 trên `test/browser-checkout-and-ci` bổ sung browser E2E và ba job CI, bàn giao qua PR riêng.
