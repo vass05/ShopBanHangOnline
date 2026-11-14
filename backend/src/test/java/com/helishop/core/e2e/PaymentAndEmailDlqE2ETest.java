@@ -3,7 +3,6 @@ package com.helishop.core.e2e;
 import com.helishop.core.common.constants.OrderStatus;
 import com.helishop.core.common.constants.PaymentMethod;
 import com.helishop.core.common.constants.PaymentStatus;
-import com.helishop.core.config.RabbitMQConfig;
 import com.helishop.core.modules.auth.service.RefreshTokenService;
 import com.helishop.core.modules.notification.consumer.OrderEmailConsumer;
 import com.helishop.core.modules.notification.service.EmailService;
@@ -21,7 +20,6 @@ import jakarta.mail.MessagingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,7 +34,6 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
