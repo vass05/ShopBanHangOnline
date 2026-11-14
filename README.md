@@ -208,6 +208,10 @@ npm run dev
 
 ---
 
+### Java trong VS Code
+
+Dùng Java 21 và Red Hat Java. Backend giữ lifecycle mapping mặc định của m2e để IDE nhận đúng nguồn/classpath; không bỏ qua `maven-compiler-plugin` trong cấu hình IDE. Nếu Problems giữ lỗi import cũ, xem [hướng dẫn khôi phục Java IDE](docs/java-ide-troubleshooting.md).
+
 ## Cổng Dịch Vụ (Service Ports)
 
 | Dịch Vụ | Port | URL / Địa Chỉ | Ghi Chú |

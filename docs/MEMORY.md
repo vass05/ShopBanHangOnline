@@ -1,5 +1,9 @@
 # BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE
 
+## Bảo trì IDE — 14/11/2026
+
+Sửa gốc lỗi Problems đỏ hàng loạt: bỏ lifecycle mapping m2e `<ignore />` cho `maven-compiler-plugin` trong pom. Mapping đó làm import mới mất Java nature/builder và classpath, dù Maven CLI vẫn build được. Bật m2e JDT APT và bỏ build-helper khai báo generated-sources trùng compiler để MapStruct được IDE quản lý đúng sau clean. Đã dựng lại Java model của VS Code, xác nhận No Problems với JavaSE-21 và classpath Maven thật; dọn 4 import test không dùng, tắt Oracle Java riêng workspace trên máy hiện tại. Backend clean test: 151 pass, 1 test MySQL skip, 0 failure/error. Chi tiết: [Java IDE troubleshooting](java-ide-troubleshooting.md). Bàn giao theo nhánh `fix/java-ide-project-import` → PR → main.
+
 ## 1. Trạng thái hiện hành — 13/11/2026
 
 Người dùng yêu cầu **mỗi chức năng tạo nhánh → PR → merge main**, thay cho push thẳng main trong quy tắc cũ. Các chức năng 01–09 đã merge PR #1–#9. Chức năng 10 bàn giao tại [PR #10](https://github.com/vass05/ShopBanHangOnline/pull/10), nhánh `test/browser-checkout-and-ci`; hoàn tất browser E2E và CI trước khi bàn giao PR. Không coi các ghi nhận baseline/Sprint phía dưới là nghiệm thu production.
