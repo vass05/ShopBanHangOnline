@@ -1,5 +1,12 @@
 # BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE
 
+## Tách build Java để tránh Problems tái diễn — 16/11/2026
+
+- Nhánh `fix/java-build-output-isolation`, bàn giao PR → main. POM profile `ide-build` tự kích hoạt theo `m2e.version`: VS Code/m2e ghi `.ide-build`, Maven CLI/CI/Docker vẫn `target`. Cấu hình riêng cả main/test class, resource và generated sources; `.ide-build` bỏ qua Git/Docker. Không dùng setting outputPath dành cho project không Maven.
+- Giữ autobuild/Lombok/automatic configuration; bỏ ignore incomplete classpath và setting autoUpdate sai scope ở workspace. Trên máy hiện tại chuyển Red Hat từ pre-release 1.59.2026111308 sang Release 1.58.0, không pin, tự kiểm tra/cập nhật bật ở User Settings; log startup mới không còn bundle ASM collision. Không ghi version cố định vào repo.
+- Kiểm chứng thực tế: `clean test` 168 pass + 1 schema MySQL dev skip khi IDE vẫn mở; Problems giữ 0, Java Ready, không cần rebuild sau clean. Hash class/mapper IDE không đổi. Package/file tạm sinh đúng 1 lỗi cố ý và tự hết sau sửa; clean test-compile có file mới vẫn pass, đã xóa probe. Khác lần trước, đây là tách output và kiểm chứng hai compiler không còn chia sẻ thư mục.
+- [Cấu hình, bằng chứng và hướng khôi phục](java-ide-troubleshooting.md). Các ghi nhận clean-cache bên dưới là lịch sử; không yêu cầu dọn cache theo mỗi lần thêm file.
+
 ## Sản phẩm/SKU seller — 16/11/2026
 
 - Nhánh `feat/seller-product-sku-management`, bàn giao PR → main. Trang `/seller/products` nối từ shop/header seller; tìm/lọc/phân trang sản phẩm của chính shop, tạo sản phẩm kèm SKU đầu tiên, sửa metadata/trạng thái và thêm/sửa SKU, reload giữ dữ liệu thật. Không mở rộng sang đơn bán/admin/theme.

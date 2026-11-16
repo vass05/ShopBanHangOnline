@@ -34,6 +34,7 @@ build/
 
 ### Local Maven & OS ###
 .maven/
+backend/.ide-build/
 *.log
 .DS_Store
 Thumbs.db

@@ -1,5 +1,9 @@
 # Kế hoạch đồng bộ frontend và backend HeliShop
 
+## Ổn định Java IDE — 16/11/2026
+
+Nhánh `fix/java-build-output-isolation`: profile m2e tự động đưa class/generated sources của IDE sang `.ide-build`, CLI/CI/Docker giữ `target`. Bỏ ignore incomplete classpath/autoUpdate sai scope; dùng Release mới nhất với auto update, không pin. Kiểm chứng `clean test` 168 pass + 1 skip khi IDE mở; hash class/mapper IDE giữ nguyên, Problems 0. Thêm file/package tạm: 1 lỗi cố ý → sửa tự hết → clean test-compile vẫn 0 → xóa probe. Bàn giao PR vào main. [Chi tiết](docs/sprints/java-build-output-isolation.md).
+
 ## Sản phẩm/SKU seller — 16/11/2026
 
 Nhánh `feat/seller-product-sku-management`, tiếp sau mở gian hàng. Dùng project-roadmap-manager và git-push-enforcer, bàn giao nhánh → kiểm thử → PR → main.

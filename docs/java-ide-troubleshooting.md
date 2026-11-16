@@ -1,10 +1,49 @@
 # Java trong VS Code
 
+## Cấu hình hiện hành — 16/11/2026
+
+Maven CLI và IDE trước đây cùng ghi `backend/target`: class, class test và nguồn MapStruct. `mvn clean` xóa đầu ra IDE; JDT có thể giữ model/chẩn đoán cũ hoặc ghi class vào lúc Maven đang biên dịch. Xung đột hai compiler dùng chung output cũng được ghi nhận tại [VS Code Java #1381](https://github.com/redhat-developer/vscode-java/issues/1381).
+
+Đã thêm profile `ide-build` trong pom, tự kích hoạt khi có property `m2e.version` của m2e/JDT:
+
+| Công cụ | Class / tài nguyên | Nguồn sinh |
+| --- | --- | --- |
+| Maven CLI, CI, Docker | `backend/target/classes`, `target/test-classes` | `target/generated-sources/annotations`, `target/generated-test-sources/test-annotations` |
+| VS Code Java / m2e | `backend/.ide-build/classes`, `.ide-build/test-classes` | `.ide-build/generated-sources/annotations`, `.ide-build/generated-test-sources/test-annotations` |
+
+Maven clean thông thường không còn xóa output IDE. Profile không đổi dependency, Java release hoặc code ứng dụng; không kích hoạt nó trong Docker. `.ide-build` được bỏ qua trong Git và Docker context. Cơ chế kích hoạt theo `m2e.version` được mô tả trong [tài liệu Eclipse m2e](https://wiki.eclipse.org/M2E-WTP_FAQ). Không dùng `java.project.outputPath` để thay thế vì setting đó không áp dụng cho Maven project.
+
+Giữ `java.autobuild.enabled`, cập nhật build configuration tự động và Lombok support. Đã bỏ `java.errors.incompleteClasspath.severity=ignore` để vẫn thấy lỗi classpath thật, và bỏ `extensions.autoUpdate` khỏi workspace vì đó là setting cấp User/Application.
+
+## Red Hat Java mới nhất và tự cập nhật
+
+Chọn **Release Version**, bật auto update và không pin version. Tại thời điểm kiểm chứng, Release mới nhất là **1.58.0**, thay bản pre-release `1.59.2026111308`; log trước đó báo `BundleException: ... org.objectweb.asm ... 9.10.1` khi nạp extension bundles. Sau chuyển Release và reload, JVM language server chạy đúng 1.58.0, log khởi động mới không còn lỗi bundle này, Java test/debug extensions vẫn được giữ.
+
+Thiết lập ở **User Settings**, không đặt trong `.vscode/settings.json`:
+
+```json
+{
+  "extensions.autoCheckUpdates": true,
+  "extensions.autoUpdate": "on"
+}
+```
+
+Không khóa 1.58.0 trong repository; bản Release sau vẫn tự cập nhật. Không thể bảo đảm mọi extension tương lai đều không có bug. Kênh pre-release có thể chứa runtime/dependency thay đổi sớm; xem [ghi nhận tương thích của Java Test Runner](https://github.com/microsoft/vscode-java-test/pull/1882).
+
+## Kiểm chứng chống tái diễn
+
+- Đối chiếu classpath JDT thật: toàn bộ output/generated sources đã ở `.ide-build`, vẫn có Maven classpath, Java nature và JavaSE-21.
+- Chạy `mvnw.cmd clean test` khi VS Code vẫn mở/autobuild: **168 pass, 1 test MySQL dev skip**, không reload/rebuild/cache clean sau đó; Problems vẫn 0, Java Ready.
+- SHA-256 của class `RefreshTokenService.class` và nguồn `ProductMapperImpl.java` trong `.ide-build` giữ nguyên sau Maven clean.
+- Thêm package/file tạm qua filesystem, không mở editor: một type sai cố ý sinh đúng một lỗi; sửa type tự về 0. Sau đó `clean test-compile` với file mới hợp lệ vẫn pass và IDE không đỏ lại; hashes IDE vẫn giữ nguyên. Đã xóa source/class thử và kiểm tra lại Problems 0.
+
+Các phần phía dưới giữ lịch sử cấu hình và cách khôi phục khi có sự cố khác. Không cần clean cache sau mỗi lần thêm file.
+
 ## Cấu hình dự án
 
 Backend dùng Java 21 và `maven-compiler-plugin` để cấu hình nguồn, classpath và annotation processor. Giữ mapping mặc định của m2e; không khai báo `<ignore />` cho các goal `compile`/`testCompile`. Mapping ignore khiến m2e không thêm Java nature/builder, do đó language server không nhận các package của chính dự án.
 
-Lombok được hỗ trợ bởi Red Hat Java; MapStruct được Maven hoặc JDT APT sinh trong `target/generated-sources/annotations`. Đặt `m2e.apt.activation=jdt_apt` để IDE quản lý annotation processing theo `annotationProcessorPaths`. Không dùng build-helper khai báo lại thư mục sinh mặc định mà compiler đã quản lý. Sau clone hoặc khi DTO/mapper thay đổi, chạy:
+Lombok được hỗ trợ bởi Red Hat Java; MapStruct được Maven sinh trong `target/generated-sources/annotations`, JDT APT sinh riêng trong `.ide-build/generated-sources/annotations`. Đặt `m2e.apt.activation=jdt_apt` để IDE quản lý annotation processing theo `annotationProcessorPaths`. Không dùng build-helper khai báo lại thư mục sinh mà compiler đã quản lý. Sau clone hoặc khi DTO/mapper thay đổi, chạy:
 
 ```powershell
 cd backend
