@@ -86,7 +86,7 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(
             summary = "Thêm mới sản phẩm",
-            description = "Dành riêng cho Người bán (SELLER) hoặc Quản trị viên (ADMIN) để tạo sản phẩm mới cùng danh sách SKUs"
+            description = "API tương thích tạo bản nháp chưa có SKU. Người bán dùng POST /seller/products để tạo nguyên tử sản phẩm và SKU trước khi mở bán."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Tạo sản phẩm thành công",
@@ -107,7 +107,7 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(
             summary = "Cập nhật thông tin/giá sản phẩm",
-            description = "Cập nhật thông tin sản phẩm và tự động loại bỏ bản ghi cache cũ trong Redis (@CacheEvict)"
+            description = "Cập nhật metadata và xóa cache sau commit. Sản phẩm đã có SKU không nhận giá/tổng kho; dùng API seller SKU với version để sửa giá và tồn kho."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cập nhật sản phẩm thành công",

@@ -98,16 +98,17 @@ class RedisCachingTest {
     }
 
     @Test
-    @DisplayName("@CacheEvict: Khi cập nhật sản phẩm, cache cũ bị xóa để lần truy vấn sau lấy dữ liệu mới từ DB")
+    @DisplayName("Sau commit cập nhật sản phẩm, cache cũ bị xóa để lần đọc sau lấy dữ liệu mới")
     void shouldEvictCacheWhenProductIsUpdated() {
         when(productRepository.findById(99L)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.findByIdWithLock(99L)).thenReturn(Optional.of(sampleProduct));
         when(productRepository.save(any(Product.class))).thenReturn(sampleProduct);
 
         // Lần 1: Nạp cache
         productService.getById(99L);
         verify(productRepository, times(1)).findById(99L);
 
-        // Cập nhật sản phẩm -> trigger @CacheEvict
+        // Cập nhật sản phẩm -> event xóa cache sau commit
         ProductRequest updateRequest = ProductRequest.builder()
                 .name("iPhone 16 Pro Max (Updated)")
                 .price(BigDecimal.valueOf(35000000))
@@ -121,7 +122,8 @@ class RedisCachingTest {
 
         assertNotNull(responseAfterUpdate);
         assertEquals("iPhone 16 Pro Max (Updated)", responseAfterUpdate.getName());
-        // Tổng số lần gọi findById là 3 (lần 1 getById, lần 2 bên trong updateProduct, lần 3 getById sau khi evict)
-        verify(productRepository, times(3)).findById(99L);
+        // Hai lần đọc thường và một lần đọc có khóa khi cập nhật.
+        verify(productRepository, times(2)).findById(99L);
+        verify(productRepository).findByIdWithLock(99L);
     }
 }

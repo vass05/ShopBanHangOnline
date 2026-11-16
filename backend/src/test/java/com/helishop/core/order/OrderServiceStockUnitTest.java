@@ -72,6 +72,7 @@ class OrderServiceStockUnitTest {
 
         sampleProduct = Product.builder()
                 .name("MacBook Pro M4")
+                .status(com.helishop.core.common.constants.ProductStatus.ACTIVE)
                 .stockQuantity(20)
                 .build();
         sampleProduct.setId(100L);

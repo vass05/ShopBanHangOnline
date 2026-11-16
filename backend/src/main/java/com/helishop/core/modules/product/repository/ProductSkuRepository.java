@@ -15,6 +15,11 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
 
     Optional<ProductSku> findBySkuCode(String skuCode);
 
+    Optional<ProductSku> findBySkuCodeIgnoreCase(String skuCode);
+
+    @Query("SELECT s.id FROM ProductSku s WHERE s.product.id = :productId ORDER BY s.id")
+    java.util.List<Long> findIdsByProductId(@Param("productId") Long productId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM ProductSku s WHERE s.id = :id")
     Optional<ProductSku> findByIdWithLock(@Param("id") Long id);

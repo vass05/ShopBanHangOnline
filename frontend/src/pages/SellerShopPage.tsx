@@ -89,6 +89,7 @@ export function SellerShopPage() {
         </section> : shop ? <section className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5">
           <p role="status" className="flex items-center gap-2 text-emerald-700"><CheckCircle2 className="w-5 h-5" />Gian hàng đã được lưu</p>
           <h2 className="text-xl font-bold text-slate-900 break-words">{shop.shopName}</h2>
+          {shop.status === "ACTIVE" && <Link to="/seller/products" className="inline-block bg-sky-600 text-white rounded-xl px-4 py-2">Quản lý sản phẩm &amp; SKU</Link>}
           <dl className="space-y-3 text-sm">
             <div><dt className="text-slate-500">Mã gian hàng</dt><dd>#{shop.id}</dd></div>
             <div><dt className="text-slate-500">Trạng thái</dt><dd>{({ ACTIVE: "Đang hoạt động", INACTIVE: "Tạm ngừng hoạt động", BANNED: "Đã bị khóa" })[shop.status]}</dd></div>

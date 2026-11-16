@@ -45,6 +45,21 @@ public class OrderService {
         User customer = userRepository.findById(customerId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+        // Keep the legacy checkout compatible with seller SKU edits and batch checkout.
+        var lockedSkus = new java.util.TreeMap<Long, ProductSku>();
+        for (var item : request.getItems()) {
+            if (item.getSkuId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Số lượng mua phải lớn hơn 0");
+            }
+        }
+        for (Long skuId : request.getItems().stream().map(CheckoutRequest.ItemRequest::getSkuId).distinct().sorted().toList()) {
+            lockedSkus.put(skuId, productSkuRepository.findByIdWithLock(skuId)
+                    .orElseThrow(() -> new ResourceNotFoundException("SKU", "id", skuId)));
+        }
+        var lockedProducts = new java.util.TreeMap<Long, Product>();
+        lockedSkus.values().stream().filter(sku -> sku.getProduct() != null).map(sku -> sku.getProduct().getId()).distinct().sorted()
+                .forEach(id -> lockedProducts.put(id, productRepository.findByIdWithLock(id).orElse(null)));
+
         String orderCode = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -66,8 +81,12 @@ public class OrderService {
                 throw new AppException(ErrorCode.INVALID_REQUEST, "Số lượng mua phải lớn hơn 0");
             }
             // Khóa bi quan trên SKU: Các request đồng thời cạnh tranh sẽ xếp hàng chờ
-            ProductSku sku = productSkuRepository.findByIdWithLock(itemReq.getSkuId())
-                    .orElseThrow(() -> new ResourceNotFoundException("SKU", "id", itemReq.getSkuId()));
+            ProductSku sku = lockedSkus.get(itemReq.getSkuId());
+
+            if (sku.getProduct() != null && (sku.getProduct().getStatus() != com.helishop.core.common.constants.ProductStatus.ACTIVE
+                    || (sku.getProduct().getShop() != null && sku.getProduct().getShop().getStatus() != com.helishop.core.common.constants.ShopStatus.ACTIVE))) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Sản phẩm hoặc gian hàng ngừng bán");
+            }
 
             if (sku.getProduct() != null && sku.getProduct().getShop() != null) {
                 var shop = sku.getProduct().getShop();
@@ -90,7 +109,7 @@ public class OrderService {
 
             // Đồng bộ trừ tồn kho Product (nếu có quản lý)
             if (sku.getProduct() != null) {
-                Product product = productRepository.findByIdWithLock(sku.getProduct().getId()).orElse(null);
+                Product product = lockedProducts.get(sku.getProduct().getId());
                 if (product != null && product.getStockQuantity() != null && product.getStockQuantity() > 0) {
                     product.setStockQuantity(Math.max(0, product.getStockQuantity() - itemReq.getQuantity()));
                     productRepository.save(product);

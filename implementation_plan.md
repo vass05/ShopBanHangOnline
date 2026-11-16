@@ -1,5 +1,16 @@
 # Kế hoạch đồng bộ frontend và backend HeliShop
 
+## Sản phẩm/SKU seller — 16/11/2026
+
+Nhánh `feat/seller-product-sku-management`, tiếp sau mở gian hàng. Dùng project-roadmap-manager và git-push-enforcer, bàn giao nhánh → kiểm thử → PR → main.
+
+- API seller riêng để đọc danh sách phân trang/tìm theo tên/trạng thái, xem chi tiết, tạo sản phẩm kèm SKU đầu tiên, sửa thông tin/ẩn-hiện, thêm và sửa SKU. Server xác định shop từ tài khoản SELLER ACTIVE và shop ACTIVE; chặn truy cập chéo shop, không nhận owner/shop từ form.
+- Giá/tổng kho sản phẩm tính từ SKU. Giá dương, kho không âm, mã SKU duy nhất, thuộc tính biến thể nhất quán; sửa SKU bắt buộc version hiện tại để chặn ghi đè tồn kho sau checkout. Khóa SKU theo ID trước product, cùng thứ tự checkout; xóa cache sau commit. API cũ không được ghi đè aggregate của sản phẩm đã có SKU.
+- Frontend `/seller/products`: tạo/sửa sản phẩm, danh mục, URL ảnh, trạng thái; quản lý biến thể/giá/giá gốc/kho; phân trang và trạng thái lỗi, tải lại khi xung đột. Giữ theme hiện tại, không mở rộng sang đơn bán/admin hoặc xóa cứng SKU đang được đơn/giỏ tham chiếu.
+- Kiểm chứng API/DB/phiên/quyền/validation/concurrency/cache, frontend service/build và E2E seller → catalog → giỏ/checkout. Kiểm tra Problems trong IDE sau build trước khi báo hoàn thành; không để Maven clean giữ chẩn đoán MapStruct cũ.
+
+Kết quả: backend clean test **168 pass, 1 schema MySQL dev skip, 0 failure/error**; frontend **40/40 tests và production build pass**; **14/14 browser E2E pass**, gồm ba ca mới trên MySQL thật. Java Ready, Problems 0; đã thử thêm package/file tạm, tạo một lỗi có chủ đích và sửa về 0 tự động rồi xóa file thử. Chi tiết: [bàn giao sản phẩm/SKU](docs/sprints/seller-product-sku-management.md).
+
 ## Mở gian hàng — 14/11/2026
 
 Nhánh `feat/seller-shop-onboarding`. Theo yêu cầu mới, chỉ triển khai mở gian hàng; các chức năng seller tiếp theo và thay đổi theme chờ người dùng yêu cầu.
@@ -28,6 +39,7 @@ Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm t
 | Docker và uploads | `fix/docker-runtime-and-uploads` | PR #9 đã merge; backend 152/152 tests; frontend 31/31 tests/build pass; 5/5 Docker healthy, upload giữ nguyên sau tạo lại backend |
 | E2E và CI | `test/browser-checkout-and-ci` | [PR #10](https://github.com/vass05/ShopBanHangOnline/pull/10); 7/7 browser E2E pass trên cụm thật; 152 backend tests, 31 frontend tests/build pass; workflow 3 jobs |
 | Mở gian hàng | `feat/seller-shop-onboarding` | GET/POST shop của mình, đăng ký/đăng nhập seller → `/seller/shop`; 157 backend tests pass, 1 test MySQL dev skip; 35 frontend tests/TypeScript/build pass; 11/11 browser E2E pass (4 ca mới trên MySQL thật). Bàn giao qua PR riêng; phần seller tiếp theo chờ yêu cầu. |
+| Sản phẩm/SKU seller | `feat/seller-product-sku-management` | Tạo nguyên tử sản phẩm/SKU, sửa giá/kho theo version, ẩn bán; 168 backend tests pass + 1 skip, frontend 40 tests/build và 14 browser E2E pass; bàn giao PR riêng vào main. |
 
 ## 1. Kết luận và phạm vi kiểm chứng
 
