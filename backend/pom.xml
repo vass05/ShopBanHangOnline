@@ -136,12 +136,29 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <!-- m2e/JDT builds must not race with Maven clean in the shared target directory. -->
+        <profile>
+            <id>ide-build</id>
+            <activation>
+                <property>
+                    <name>m2e.version</name>
+                </property>
+            </activation>
+            <build>
+                <directory>${project.basedir}/.ide-build</directory>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <generatedSourcesDirectory>${project.build.directory}/generated-sources/annotations</generatedSourcesDirectory>
+                    <generatedTestSourcesDirectory>${project.build.directory}/generated-test-sources/test-annotations</generatedTestSourcesDirectory>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>

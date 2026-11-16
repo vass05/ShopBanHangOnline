@@ -1,5 +1,9 @@
 # LỘ TRÌNH DỰ ÁN TỔNG THỂ: HELISHOP E-COMMERCE
 
+## Ổn định môi trường Java — 16/11/2026
+
+Tách đầu ra IDE `.ide-build` khỏi Maven/Docker `target` bằng profile m2e, giữ chẩn đoán thật và auto build. Máy kiểm chứng dùng Red Hat Java Release mới nhất, không pin và bật auto update. Hai lượt clean/build, thêm/sửa/xóa file/package và đối chiếu hash output IDE đã xác nhận Problems 0 mà không cần dọn cache sau clean. Backend 168 pass + 1 MySQL dev skip. Nhánh `fix/java-build-output-isolation` bàn giao qua PR; chi tiết tại [Java IDE](java-ide-troubleshooting.md) và [handover](sprints/java-build-output-isolation.md).
+
 ## Sản phẩm/SKU seller — 16/11/2026
 
 Đã nối quản lý sản phẩm/SKU tại `/seller/products`: danh sách riêng shop có phân trang/tìm kiếm/lọc trạng thái; tạo sản phẩm và SKU nguyên tử, sửa thông tin, ẩn/hiện, thêm/sửa SKU và tồn kho. Giá/tổng kho tính từ SKU, sửa biến thể cần version hiện tại, chặn ghi đè số lượng vừa bán. API cũ được bảo vệ để không sửa aggregate của sản phẩm có SKU hoặc mua sản phẩm đã ẩn.
