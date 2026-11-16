@@ -15,6 +15,8 @@ Các thư viện, processor và Java release tiếp tục lấy từ `pom.xml`. 
 
 ## Khôi phục khi Problems giữ lỗi cũ
 
+Khi chỉ vừa chạy Maven clean, thử **Java: Reload Projects** rồi **Java: Rebuild Projects** trước. Nếu lỗi import vẫn nằm ở cả source cũ/mới dù classpath và Maven compiler đúng, thực hiện clean language server bên dưới. Không cần Maven clean sau mỗi lần thêm file; dùng `test-compile`/`test` cho vòng lặp thường ngày, clean khi cần kiểm chứng build sạch.
+
 1. Sử dụng **Language Support for Java by Red Hat** và Java 21. Nếu Oracle Java đang chạy bằng JDK 17 và báo không khởi động được, đặt đúng JDK 21 cho extension đó hoặc chọn **Disable (Workspace)** khi workspace đã dùng Red Hat Java.
 2. Chạy **Java: Clean Java Language Server Workspace**, chọn **Reload and delete** để IDE xóa cache và reload.
 3. Chạy **Java: Import Java Projects into Workspace**, rồi **Java: Reload Projects** nếu cần. Trong phiên bản extension cũ, lệnh sau có tên **Java: Update Project Configuration**. Sau lần sửa mapping hoặc khi Maven tạo lại toàn bộ file MapStruct, có thể cần clean/reload lại để loại model Java cũ trong bộ nhớ.
@@ -29,3 +31,9 @@ Việc dọn cache chỉ tác động trạng thái IDE. Không xóa mã nguồn
 Backend `clean test`: 152 tests được liệt kê, 151 chạy thành công, 1 test schema MySQL được skip do không có MySQL ở cổng dev 3307; không có lỗi/failure. `test-compile` sau dọn import thành công. Đây là sửa cấu hình IDE/Maven, không thay đổi hợp đồng API.
 
 Tham khảo: [m2e lifecycle mapping](https://eclipse.dev/m2e/documentation/m2e-execution-not-covered.html), [m2e giải thích ảnh hưởng của compiler ignore](https://www.eclipse.org/lists/m2e-users/msg02248.html), [MapStruct IDE support](https://mapstruct.org/documentation/ide-support/), [VS Code Java project management](https://code.visualstudio.com/docs/java/java-project).
+
+## Kiểm chứng tái diễn ngày 16/11/2026
+
+Sau khi thêm package seller và chạy build sạch, IDE giữ 204 lỗi import trong source dù backend `clean test` thành công (168 pass, 1 skip). Java nature, JavaSE-21 và classpath source/Maven vẫn có; Reload/Rebuild Projects chưa đủ. Chạy **Clean Java Language Server Workspace → Reload and delete** rồi đợi import hoàn tất đã đưa Problems về 0, Java Ready.
+
+Đã kiểm tra nhận file mới bằng package/file probe tạm tham chiếu entity/constants có thật và một type cố ý không tồn tại: IDE báo chính xác một lỗi. Xóa type sai làm Problems tự về 0, không rebuild; sau đó xóa file probe. Đây là kiểm chứng index/chẩn đoán hoạt động. Sau build sạch phải kiểm chứng lại IDE trước khi bàn giao; No Problems tại một thời điểm không bảo đảm cache không bao giờ hỏng lại.

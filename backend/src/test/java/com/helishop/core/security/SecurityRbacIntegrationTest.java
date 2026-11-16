@@ -116,9 +116,9 @@ class SecurityRbacIntegrationTest {
     @Test
     @DisplayName("201 Created: SELLER được phép tạo mới sản phẩm thành công")
     void shouldAllowSellerToCreateProduct() throws Exception {
-        var owner = com.helishop.core.modules.user.entity.User.builder().build();
+        var owner = com.helishop.core.modules.user.entity.User.builder().role(com.helishop.core.common.constants.UserRole.ROLE_SELLER).status(com.helishop.core.common.constants.UserStatus.ACTIVE).build();
         owner.setId(2L);
-        var shop = com.helishop.core.modules.user.entity.Shop.builder().owner(owner).build();
+        var shop = com.helishop.core.modules.user.entity.Shop.builder().owner(owner).status(com.helishop.core.common.constants.ShopStatus.ACTIVE).build();
         shop.setId(1L);
         when(shopRepository.findById(1L)).thenReturn(java.util.Optional.of(shop));
         String sellerToken = jwtUtils.generateAccessToken("seller@test.com", 2L, "ROLE_SELLER", "Chủ Shop");

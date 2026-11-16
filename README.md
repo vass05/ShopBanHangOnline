@@ -10,7 +10,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?style=flat-square&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-158_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
+[![Tests](https://img.shields.io/badge/Tests-169_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
 
 **Hệ thống Thương mại Điện tử Đa Nhà bán hàng (Multi-vendor Shopee Mall) chuẩn Doanh nghiệp.**  
 *Tối ưu xử lý tải cao, giỏ hàng phân tán tốc độ cao, chống âm kho Flash Sale và tích hợp thanh toán trực tuyến.*
@@ -33,7 +33,15 @@
 
 Sau khi chạy frontend và backend theo hướng dẫn bên dưới, chọn **Kênh Người Bán** trên header hoặc mở `/register?role=seller`. Đăng ký tài khoản người bán, nhập tên gian hàng (3–150 ký tự, chưa được sử dụng) và mô tả tùy chọn (tối đa 2000 ký tự), rồi bấm **Mở gian hàng**. Trang `/seller/shop` hiển thị shop đã lưu; tải lại trang hoặc đăng nhập lại bằng tài khoản SELLER vẫn trở về shop đó.
 
-Người bán đã có tài khoản chỉ cần đăng nhập. Shop mới hoạt động ngay, chưa có bước admin duyệt; tài khoản CUSTOMER không tự chuyển thành SELLER. Đợt này chỉ có mở và xem gian hàng của mình. Quản lý sản phẩm, đơn bán và dashboard sẽ triển khai trong các chức năng tiếp theo khi được yêu cầu.
+Người bán đã có tài khoản chỉ cần đăng nhập. Shop mới hoạt động ngay, chưa có bước admin duyệt; tài khoản CUSTOMER không tự chuyển thành SELLER. Đã có quản lý sản phẩm/SKU bên dưới; đơn bán và dashboard sẽ triển khai trong các chức năng tiếp theo khi được yêu cầu.
+
+## Quản lý sản phẩm và SKU của người bán
+
+Từ **Gian hàng của tôi**, chọn **Quản lý sản phẩm & SKU**, hoặc vào `/seller/products`. Danh sách riêng shop có tìm kiếm, lọc trạng thái và phân trang. Chọn **Thêm sản phẩm**, điền thông tin/danh mục, URL ảnh tùy chọn và SKU đầu tiên; mặc định **Bản nháp**. Đổi thành **Đang bán** để đưa lên catalog, hoặc **Đã ẩn** để ngừng bán.
+
+Trong màn chi tiết, thêm hoặc sửa SKU với mã, giá bán/giá gốc, tồn kho, URL ảnh và tối đa hai thuộc tính. Các SKU cùng sản phẩm dùng cùng tên thuộc tính, khác tổ hợp giá trị. Giá sản phẩm là giá SKU thấp nhất, tổng kho bằng tổng kho SKU. Nếu vừa có người mua hoặc người khác sửa SKU, hệ thống trả xung đột: chọn **Tải lại dữ liệu** rồi sửa trên số liệu mới nhất.
+
+Ảnh hiện nhận URL http/https hoặc đường dẫn `/uploads/`; chưa có upload ảnh sản phẩm trong đợt này. SKU được giữ để bảo toàn tham chiếu đơn hàng; dùng trạng thái sản phẩm để ẩn bán. Chi tiết: [seller-product-sku-management.md](docs/sprints/seller-product-sku-management.md).
 
 ---
 

@@ -59,7 +59,7 @@ class PessimisticLockingIntegrationTest {
         sampleCustomer = User.builder().fullName("Khách hàng Test").build();
         sampleCustomer.setId(1L);
 
-        sampleProduct = Product.builder().name("iPhone 16 Flash Sale").stockQuantity(10).build();
+        sampleProduct = Product.builder().name("iPhone 16 Flash Sale").status(com.helishop.core.common.constants.ProductStatus.ACTIVE).stockQuantity(10).build();
         sampleProduct.setId(100L);
 
         sampleSku = ProductSku.builder()

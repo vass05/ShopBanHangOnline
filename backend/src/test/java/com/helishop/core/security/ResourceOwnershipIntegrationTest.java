@@ -55,9 +55,9 @@ class ResourceOwnershipIntegrationTest {
     void resources() {
         User buyer = User.builder().build();
         buyer.setId(1L);
-        User seller = User.builder().build();
+        User seller = User.builder().role(com.helishop.core.common.constants.UserRole.ROLE_SELLER).status(com.helishop.core.common.constants.UserStatus.ACTIVE).build();
         seller.setId(3L);
-        Shop shop = Shop.builder().owner(seller).build();
+        Shop shop = Shop.builder().owner(seller).status(com.helishop.core.common.constants.ShopStatus.ACTIVE).build();
         shop.setId(20L);
         Order order = Order.builder().customer(buyer).shop(shop).orderStatus(OrderStatus.PENDING).build();
         order.setId(10L);

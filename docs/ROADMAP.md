@@ -1,5 +1,11 @@
 # LỘ TRÌNH DỰ ÁN TỔNG THỂ: HELISHOP E-COMMERCE
 
+## Sản phẩm/SKU seller — 16/11/2026
+
+Đã nối quản lý sản phẩm/SKU tại `/seller/products`: danh sách riêng shop có phân trang/tìm kiếm/lọc trạng thái; tạo sản phẩm và SKU nguyên tử, sửa thông tin, ẩn/hiện, thêm/sửa SKU và tồn kho. Giá/tổng kho tính từ SKU, sửa biến thể cần version hiện tại, chặn ghi đè số lượng vừa bán. API cũ được bảo vệ để không sửa aggregate của sản phẩm có SKU hoặc mua sản phẩm đã ẩn.
+
+Bàn giao nhánh `feat/seller-product-sku-management` → PR → main. Backend 168 pass, 1 test MySQL dev skip; frontend 40 tests/build và 14 browser E2E pass. Bằng chứng browser/IDE, hợp đồng và giới hạn: [seller-product-sku-management.md](sprints/seller-product-sku-management.md). Giữ theme hiện có; quản lý đơn bán/admin và upload ảnh sản phẩm chờ đợt riêng.
+
 ## Mở gian hàng — 14/11/2026
 
 Đã triển khai chức năng mở và xem shop của người bán: đăng ký SELLER → `/seller/shop` → nhập tên/mô tả → lưu shop thật; đăng nhập lại và tải lại trang vẫn đọc shop đã lưu. API GET/POST `/api/v1/shops/me` lấy owner từ JWT đã xác minh, kiểm tra vai trò/trạng thái trong database; khóa tài khoản và unique constraints chống tạo trùng.

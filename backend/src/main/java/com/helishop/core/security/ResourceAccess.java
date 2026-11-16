@@ -58,6 +58,11 @@ public class ResourceAccess {
         if (!securityUtils.hasRole("ADMIN") && !ownsShop(shop)) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Không có quyền quản lý gian hàng này");
         }
+        if (!securityUtils.hasRole("ADMIN") && (shop.getStatus() != com.helishop.core.common.constants.ShopStatus.ACTIVE
+                || shop.getOwner().getRole() != com.helishop.core.common.constants.UserRole.ROLE_SELLER
+                || shop.getOwner().getStatus() != com.helishop.core.common.constants.UserStatus.ACTIVE)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Tài khoản người bán và gian hàng phải đang hoạt động");
+        }
     }
 
     public void requireProduct(Long productId, Long requestedShopId) {

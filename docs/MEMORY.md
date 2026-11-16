@@ -1,5 +1,15 @@
 # BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE
 
+## Sản phẩm/SKU seller — 16/11/2026
+
+- Nhánh `feat/seller-product-sku-management`, bàn giao PR → main. Trang `/seller/products` nối từ shop/header seller; tìm/lọc/phân trang sản phẩm của chính shop, tạo sản phẩm kèm SKU đầu tiên, sửa metadata/trạng thái và thêm/sửa SKU, reload giữ dữ liệu thật. Không mở rộng sang đơn bán/admin/theme.
+- API GET/POST `/api/v1/seller/products`, GET/PUT `/{id}`, POST `/{id}/skus`, PUT `/{id}/skus/{skuId}`: owner/shop lấy từ principal, kiểm tra DB user SELLER ACTIVE và shop ACTIVE. Create nhận `{product, skus}` và lưu nguyên tử; DTO không nhận shopId/rating/aggregate. Mã SKU duy nhất, giá >0, giá gốc ≥giá bán, kho 0–1.000.000, tối đa 100 SKU và hai tên thuộc tính nhất quán, tổ hợp khác nhau. Slug UUID tự sinh.
+- ProductWriteLock khóa SKU theo ID tăng dần trước product, READ_COMMITTED cho seller writes; version bắt buộc khi sửa SKU, stale trả 409. Không đổi dữ liệu thì version có thể không tăng. Giá sản phẩm min(SKU.price), tổng kho sum(SKU.stock); cache products xóa sau commit qua ProductStockChanged. Đơn đã mua giữ snapshot giá/biến thể.
+- API products cũ không sửa price/stock của sản phẩm có SKU, không tự đặt rating và không mở bán sản phẩm chưa có SKU. ResourceAccess kiểm tra seller/shop ACTIVE cả route cũ. Legacy checkout khóa cùng thứ tự SKU → product và chặn sản phẩm/shop ngừng bán.
+- Kiểm chứng: backend 169 bài liệt kê, 168 pass + 1 schema MySQL dev skip; frontend 40 tests/build và 14/14 browser E2E pass. Ba E2E mới trên MySQL/Redis/RabbitMQ/Nginx thật, gồm khách mua biến thể vừa tạo và concurrent SKU edits/checkout.
+- IDE sau clean từng giữ 204 import errors dù compiler pass. Đã Clean Java Language Server Workspace → Reload and delete, Java Ready/No Problems. Probe package/file mới báo đúng 1 lỗi cố ý, sửa tự về 0 rồi xóa file thử. Sau external clean phải kiểm chứng IDE; không chỉ dựa vào Maven pass. Không tắt kiểm tra lỗi để che Problems.
+- Giới hạn: ảnh dùng URL, chưa upload; không xóa cứng SKU vì đơn cũ tham chiếu, dùng trạng thái sản phẩm để ẩn. Chưa có sửa hàng loạt thuộc tính, import file, dashboard hoặc đơn bán. Chi tiết [bàn giao](sprints/seller-product-sku-management.md).
+
 ## Mở gian hàng — 14/11/2026
 
 - Phạm vi đã triển khai: GET/POST `/api/v1/shops/me`, `ShopService`, DTO ApiResponse/OpenAPI và trang `/seller/shop`. Header Kênh Người Bán đưa đến đăng ký seller; đăng ký/đăng nhập SELLER mặc định vào shop, vẫn giữ redirect hợp lệ khi có.

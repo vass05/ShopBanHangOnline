@@ -17,7 +17,6 @@ import com.helishop.core.modules.user.entity.Shop;
 import com.helishop.core.modules.user.repository.ShopRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +37,8 @@ public class ProductService {
     private final CategoryService categoryService;
     private final ShopRepository shopRepository;
     private final ProductMapper productMapper;
+    private final ProductWriteLock writeLock;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     @Cacheable(value = "products", key = "#id")
     @Transactional(readOnly = true)
@@ -112,6 +113,10 @@ public class ProductService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Danh mục không tồn tại"));
 
         Product product = productMapper.toEntity(request);
+        if (request.getStatus() == ProductStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_REQUEST, "Tạo sản phẩm kèm SKU bằng API seller trước khi mở bán");
+        if (product.getStatus() == null) product.setStatus(ProductStatus.DRAFT);
+        if (product.getSlug() == null || product.getSlug().isBlank()) product.setSlug("product-" + java.util.UUID.randomUUID());
+        product.setRating(null);
         product.setShop(shop);
         product.setCategory(category);
 
@@ -119,16 +124,20 @@ public class ProductService {
         return productMapper.toResponse(savedProduct);
     }
 
-    @Transactional
-    @CacheEvict(value = "products", key = "#id")
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public ProductResponse updateProduct(Long id, ProductRequest request) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+        Product product = writeLock.acquire(id);
+        if (!product.getSkus().isEmpty() && (request.getPrice() != null || request.getStockQuantity() != null)) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Hãy cập nhật giá/tồn kho trên từng SKU, không sửa tổng sản phẩm");
+        }
+        if (request.getStatus() == ProductStatus.ACTIVE && product.getSkus().isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Cần thêm SKU trước khi mở bán");
+        }
+        if (request.getRating() != null) throw new AppException(ErrorCode.INVALID_REQUEST, "Điểm đánh giá không được nhập thủ công");
 
         if (request.getName() != null) product.setName(request.getName());
         if (request.getDescription() != null) product.setDescription(request.getDescription());
         if (request.getPrice() != null) product.setPrice(request.getPrice());
-        if (request.getRating() != null) product.setRating(request.getRating());
         if (request.getStockQuantity() != null) product.setStockQuantity(request.getStockQuantity());
         if (request.getMainImageUrl() != null) product.setMainImageUrl(request.getMainImageUrl());
         if (request.getStatus() != null) product.setStatus(request.getStatus());
@@ -140,7 +149,8 @@ public class ProductService {
         }
 
         Product updatedProduct = productRepository.save(product);
-        log.info("Updated product ID '{}' and evicted from Redis cache", id);
+        events.publishEvent(new ProductStockChanged(java.util.Set.of(id)));
+        log.info("Updated product ID '{}'; cache will be evicted after commit", id);
         return productMapper.toResponse(updatedProduct);
     }
 }
