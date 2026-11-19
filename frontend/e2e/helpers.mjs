@@ -9,8 +9,12 @@ export async function data(response, status = 200) {
   return (await response.json()).data;
 }
 export async function register(request, name = 'customer', role = 'ROLE_CUSTOMER') {
-  const email = `${name}-${randomUUID()}@example.test`;
-  const auth = await data(await request.post('/api/v1/auth/register', { data: { email, password, fullName: 'E2E Customer', role } }), 201);
+  const email = `${name}-${randomUUID()}@gmail.com`;
+  await data(await request.post('/api/v1/auth/register/otp', { data: { email } }));
+  const mail = await waitMail(request, email, 'Xác thực đăng ký');
+  const otp = mail.Text.match(/: (\d{6})\b/)?.[1];
+  expect(otp).toMatch(/^[0-9]{6}$/);
+  const auth = await data(await request.post('/api/v1/auth/register', { data: { email, password, otp, fullName: 'E2E Customer', role } }), 201);
   return { ...auth, password };
 }
 export async function addAddress(request, user) {
@@ -20,7 +24,7 @@ export async function addAddress(request, user) {
 }
 export async function login(page, user, remember = true, origin) {
   await page.goto(origin ? new URL('/login', origin).href : '/login');
-  await page.locator('form').first().locator('input[type="text"]').fill(user.email);
+  await page.locator('form').first().locator('input[type="email"]').fill(user.email);
   await page.locator('form').first().locator('input[type="password"]').fill(user.password);
   await page.locator('form').first().getByRole('checkbox').setChecked(remember);
   const response = page.waitForResponse(result => result.url().endsWith('/auth/login') && result.request().method() === 'POST');

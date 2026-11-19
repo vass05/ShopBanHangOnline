@@ -1,17 +1,20 @@
 import { test, expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
-import { register, login, browserUser, authorization, data, sql, password } from './helpers.mjs';
+import { register, login, browserUser, authorization, data, sql, password, waitMail } from './helpers.mjs';
 
 test('seller signup opens one persisted shop, reload and login return to it', async ({ page, request }) => {
-  const email = `seller-ui-${randomUUID()}@example.test`;
+  const email = `seller-ui-${randomUUID()}@gmail.com`;
   const shopName = `Gian hàng ${randomUUID()}`;
   await page.goto('/');
   await page.getByRole('link', { name: 'Kênh Người Bán', exact: true }).click();
   await expect(page).toHaveURL(/\/register\?role=seller$/);
   const form = page.locator('form').first();
-  await form.locator('input[type="text"]').fill(email);
+  await form.locator('input[type="email"]').fill(email);
   await form.locator('input[type="password"]').nth(0).fill(password);
   await form.locator('input[type="password"]').nth(1).fill(password);
+  await page.getByRole('button', { name: 'Gửi OTP về Gmail', exact: true }).click();
+  const mail = await waitMail(request, email, 'Xác thực đăng ký');
+  await page.getByLabel('Mã OTP đăng ký (6 số)', { exact: true }).fill(mail.Text.match(/: (\d{6})\b/)[1]);
   await page.getByRole('button', { name: /Đăng Ký Mở Gian Hàng/ }).click();
   await expect(page).toHaveURL(/\/seller\/shop$/);
   await page.getByLabel('Tên gian hàng', { exact: true }).fill(shopName);

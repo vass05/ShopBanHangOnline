@@ -1,3 +1,9 @@
+## Gmail OTP, admin và một môi trường Docker — 19/11/2026
+
+Theo yêu cầu: Gmail + mật khẩu; đăng ký bắt buộc OTP gửi Gmail; số điện thoại chỉ dùng trong địa chỉ nhận hàng. Triển khai lần lượt theo nhánh/PR: (1) `feat/gmail-registration-otp`, (2) quản lý tài khoản buyer/seller cho admin, (3) thống nhất một cụm Docker chính dùng volume dữ liệu cũ. Giữ dữ liệu integration, chỉ dùng khi kiểm thử. Chạy kiểm thử, cập nhật tài liệu, push và merge từng phần vào main.
+
+Phần 1: đã thêm API/form OTP, giới hạn gửi/nhập sai, tiêu thụ nguyên tử; bỏ đăng nhập và cập nhật phone ở hồ sơ. Cấu hình gửi Gmail riêng trong `.env.gmail.local`, người dùng sẽ điền; không khẳng định gửi Gmail thật khi chưa có cấu hình. [Chi tiết](sprints/gmail-registration-otp.md).
+
 # LỘ TRÌNH DỰ ÁN TỔNG THỂ: HELISHOP E-COMMERCE
 
 ## Kết nối frontend dev/backend — 19/11/2026

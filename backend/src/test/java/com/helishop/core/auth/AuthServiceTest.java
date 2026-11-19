@@ -48,6 +48,8 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock private com.helishop.core.modules.auth.service.RegistrationOtpService registrationOtpService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -56,7 +58,7 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         sampleUser = User.builder()
-                .email("test@helishop.com")
+                .email("test@gmail.com")
                 .passwordHash("hashed_password_xyz")
                 .fullName("Test User")
                 .role(UserRole.ROLE_CUSTOMER)
@@ -69,13 +71,13 @@ class AuthServiceTest {
     @DisplayName("Đăng ký thành công: mã hóa mật khẩu, tạo cặp token và lưu Refresh Token vào Redis")
     void shouldRegisterUserSuccessfullyAndSaveRefreshToken() {
         RegisterRequest request = RegisterRequest.builder()
-                .email("test@helishop.com")
-                .password("plain_password")
+                .email("test@gmail.com")
+                .password("plain_password").otp("123456")
                 .fullName("Test User")
                 .role(UserRole.ROLE_CUSTOMER)
                 .build();
 
-        when(userRepository.existsByEmail("test@helishop.com")).thenReturn(false);
+        when(userRepository.existsByEmail("test@gmail.com")).thenReturn(false);
         when(passwordEncoder.encode("plain_password")).thenReturn("hashed_password_xyz");
         when(userRepository.save(any(User.class))).thenReturn(sampleUser);
         when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString())).thenReturn("mock_access_token");
@@ -83,23 +85,24 @@ class AuthServiceTest {
         when(jwtUtils.getAccessTokenExpirationMs()).thenReturn(900000L);
 
         AuthResponse response = authService.register(request);
+        verify(registrationOtpService).consume("test@gmail.com", "123456");
 
         assertNotNull(response);
         assertEquals("mock_access_token", response.getAccessToken());
         assertEquals("mock_refresh_token", response.getRefreshToken());
         assertEquals(900L, response.getExpiresIn());
-        verify(refreshTokenService).saveRefreshToken(eq("test@helishop.com"), eq("mock_refresh_token"));
+        verify(refreshTokenService).saveRefreshToken(eq("test@gmail.com"), eq("mock_refresh_token"));
     }
 
     @Test
     @DisplayName("Đăng nhập thành công với mật khẩu đúng: sinh cặp token và lưu Refresh Token")
     void shouldLoginSuccessfullyWhenCredentialsAreValid() {
         LoginRequest request = LoginRequest.builder()
-                .email("test@helishop.com")
+                .email("test@gmail.com")
                 .password("correct_pass")
                 .build();
 
-        when(userRepository.findByEmail("test@helishop.com")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(sampleUser));
         when(passwordEncoder.matches("correct_pass", "hashed_password_xyz")).thenReturn(true);
         when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString())).thenReturn("mock_access_token");
         when(jwtUtils.generateRefreshToken()).thenReturn("mock_refresh_token");
@@ -110,18 +113,18 @@ class AuthServiceTest {
         assertNotNull(response);
         assertEquals("mock_access_token", response.getAccessToken());
         assertEquals("mock_refresh_token", response.getRefreshToken());
-        verify(refreshTokenService).saveRefreshToken(eq("test@helishop.com"), eq("mock_refresh_token"));
+        verify(refreshTokenService).saveRefreshToken(eq("test@gmail.com"), eq("mock_refresh_token"));
     }
 
     @Test
     @DisplayName("Đăng nhập thất bại khi sai mật khẩu: ném AppException")
     void shouldThrowExceptionWhenLoginWithWrongPassword() {
         LoginRequest request = LoginRequest.builder()
-                .email("test@helishop.com")
+                .email("test@gmail.com")
                 .password("wrong_pass")
                 .build();
 
-        when(userRepository.findByEmail("test@helishop.com")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(sampleUser));
         when(passwordEncoder.matches("wrong_pass", "hashed_password_xyz")).thenReturn(false);
 
         assertThrows(AppException.class, () -> authService.login(request));
@@ -134,8 +137,8 @@ class AuthServiceTest {
                 .refreshToken("valid_refresh_token_123")
                 .build();
 
-        when(refreshTokenService.getEmailFromRefreshToken("valid_refresh_token_123")).thenReturn("test@helishop.com");
-        when(userRepository.findByEmail("test@helishop.com")).thenReturn(Optional.of(sampleUser));
+        when(refreshTokenService.getEmailFromRefreshToken("valid_refresh_token_123")).thenReturn("test@gmail.com");
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(sampleUser));
         when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString())).thenReturn("new_access_token");
         when(jwtUtils.getAccessTokenExpirationMs()).thenReturn(900000L);
 
@@ -164,4 +167,20 @@ class AuthServiceTest {
         authService.logout("refresh_token_to_delete");
         verify(refreshTokenService).deleteRefreshToken("refresh_token_to_delete");
     }
+    @Test
+    void cannotCreateUserOrTokensIfOtpIsRejected() {
+        RegisterRequest request = RegisterRequest.builder().email("test@gmail.com").password("Password123!").otp("123456").build();
+        org.mockito.Mockito.doThrow(new AppException(com.helishop.core.common.exception.ErrorCode.INVALID_REQUEST))
+                .when(registrationOtpService).consume("test@gmail.com", "123456");
+        assertThrows(AppException.class, () -> authService.register(request));
+        verify(userRepository, org.mockito.Mockito.never()).save(any());
+        org.mockito.Mockito.verifyNoInteractions(jwtUtils, refreshTokenService);
+    }
+
+    @Test
+    void phoneIsRejectedWithoutLookingUpAccount() {
+        assertThrows(AppException.class, () -> authService.login(LoginRequest.builder().email("0901234567").password("Password123!").build()));
+        org.mockito.Mockito.verifyNoInteractions(userRepository, jwtUtils, refreshTokenService);
+    }
+
 }

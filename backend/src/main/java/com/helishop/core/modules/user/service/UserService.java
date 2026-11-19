@@ -54,14 +54,6 @@ public class UserService {
     public UserResponse updateProfile(Long userId, UpdateProfileRequest request) {
         User user = getById(userId);
 
-        if (request.getPhone() != null && !request.getPhone().trim().isBlank()) {
-            String newPhone = request.getPhone().trim();
-            if (!newPhone.equals(user.getPhone()) && userRepository.existsByPhone(newPhone)) {
-                throw new AppException(ErrorCode.USER_EXISTED, "Số điện thoại này đã được liên kết với một tài khoản khác");
-            }
-            user.setPhone(newPhone);
-        }
-
         if (request.getFullName() != null && !request.getFullName().trim().isBlank()) {
             user.setFullName(request.getFullName().trim());
         }

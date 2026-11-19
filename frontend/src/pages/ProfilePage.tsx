@@ -13,7 +13,6 @@ import {
 import {
   User as UserIcon,
   Mail,
-  Phone,
   MapPin,
   Lock,
   Camera,
@@ -77,7 +76,6 @@ export const ProfilePage: React.FC = () => {
 
   // Profile Form State
   const [fullName, setFullName] = useState(authUser?.fullName || "");
-  const [phone, setPhone] = useState(authUser?.phone || "");
   const [avatarUrl, setAvatarUrl] = useState(authUser?.avatarUrl || "");
   const [avatarError, setAvatarError] = useState(false);
   const [sidebarAvatarError, setSidebarAvatarError] = useState(false);
@@ -127,7 +125,6 @@ export const ProfilePage: React.FC = () => {
       try {
         const profile = await profileService.getMyProfile();
         setFullName(profile.fullName || "");
-        setPhone(profile.phone || "");
         setAvatarUrl(profile.avatarUrl || "");
         updateUser({
           fullName: profile.fullName,
@@ -231,7 +228,6 @@ export const ProfilePage: React.FC = () => {
     try {
       await profileService.updateProfile({
         fullName,
-        phone,
         avatarUrl: "",
       });
       setProfileSuccessMsg("Đã đặt lại ảnh đại diện về biểu tượng mặc định!");
@@ -256,7 +252,6 @@ export const ProfilePage: React.FC = () => {
     try {
       const updated = await profileService.updateProfile({
         fullName: fullName.trim(),
-        phone: phone.trim() || undefined,
         avatarUrl: avatarUrl.trim() || undefined,
       });
 
@@ -611,29 +606,7 @@ export const ProfilePage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Số điện thoại */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Số điện thoại (Dùng để đăng nhập & nhận hàng)
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                          <Phone className="w-4 h-4" />
-                        </div>
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="Ví dụ: 0988889999"
-                          className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#0284C7]/20 focus:border-[#0284C7] transition-all"
-                        />
-                      </div>
-                      <p className="text-[11px] text-slate-400 mt-1">
-                        Số điện thoại có thể thay đổi bất kỳ lúc nào. Sau khi đổi, bạn có thể dùng số mới này để đăng nhập và nhận hàng từ shipper.
-                      </p>
-                    </div>
-
-
+                    <p className="text-xs text-slate-500">Số điện thoại nhận hàng được quản lý trong Sổ địa chỉ, để shipper liên lạc khi giao hàng.</p>
 
                     {/* Submit Button */}
                     <div className="pt-3">

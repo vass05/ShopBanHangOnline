@@ -138,7 +138,7 @@ class ResourceOwnershipIntegrationTest {
     @Test
     void publicRegistrationCannotGrantAdmin() throws Exception {
         mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"admin@test.com\",\"password\":\"Password123!\",\"role\":\"ROLE_ADMIN\"}"))
+                        .content("{\"email\":\"admin@gmail.com\",\"password\":\"Password123!\",\"otp\":\"123456\",\"role\":\"ROLE_ADMIN\"}"))
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value(1005));
     }
 

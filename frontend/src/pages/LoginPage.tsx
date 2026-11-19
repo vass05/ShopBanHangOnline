@@ -16,7 +16,6 @@ import {
   KeyRound,
   Sparkles,
   ArrowLeft,
-  Smartphone,
 } from "lucide-react";
 
 const REMEMBERED_ACCOUNT_KEY = "helishop_remembered_account";
@@ -150,7 +149,7 @@ export const LoginPage: React.FC = () => {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotEmail.trim()) {
-      setForgotError("Vui lòng nhập email hoặc số điện thoại");
+      setForgotError("Vui lòng nhập email");
       return;
     }
 
@@ -297,7 +296,7 @@ export const LoginPage: React.FC = () => {
           <CardHeader className="space-y-1 pb-4 pr-12">
             <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
             <CardDescription>
-              Nhập Gmail hoặc Số điện thoại để truy cập tài khoản mua sắm
+              Nhập Email / Gmail để truy cập tài khoản mua sắm
             </CardDescription>
           </CardHeader>
 
@@ -307,7 +306,7 @@ export const LoginPage: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                    Gmail hoặc Số điện thoại
+                    Email / Gmail
                   </label>
                   {hasRememberedAccount && email && (
                     <button
@@ -322,7 +321,7 @@ export const LoginPage: React.FC = () => {
                 </div>
                 <Input
                   ref={emailInputRef}
-                  type="text"
+                  type="email"
                   icon={<Mail className="w-4 h-4" />}
                   value={email}
                   onChange={(e) => {
@@ -335,7 +334,7 @@ export const LoginPage: React.FC = () => {
                   required
                 />
                 <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
-                  <span>Có thể đăng nhập bằng Gmail hoặc Số điện thoại (10 số)</span>
+                  <span>Có thể đăng nhập bằng Gmail và mật khẩu</span>
                   {hasRememberedAccount && email && (
                     <span className="text-emerald-600 font-medium flex items-center gap-1 shrink-0">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Đã nhớ trên máy này
@@ -472,16 +471,16 @@ export const LoginPage: React.FC = () => {
               {forgotStep === 1 && (
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Vui lòng nhập <strong>Gmail</strong> hoặc <strong>Số điện thoại</strong> đã đăng ký. Hệ thống sẽ cấp mã xác thực OTP có hiệu lực trong 10 phút.
+                    Vui lòng nhập <strong>email</strong> đã đăng ký. Hệ thống sẽ cấp mã xác thực OTP có hiệu lực trong 10 phút.
                   </p>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                      Gmail hoặc Số điện thoại
+                      Email / Gmail
                     </label>
                     <Input
-                      type="text"
-                      placeholder="Nhập Gmail hoặc số điện thoại..."
+                      type="email"
+                      placeholder="Nhập email đã đăng ký..."
                       icon={<Mail className="w-4 h-4" />}
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}

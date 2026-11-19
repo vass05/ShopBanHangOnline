@@ -29,50 +29,20 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
     private final PasswordResetService passwordResetService;
+    private final RegistrationOtpService registrationOtpService;
 
     @Transactional // giúp đảm bảo tính toàn vẽn dữ liệu
     public AuthResponse register(RegisterRequest request) {
         if (request.getRole() == UserRole.ROLE_ADMIN) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Không được tự đăng ký quyền quản trị viên");
         }
-        boolean hasEmail = request.getEmail() != null && !request.getEmail().trim().isBlank();
-        boolean hasPhone = request.getPhone() != null && !request.getPhone().trim().isBlank();
-
-        if (!hasEmail && !hasPhone) {
-            throw new AppException(ErrorCode.INVALID_REQUEST,
-                    "Vui lòng cung cấp ít nhất một phương thức liên lạc: Địa chỉ Gmail hoặc Số điện thoại");
+        String finalEmail = RegistrationOtpService.gmail(request.getEmail());
+        if (userRepository.existsByEmail(finalEmail)) {
+            throw new AppException(ErrorCode.USER_EXISTED, "Gmail này đã được sử dụng");
         }
-
-        String finalEmail = hasEmail ? request.getEmail().trim() : null;
-        String finalPhone = hasPhone ? request.getPhone().trim() : null;
-
-        if (hasEmail && userRepository.existsByEmail(finalEmail)) {
-            throw new AppException(ErrorCode.USER_EXISTED,
-                    "Địa chỉ Gmail này đã được sử dụng. Vui lòng chọn Gmail khác hoặc đăng nhập.");
-        }
-
-        if (hasPhone && userRepository.existsByPhone(finalPhone)) {
-            throw new AppException(ErrorCode.USER_EXISTED,
-                    "Số điện thoại này đã được liên kết với một tài khoản khác.");
-        }
-
-        // Nếu đăng ký bằng Số điện thoại mà không nhập Gmail, tạo định danh email hệ
-        // thống
-        if (finalEmail == null) {
-            finalEmail = finalPhone + "@phone.helishop.com";
-        }
-
-        // Họ tên mặc định nếu chưa cập nhật
-        String resolvedFullName;
-        if (request.getFullName() != null && !request.getFullName().trim().isBlank()) {
-            resolvedFullName = request.getFullName().trim();
-        } else if (hasEmail) {
-            resolvedFullName = "User " + finalEmail.split("@")[0];
-        } else if (hasPhone) {
-            resolvedFullName = "User " + finalPhone;
-        } else {
-            resolvedFullName = "Thành viên HeliShop";
-        }
+        registrationOtpService.consume(finalEmail, request.getOtp());
+        String resolvedFullName = request.getFullName() == null || request.getFullName().isBlank()
+                ? "User " + finalEmail.split("@")[0] : request.getFullName().trim();
 
         UserRole role = request.getRole() != null ? request.getRole() : UserRole.ROLE_CUSTOMER;
 
@@ -80,7 +50,6 @@ public class AuthService {
                 .email(finalEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(resolvedFullName)
-                .phone(finalPhone)
                 .role(role)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -115,11 +84,13 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        String identifier = request.getEmail().trim();
+        String identifier = request.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+        if (!identifier.contains("@") || identifier.endsWith("@phone.helishop.com")) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Vui lòng đăng nhập bằng email, không dùng số điện thoại");
+        }
         User user = userRepository.findByEmail(identifier)
-                .or(() -> userRepository.findByPhone(identifier))
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED,
-                        "Tài khoản (Email hoặc Số điện thoại) không tồn tại trên hệ thống"));
+                        "Gmail hoặc mật khẩu không đúng"));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.UNAUTHENTICATED, "Tài khoản hiện đang bị khóa hoặc chưa kích hoạt");

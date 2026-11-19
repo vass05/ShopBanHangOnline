@@ -29,15 +29,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
         private final AuthService authService;
+        private final com.helishop.core.modules.auth.service.RegistrationOtpService registrationOtpService;
+
+        @PostMapping("/register/otp")
+        @Operation(summary = "Gửi OTP đăng ký về Gmail", description = "Không tạo tài khoản; OTP dùng một lần, TTL 10 phút, tối đa 5 lần gửi mỗi giờ và 5 lần nhập sai.")
+        @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đã gửi OTP"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Gmail không hợp lệ"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Gmail đã đăng ký"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "429", description = "Vượt giới hạn gửi"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "Không gửi được email")
+        })
+        public ApiResponse<String> registrationOtp(@Valid @RequestBody com.helishop.core.modules.auth.dto.RegistrationOtpRequest request) {
+            String message = registrationOtpService.send(request.getEmail());
+            return ApiResponse.success(message, message);
+        }
 
         @PostMapping("/register") // định tuyến http post đến địa chỉ /api/v1/auth/register
         @ResponseStatus(HttpStatus.CREATED)
         @Operation( // mô tả tóm tắt tính năng và cách xử lý
-                        summary = "Đăng ký tài khoản người dùng mới", description = "Tạo tài khoản mới với vai trò chỉ định (Mặc định ROLE_CUSTOMER hoặc ROLE_SELLER) và mã hóa mật khẩu bằng BCrypt")
+                        summary = "Đăng ký tài khoản người dùng mới", description = "Tạo tài khoản mới với vai trò chỉ định (Mặc định ROLE_CUSTOMER hoặc ROLE_SELLER) sau khi xác nhận OTP Gmail hợp lệ; mã hóa mật khẩu bằng BCrypt")
         @ApiResponses({ // định nghĩa tài liệu Swagger cho các trường hợp phản hồi
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Đăng ký tài khoản thành công", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu đăng ký không hợp lệ (Validation Error)", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Email hoặc số điện thoại đã tồn tại trong hệ thống", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Gmail đã tồn tại trong hệ thống", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
         })
         public ApiResponse<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
                 return ApiResponse.success(authService.register(request), "Đăng ký tài khoản thành công");
