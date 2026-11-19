@@ -1,5 +1,9 @@
 # LỘ TRÌNH DỰ ÁN TỔNG THỂ: HELISHOP E-COMMERCE
 
+## Kết nối frontend dev/backend — 19/11/2026
+
+Đã sửa proxy Vite khi frontend 5173 dùng backend Docker 18080: cấu hình local chọn cổng, giữ API/ảnh cùng origin và Host đúng cho POST; có template/hướng dẫn, không hardcode cổng Docker vào bản build trình duyệt. 46 frontend tests/build pass; Chrome đăng ký/đăng nhập/catalog/profile qua 5173 pass; backend 183 pass + 1 skip. Nhánh `fix/frontend-dev-backend-proxy` bàn giao PR → main. [Chi tiết](sprints/frontend-dev-backend-proxy.md).
+
 ## Seller xử lý đơn — 19/11/2026
 
 Đã nối `/seller/orders` từ shop/header/sản phẩm: danh sách riêng shop, tìm/lọc/phân trang, chi tiết snapshot và thao tác xác nhận → đóng gói → bàn giao → ghi nhận đã giao. Server tính thao tác hợp lệ, khóa order/kiểm tra expectedStatus, chặn sai shop/trạng thái và hoàn kho lặp. VNPAY cần PAID trước đóng gói/giao; IPN không tự đổi bước xử lý. Tiền về sau hủy vẫn được ghi nhận cho đối soát, không mở lại đơn.
