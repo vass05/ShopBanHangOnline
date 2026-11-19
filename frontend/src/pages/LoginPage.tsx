@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore, User } from "@/store/useAuthStore";
+import { GoogleSignIn } from "@/components/GoogleSignIn";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -300,6 +301,8 @@ export const LoginPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
 
+          <div className="px-6 pb-4"><GoogleSignIn rememberMe={rememberMe} /></div>
+          <p className="px-6 pb-3 text-xs text-slate-500">Hoặc đăng nhập bằng mật khẩu HeliShop đã có</p>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
               {/* Email Input */}

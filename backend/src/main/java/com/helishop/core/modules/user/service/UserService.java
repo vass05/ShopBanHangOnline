@@ -72,6 +72,9 @@ public class UserService {
     public void changePassword(Long userId, ChangePasswordRequest request) {
         User user = getById(userId);
 
+        if (user.getPasswordHash() == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Tài khoản đang đăng nhập bằng Google và chưa có mật khẩu riêng");
+        }
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
             throw new AppException(ErrorCode.INVALID_REQUEST, "Mật khẩu hiện tại không chính xác");
         }

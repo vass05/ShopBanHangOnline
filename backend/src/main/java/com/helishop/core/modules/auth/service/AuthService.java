@@ -56,30 +56,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        // Sinh cặp Access Token (15m) và Refresh Token (7 ngày)
-        String accessToken = jwtUtils.generateAccessToken(
-                savedUser.getEmail(),
-                savedUser.getId(),
-                savedUser.getRole().name(),
-                savedUser.getFullName(), savedUser.getAuthVersion());
-        String refreshToken = jwtUtils.generateRefreshToken();
-
-        // Lưu Refresh Token vào Redis với TTL 7 ngày
-        refreshTokenService.saveRefreshToken(savedUser.getEmail(), refreshToken);
-
-        long expiresIn = jwtUtils.getAccessTokenExpirationMs() / 1000;
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(expiresIn)
-                .userId(savedUser.getId())
-                .email(savedUser.getEmail())
-                .fullName(savedUser.getFullName())
-                .phone(savedUser.getPhone())
-                .role(savedUser.getRole())
-                .build();
+        return issueSession(savedUser);
     }
 
     @Transactional(readOnly = true)
@@ -96,10 +73,17 @@ public class AuthService {
             throw new AppException(ErrorCode.UNAUTHENTICATED, "Tài khoản hiện đang bị khóa hoặc chưa kích hoạt");
         }
 
+        if (user.getPasswordHash() == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED, "Tài khoản này dùng Google. Vui lòng chọn Tiếp tục với Google");
+        }
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new AppException(ErrorCode.UNAUTHENTICATED, "Mật khẩu không chính xác");
         }
 
+        return issueSession(user);
+    }
+
+    public AuthResponse issueSession(User user) {
         // Sinh cặp Access Token (15m) và Refresh Token (7 ngày)
         String accessToken = jwtUtils.generateAccessToken(
                 user.getEmail(),

@@ -37,6 +37,7 @@ services:
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-helishop}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Initialize .env.production first}
       JWT_SECRET: ${JWT_SECRET:?Initialize .env.production first}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       APP_CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
       SPRING_MAIL_HOST: ${SMTP_HOST:-localhost}
       SPRING_MAIL_PORT: ${SMTP_PORT:-587}

@@ -34,4 +34,6 @@ Có Chrome trên Windows: đặt `$env:E2E_BROWSER_CHANNEL='chrome'` để dùng
 
 Các ca E2E tạo địa chỉ `@gmail.com` duy nhất nhưng thư được chặn trong Mailpit của integration, không gửi Gmail bên ngoài. Các ca thử dùng SKU 9001/9002 và chỉ thao tác container `helishop_integration_*`. SMTP gửi vào Mailpit, callback thanh toán dùng secret thử; không xác nhận được việc vận hành merchant/SMTP/Cloudinary bên ngoài.
 
-Đăng ký mới bắt buộc OTP Gmail trước khi tạo tài khoản. Số điện thoại chỉ ở sổ địa chỉ nhận hàng. Admin dùng `/admin/users` để quản lý buyer/seller. Cấu hình SMTP thật nằm trong `.env.gmail.local` ở thư mục gốc; xem README gốc.
+Đăng ký bằng Gmail + mật khẩu dự phòng bắt buộc OTP Gmail trước khi tạo tài khoản. Số điện thoại chỉ ở sổ địa chỉ nhận hàng. Admin dùng `/admin/users` để quản lý buyer/seller. Cấu hình SMTP thật nằm trong `.env.gmail.local` ở thư mục gốc; xem README gốc.
+
+Google là luồng chính trên login/register, dùng cấu hình runtime của backend; điền `.env.google.local` ở gốc rồi khởi động lại backend, không cần rebuild Vite. Xem [hướng dẫn Google](../docs/google-sign-in-setup.md). Đăng ký Google không cần OTP riêng; form Gmail + mật khẩu dự phòng vẫn yêu cầu OTP.

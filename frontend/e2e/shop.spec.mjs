@@ -8,7 +8,8 @@ test('seller signup opens one persisted shop, reload and login return to it', as
   await page.goto('/');
   await page.getByRole('link', { name: 'Kênh Người Bán', exact: true }).click();
   await expect(page).toHaveURL(/\/register\?role=seller$/);
-  const form = page.locator('form').first();
+  await page.getByText('Đăng ký bằng Gmail và mật khẩu', { exact: true }).click();
+  const form = page.locator('form').last();
   await form.locator('input[type="email"]').fill(email);
   await form.locator('input[type="password"]').nth(0).fill(password);
   await form.locator('input[type="password"]').nth(1).fill(password);

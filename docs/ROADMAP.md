@@ -1,3 +1,7 @@
+## Google Sign-In — 19/11/2026
+
+Triển khai `feat/google-sign-in`: Google là cách chính, xác minh Gmail qua token Google, bỏ OTP riêng cho luồng Google. Người mới xác minh xong chọn buyer/seller; người cũ xác nhận mật khẩu một lần để liên kết và giữ dữ liệu/quyền. Không tạo hoặc tự nâng admin. Giữ một cụm Docker và form mật khẩu dự phòng. Client ID chính chủ đang chờ người dùng tạo, đã có `.env.google.local` và hướng dẫn. Local đã qua 224 backend tests, 55 frontend tests/build và 11 Chrome cases Google/seller/admin; PR sẽ chạy đầy đủ CI trước merge. Google thật vẫn chờ Client ID chính chủ. [Bàn giao](sprints/google-sign-in.md).
+
 ## Một cụm Docker chính — 19/11/2026
 
 Thống nhất `docker-compose.yml` project `webbnhngonline`: frontend localhost, API 8080, npm dev 5173 cùng backend. Start-Local giữ volume/dữ liệu cũ, hostname RabbitMQ và uploads, dừng integration nhưng không xóa volume/seed. SMTP thật từ `.env.gmail.local` do người dùng điền. Đã sao lưu hai database; 5 service healthy, dữ liệu cũ nguyên vẹn, API 200 qua Docker/Vite, admin đọc 7 tài khoản thật. Backend 202 tests, frontend 50 tests/build và các kiểm tra trình duyệt đã pass. PR #18 admin đã merge với 22 browser E2E pass CI. SMTP thật chờ chủ dự án điền cấu hình. [Bàn giao](sprints/single-docker-runtime.md).
