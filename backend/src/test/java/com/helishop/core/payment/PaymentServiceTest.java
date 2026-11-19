@@ -269,7 +269,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("IPN: Thanh toán thành công (vnp_ResponseCode=00) -> Cập nhật PAID, PROCESSING, lưu Transaction và bắn RabbitMQ Event")
+    @DisplayName("IPN thành công cập nhật PAID, giữ bước seller, lưu Transaction và phát sự kiện")
     void testProcessVnPayIpn_Success_Flow() {
         when(vnPayConfig.getHashSecret()).thenReturn(secretKey);
 
@@ -294,7 +294,7 @@ class PaymentServiceTest {
 
         // Kiểm tra cập nhật trạng thái đơn hàng
         assertThat(testOrder.getPaymentStatus()).isEqualTo(PaymentStatus.PAID);
-        assertThat(testOrder.getOrderStatus()).isEqualTo(OrderStatus.PROCESSING);
+        assertThat(testOrder.getOrderStatus()).isEqualTo(OrderStatus.PENDING);
         verify(orderRepository).save(testOrder);
 
         // Kiểm tra lưu transaction

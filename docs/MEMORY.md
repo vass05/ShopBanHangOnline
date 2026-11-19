@@ -1,5 +1,14 @@
 # BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE
 
+## Seller xử lý đơn — 19/11/2026
+
+- Nhánh `feat/seller-order-fulfillment`, bàn giao PR → main. Trang `/seller/orders` nối shop/header/sản phẩm; tìm mã, lọc trạng thái/thanh toán, phân trang và chi tiết snapshot hàng/giá/người nhận/ghi chú. API GET list/detail và PATCH status dưới `/api/v1/seller/orders`, user/shop ACTIVE và owner từ JWT/database; chặn chéo shop/caller CUSTOMER/ADMIN/token role cũ.
+- SellerOrderPolicy dùng chung route mới và ResourceAccess route status cũ: PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED. Không bỏ bước/quay lùi, không tự RETURNED. VNPAY chỉ đóng gói/giao sau PAID; hủy trước SHIPPING chỉ khi UNPAID/FAILED hoặc PENDING đã hết hạn, không PAID/REFUNDED/intent còn hiệu lực. COD đã giao không tự đổi thành PAID.
+- Ghi khóa order, READ_COMMITTED, kiểm tra expectedStatus; trùng target hiện tại idempotent, target khác với trạng thái đã đổi trả 409. Hoàn kho/cache qua lifecycle sau commit chỉ một lần. Frontend nhận allowedStatuses/actionNote từ server, giữ trạng thái thật khi lỗi, có tải lại và chặn request/response cũ khi đổi phiên.
+- PaymentService IPN nay giữ nguyên bước seller, chỉ ghi tiền/ledger/outbox. Đơn cũ không hồi tố trạng thái. Tiền về muộn sau hủy/trả vẫn ghi PAID để đối soát, không mở lại đơn hoặc phát sự kiện xử lý đơn đang mở; seller có cảnh báo cần hoàn tiền riêng. Không tuyên bố đã refund.
+- Kiểm chứng **184 bài backend liệt kê: 183 pass, 1 MySQL schema dev skip; 45 frontend tests/build; 18 browser E2E pass**. 15 integration tests mới và bốn browser cases bao gồm hủy lặp, stale tab, phân quyền, COD/VNPAY, cache và MySQL IPN/hủy cạnh tranh. Callback thử dùng transaction number hợp lệ và assert RspCode 00 để tránh test thanh toán giả thành công.
+- IDE No Problems/Ready sau clean, không reload/rebuild/clean cache. Giữ output .ide-build. Chưa có hãng vận chuyển/tracking/vận đơn, đối soát COD, hủy/trả đã thanh toán hoặc refund/dashboard; giữ theme và dừng sau chức năng này. [Bàn giao](sprints/seller-order-fulfillment.md).
+
 ## Tách build Java để tránh Problems tái diễn — 16/11/2026
 
 - Nhánh `fix/java-build-output-isolation`, bàn giao PR → main. POM profile `ide-build` tự kích hoạt theo `m2e.version`: VS Code/m2e ghi `.ide-build`, Maven CLI/CI/Docker vẫn `target`. Cấu hình riêng cả main/test class, resource và generated sources; `.ide-build` bỏ qua Git/Docker. Không dùng setting outputPath dành cho project không Maven.

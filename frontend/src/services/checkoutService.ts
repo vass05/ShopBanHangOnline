@@ -7,6 +7,7 @@ export interface CheckoutPayload {
 }
 export interface OrderDto {
   id: number; orderCode: string; customerId: number; shopId: number; shopName: string;
+  customerName?: string;
   totalAmount: number; shippingFee: number; discountAmount: number; finalAmount: number;
   orderStatus: string; paymentStatus: string; paymentMethod: "COD" | "VNPAY";
   paymentExpiresAt?: string;

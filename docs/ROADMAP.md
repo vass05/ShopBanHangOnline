@@ -1,5 +1,11 @@
 # LỘ TRÌNH DỰ ÁN TỔNG THỂ: HELISHOP E-COMMERCE
 
+## Seller xử lý đơn — 19/11/2026
+
+Đã nối `/seller/orders` từ shop/header/sản phẩm: danh sách riêng shop, tìm/lọc/phân trang, chi tiết snapshot và thao tác xác nhận → đóng gói → bàn giao → ghi nhận đã giao. Server tính thao tác hợp lệ, khóa order/kiểm tra expectedStatus, chặn sai shop/trạng thái và hoàn kho lặp. VNPAY cần PAID trước đóng gói/giao; IPN không tự đổi bước xử lý. Tiền về sau hủy vẫn được ghi nhận cho đối soát, không mở lại đơn.
+
+Backend **183 pass + 1 schema dev skip**, frontend **45 tests/build pass**, browser **18/18 pass**. IDE vẫn No Problems sau clean nhờ output riêng. Bàn giao nhánh `feat/seller-order-fulfillment` → PR → main. Chưa tích hợp hãng vận chuyển/đối soát COD/refund; không đổi theme. [Chi tiết và giới hạn](sprints/seller-order-fulfillment.md).
+
 ## Ổn định môi trường Java — 16/11/2026
 
 Tách đầu ra IDE `.ide-build` khỏi Maven/Docker `target` bằng profile m2e, giữ chẩn đoán thật và auto build. Máy kiểm chứng dùng Red Hat Java Release mới nhất, không pin và bật auto update. Hai lượt clean/build, thêm/sửa/xóa file/package và đối chiếu hash output IDE đã xác nhận Problems 0 mà không cần dọn cache sau clean. Backend 168 pass + 1 MySQL dev skip. Nhánh `fix/java-build-output-isolation` bàn giao qua PR; chi tiết tại [Java IDE](java-ide-troubleshooting.md) và [handover](sprints/java-build-output-isolation.md).
