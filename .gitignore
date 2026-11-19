@@ -54,6 +54,7 @@ uploads/**
 !uploads/**/.gitkeep
 
 # Private runtime configuration and integration artifacts
+.env
 .env.production
 .env.*.local
 frontend/test-results/

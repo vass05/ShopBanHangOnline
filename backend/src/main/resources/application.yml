@@ -41,19 +41,20 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
 
   mail:
-    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
-    port: ${SPRING_MAIL_PORT:587}
-    username: ${SPRING_MAIL_USERNAME:helishop.system@gmail.com}
-    password: ${SPRING_MAIL_PASSWORD:helishop_secret_password}
+    host: ${SPRING_MAIL_HOST:${SMTP_HOST:smtp.gmail.com}}
+    port: ${SPRING_MAIL_PORT:${SMTP_PORT:587}}
+    username: ${SPRING_MAIL_USERNAME:${SMTP_USERNAME:}}
+    password: ${SPRING_MAIL_PASSWORD:${SMTP_PASSWORD:}}
     properties:
       mail:
         smtp:
           connectiontimeout: 3000
           timeout: 5000
           writetimeout: 5000
-          auth: ${SPRING_MAIL_SMTP_AUTH:true}
+          auth: ${SPRING_MAIL_SMTP_AUTH:${SMTP_AUTH:true}}
           starttls:
-            enable: ${SPRING_MAIL_STARTTLS:true}
+            enable: ${SPRING_MAIL_STARTTLS:${SMTP_STARTTLS:true}}
+            required: ${SPRING_MAIL_STARTTLS:${SMTP_STARTTLS:true}}
 
   rabbitmq:
     publisher-confirm-type: simple

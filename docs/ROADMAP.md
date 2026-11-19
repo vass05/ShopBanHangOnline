@@ -1,3 +1,7 @@
+## Một cụm Docker chính — 19/11/2026
+
+Thống nhất `docker-compose.yml` project `webbnhngonline`: frontend localhost, API 8080, npm dev 5173 cùng backend. Start-Local giữ volume/dữ liệu cũ, hostname RabbitMQ và uploads, dừng integration nhưng không xóa volume/seed. SMTP thật từ `.env.gmail.local` do người dùng điền. Đã sao lưu hai database; 5 service healthy, dữ liệu cũ nguyên vẹn, API 200 qua Docker/Vite, admin đọc 7 tài khoản thật. Backend 202 tests, frontend 50 tests/build và các kiểm tra trình duyệt đã pass. PR #18 admin đã merge với 22 browser E2E pass CI. SMTP thật chờ chủ dự án điền cấu hình. [Bàn giao](sprints/single-docker-runtime.md).
+
 ## Admin quản lý tài khoản — 19/11/2026
 
 PR #17 Gmail OTP đã merge, CI 3/3 gồm 20 browser tests. Tiếp tục `feat/admin-account-management`: màn `/admin/users`, tìm/lọc/phân trang, khóa/mở khóa buyer/seller; API kiểm tra admin thực trong DB, giữ nguyên shop/đơn. Thêm auth_version/JWT để vô hiệu phiên cũ ngay khi khóa và không hồi sinh sau mở khóa. Không tạo/xóa admin hay đổi role qua API công khai. [Bàn giao](sprints/admin-account-management.md).
