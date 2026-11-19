@@ -32,6 +32,23 @@ export const RegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [otpMessage, setOtpMessage] = useState("");
+
+  const sendOtp = async () => {
+    setErrorMessage(null);
+    setSendingOtp(true);
+    try {
+      const response = await api.post("/auth/register/otp", { email: account.trim().toLowerCase() });
+      setOtpSent(true);
+      setOtpMessage(response.data.message);
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || "Không gửi được OTP. Vui lòng thử lại.");
+    } finally { setSendingOtp(false); }
+  };
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -39,18 +56,13 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     setErrorMessage(null);
 
-    const rawAccount = account.trim();
-    if (!rawAccount) {
-      setErrorMessage("Vui lòng nhập Gmail hoặc Số điện thoại");
+    const rawAccount = account.trim().toLowerCase();
+    if (!/^[^\s@]+@gmail\.com$/.test(rawAccount)) {
+      setErrorMessage("Vui lòng nhập địa chỉ @gmail.com");
       return;
     }
-
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawAccount);
-    const cleanPhone = rawAccount.replace(/\s+/g, "");
-    const isPhone = /^(0|\+84)[0-9]{9}$/.test(cleanPhone);
-
-    if (!isEmail && !isPhone) {
-      setErrorMessage("Tài khoản phải là địa chỉ Gmail hợp lệ hoặc Số điện thoại 10 chữ số!");
+    if (!otpSent || !/^[0-9]{6}$/.test(otp)) {
+      setErrorMessage("Hãy lấy OTP gửi về Gmail và nhập đủ 6 chữ số");
       return;
     }
 
@@ -68,8 +80,8 @@ export const RegisterPage: React.FC = () => {
 
     try {
       const response = await api.post("/auth/register", {
-        email: isEmail ? rawAccount : undefined,
-        phone: isPhone ? cleanPhone : undefined,
+        email: rawAccount,
+        otp,
         password,
         role,
       });
@@ -77,9 +89,8 @@ export const RegisterPage: React.FC = () => {
       const data = response.data.data as any;
       const user: User = data.user || {
         id: data.userId || 1,
-        fullName: data.fullName || (isEmail ? rawAccount.split("@")[0] : `User ${cleanPhone}`),
-        email: data.email || (isEmail ? rawAccount : `${cleanPhone}@phone.helishop.com`),
-        phone: data.phone || (isPhone ? cleanPhone : undefined),
+        fullName: data.fullName || rawAccount.split("@")[0],
+        email: data.email || rawAccount,
         role: data.role || role,
         status: "ACTIVE",
       };
@@ -211,16 +222,29 @@ export const RegisterPage: React.FC = () => {
               {/* Account (Gmail or Phone) */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Gmail hoặc Số điện thoại
+                  Địa chỉ Gmail
                 </label>
                 <Input
-                  type="text"
+                  type="email"
+                  aria-label="Địa chỉ Gmail"
+                  maxLength={150}
                   icon={<Mail className="w-4 h-4" />}
                   value={account}
-                  onChange={(e) => setAccount(e.target.value)}
+                  onChange={(e) => { setAccount(e.target.value); setOtpSent(false); setOtp(""); setOtpMessage(""); }}
                   autoComplete="username"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Button type="button" variant="outline" onClick={sendOtp} isLoading={sendingOtp} disabled={loading || !account.trim()}>
+                  {otpSent ? "Gửi lại OTP" : "Gửi OTP về Gmail"}
+                </Button>
+                {otpMessage && <p role="status" className="text-xs text-emerald-700">{otpMessage}</p>}
+                <label htmlFor="registration-otp" className="block text-xs font-semibold text-slate-700">Mã OTP đăng ký (6 số)</label>
+                <Input id="registration-otp" inputMode="numeric" autoComplete="one-time-code" value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} maxLength={6} required />
+                <p className="text-xs text-slate-500">Số điện thoại được nhập trong địa chỉ nhận hàng để shipper liên lạc.</p>
               </div>
 
               {/* Password */}
@@ -291,6 +315,7 @@ export const RegisterPage: React.FC = () => {
                 variant="default"
                 className="w-full text-sm py-5 bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md shadow-sky-600/20 cursor-pointer font-bold"
                 isLoading={loading}
+                disabled={!otpSent || sendingOtp}
               >
                 {role === "ROLE_SELLER" ? "Đăng Ký Mở Gian Hàng" : "Đăng Ký Tài Khoản"}
               </Button>

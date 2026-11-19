@@ -29,7 +29,6 @@ export interface UserAddress {
 
 export interface UpdateProfileData {
   fullName: string;
-  phone?: string;
   avatarUrl?: string;
 }
 

@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Yêu cầu gửi mã OTP quên mật khẩu")
 public class ForgotPasswordRequest {
 
-    @NotBlank(message = "Email hoặc số điện thoại không được để trống")
-    @Schema(description = "Gmail hoặc Số điện thoại đăng ký tài khoản", example = "vuvietanh@gmail.com")
+    @NotBlank(message = "Gmail không được để trống")
+    @Schema(description = "Gmail đăng ký tài khoản", example = "vuvietanh@gmail.com")
+    @jakarta.validation.constraints.Email
     private String email;
 }

@@ -106,8 +106,8 @@ public class PasswordResetService {
     }
 
     private User lookup(String identifier) {
-        String normalized = identifier.trim();
-        return users.findByEmail(normalized).or(() -> users.findByPhone(normalized)).orElse(null);
+        String normalized = identifier.trim().toLowerCase(java.util.Locale.ROOT);
+        return users.findByEmail(normalized).orElse(null);
     }
 
     private AppException invalidOtp() {

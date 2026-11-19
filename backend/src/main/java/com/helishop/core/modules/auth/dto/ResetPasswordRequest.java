@@ -16,8 +16,9 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Yêu cầu đặt lại mật khẩu với mã xác thực OTP")
 public class ResetPasswordRequest {
 
-    @NotBlank(message = "Email hoặc số điện thoại không được để trống")
-    @Schema(description = "Gmail hoặc Số điện thoại đăng ký tài khoản", example = "vuvietanh@gmail.com")
+    @NotBlank(message = "Gmail không được để trống")
+    @Schema(description = "Gmail đăng ký tài khoản", example = "vuvietanh@gmail.com")
+    @jakarta.validation.constraints.Email
     private String email;
 
     @NotBlank(message = "Mã xác thực OTP không được để trống")
