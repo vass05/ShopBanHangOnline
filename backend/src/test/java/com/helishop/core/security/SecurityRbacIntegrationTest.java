@@ -40,6 +40,20 @@ class SecurityRbacIntegrationTest {
         mockMvc.perform(get("/api/v1/products").param("sortBy", "passwordHash")).andExpect(status().isBadRequest());
     }
 
+    @MockBean private com.helishop.core.modules.user.repository.UserRepository users;
+
+    @org.junit.jupiter.api.BeforeEach
+    void activeAccounts() {
+        for (long id = 1; id <= 2; id++) {
+            var user = com.helishop.core.modules.user.entity.User.builder()
+                    .email(id == 1 ? "customer@test.com" : "seller@test.com")
+                    .role(id == 1 ? com.helishop.core.common.constants.UserRole.ROLE_CUSTOMER : com.helishop.core.common.constants.UserRole.ROLE_SELLER)
+                    .status(com.helishop.core.common.constants.UserStatus.ACTIVE).build();
+            user.setId(id);
+            org.mockito.Mockito.lenient().when(users.findById(id)).thenReturn(java.util.Optional.of(user));
+        }
+    }
+
     @Autowired
     private MockMvc mockMvc;
 

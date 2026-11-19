@@ -61,7 +61,7 @@ public class AuthService {
                 savedUser.getEmail(),
                 savedUser.getId(),
                 savedUser.getRole().name(),
-                savedUser.getFullName());
+                savedUser.getFullName(), savedUser.getAuthVersion());
         String refreshToken = jwtUtils.generateRefreshToken();
 
         // Lưu Refresh Token vào Redis với TTL 7 ngày
@@ -105,7 +105,7 @@ public class AuthService {
                 user.getEmail(),
                 user.getId(),
                 user.getRole().name(),
-                user.getFullName());
+                user.getFullName(), user.getAuthVersion());
         String refreshToken = jwtUtils.generateRefreshToken();
 
         // Lưu Refresh Token vào Redis
@@ -151,7 +151,7 @@ public class AuthService {
                 user.getEmail(),
                 user.getId(),
                 user.getRole().name(),
-                user.getFullName());
+                user.getFullName(), user.getAuthVersion());
 
         long expiresIn = jwtUtils.getAccessTokenExpirationMs() / 1000;
 

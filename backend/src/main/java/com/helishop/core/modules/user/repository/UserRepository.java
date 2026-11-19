@@ -7,7 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<User> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select u from User u where u.id = :id and u.role in (com.helishop.core.common.constants.UserRole.ROLE_CUSTOMER, com.helishop.core.common.constants.UserRole.ROLE_SELLER)")
+    Optional<User> findManagedAccountWithLock(@org.springframework.data.repository.query.Param("id") Long id);
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select u from User u where u.id = :id")
     Optional<User> findByIdWithLock(@org.springframework.data.repository.query.Param("id") Long id);

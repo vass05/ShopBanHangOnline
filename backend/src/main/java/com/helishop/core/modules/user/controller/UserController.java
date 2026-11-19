@@ -62,12 +62,12 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Cập nhật thông tin cá nhân",
-            description = "Cập nhật họ và tên, số điện thoại hoặc ảnh đại diện cho tài khoản hiện tại"
+            description = "Cập nhật họ và tên hoặc ảnh đại diện; số điện thoại nằm trong địa chỉ nhận hàng cho tài khoản hiện tại"
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cập nhật hồ sơ thành công",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc số điện thoại đã tồn tại",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu hồ sơ không hợp lệ",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<UserResponse> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {

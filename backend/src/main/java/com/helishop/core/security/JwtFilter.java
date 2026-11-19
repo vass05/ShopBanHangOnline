@@ -24,6 +24,7 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
+    private final com.helishop.core.modules.user.repository.UserRepository users;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -33,7 +34,11 @@ public class JwtFilter extends OncePerRequestFilter {
             String jwt = parseJwt(request);
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUsernameFromJwtToken(jwt);
-                String role = jwtUtils.getRoleFromJwtToken(jwt);
+                Long userId = jwtUtils.getUserIdFromJwtToken(jwt);
+                var user = userId == null ? null : users.findById(userId).orElse(null);
+                if (user != null && user.getStatus() == com.helishop.core.common.constants.UserStatus.ACTIVE
+                        && user.getEmail().equals(username) && user.getAuthVersion() == jwtUtils.getAuthVersionFromJwtToken(jwt)) {
+                String role = user.getRole().name();
 
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                 if (StringUtils.hasText(role)) {
@@ -48,9 +53,10 @@ public class JwtFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
-        } catch (Exception e) {
-            log.error("Không thể thiết lập xác thực người dùng: {}", e.getMessage());
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+            log.debug("Không thể thiết lập xác thực JWT: {}", e.getClass().getSimpleName());
         }
 
         filterChain.doFilter(request, response);

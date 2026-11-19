@@ -39,6 +39,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class CartControllerIntegrationTest {
 
+    @MockBean private com.helishop.core.modules.user.repository.UserRepository users;
+
+    @org.junit.jupiter.api.BeforeEach
+    void activeAccountForToken() {
+        var user = com.helishop.core.modules.user.entity.User.builder().email("customer@gmail.com")
+                .role(com.helishop.core.common.constants.UserRole.ROLE_CUSTOMER)
+                .status(com.helishop.core.common.constants.UserStatus.ACTIVE).build();
+        user.setId(1L);
+        org.mockito.Mockito.lenient().when(users.findById(1L)).thenReturn(java.util.Optional.of(user));
+    }
+
     @Autowired
     private MockMvc mockMvc;
 
