@@ -42,7 +42,7 @@ export function SellerProductsPage() {
   const selected = params.get("product");
   return <div className="min-h-screen bg-slate-50 flex flex-col"><Header />
     <main className="w-full max-w-6xl mx-auto px-4 py-8 flex-1 space-y-5">
-      <nav className="flex gap-4 text-sky-700"><Link to="/seller/shop">Gian hàng của tôi</Link><Link to="/seller/products">Sản phẩm &amp; SKU</Link></nav>
+      <nav className="flex flex-wrap gap-4 text-sky-700"><Link to="/seller/shop">Gian hàng của tôi</Link><Link to="/seller/products">Sản phẩm &amp; SKU</Link><Link to="/seller/orders">Đơn bán</Link></nav>
       <h1 className="text-2xl font-bold text-slate-900">Quản lý sản phẩm &amp; SKU</h1>
       {!seller ? <p role="alert">Chức năng dành cho tài khoản người bán.</p> : loading ? <p role="status">Đang tải gian hàng...</p>
         : error ? <div><p role="alert" className="text-red-700">{error}</p><button onClick={() => setRetry(v => v + 1)} className={buttonClass}>Thử lại</button></div>

@@ -124,7 +124,7 @@ class PaymentAndEmailDlqE2ETest {
         // 4. Kiểm tra Database được cập nhật chính xác
         Order updatedOrder = orderRepository.findByOrderCode(sampleOrder.getOrderCode()).orElseThrow();
         assertThat(updatedOrder.getPaymentStatus()).isEqualTo(PaymentStatus.PAID);
-        assertThat(updatedOrder.getOrderStatus()).isEqualTo(OrderStatus.PROCESSING);
+        assertThat(updatedOrder.getOrderStatus()).isEqualTo(OrderStatus.PENDING);
 
         // 5. Kiểm tra Giao dịch thanh toán được lưu trữ
         java.util.List<PaymentTransaction> txns = paymentTransactionRepository.findByOrderId(sampleOrder.getId());

@@ -20,6 +20,7 @@ public class ResourceAccess {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final ShopRepository shopRepository;
+    private final com.helishop.core.modules.order.service.SellerOrderPolicy sellerOrderPolicy;
 
     public void requireCustomer(Long customerId) {
         if (!securityUtils.hasRole("ADMIN")) {
@@ -39,6 +40,10 @@ public class ResourceAccess {
     public void requireOrderStatus(Long id, OrderStatus status) {
         Order order = findOrder(id);
         requireOrderAccess(order);
+        if (!securityUtils.hasRole("ADMIN") && ownsShop(order.getShop())) {
+            sellerOrderPolicy.requireTransition(order, status);
+            return;
+        }
         if (!securityUtils.hasRole("ADMIN") && !ownsShop(order.getShop())) {
             if (status == OrderStatus.CANCELLED && order.getOrderStatus() == OrderStatus.CANCELLED) return;
             if (status != OrderStatus.CANCELLED

@@ -31,7 +31,7 @@ test('multi-shop receipt is idempotent; signed return waits for IPN and invoice 
   await expect(page.getByRole('heading', { name: 'Thanh toán thành công' })).toBeVisible();
   current = await data(await request.get(`/api/v1/orders/${order.id}`, { headers: authorization(user) }));
   expect(current.paymentStatus).toBe('PAID');
-  expect(current.orderStatus).toBe('PROCESSING');
+  expect(current.orderStatus).toBe('PENDING');
   const id = Number(order.id);
   expect(Number.isSafeInteger(id)).toBeTruthy();
   expect(sql(`SELECT COUNT(*) FROM payment_transactions WHERE order_id=${id};`)).toBe('1');

@@ -1,5 +1,17 @@
 # Kế hoạch đồng bộ frontend và backend HeliShop
 
+## Seller xử lý đơn — 19/11/2026
+
+Nhánh `feat/seller-order-fulfillment`, baseline `3cc17cc` (PR #14). Chỉ xử lý đơn bán của shop hiện tại; chưa tích hợp hãng vận chuyển, thu hộ/đối soát COD, hoàn tiền hay dashboard admin.
+
+- API seller danh sách phân trang/tìm mã/lọc trạng thái và thanh toán, chi tiết đơn và các thao tác được phép do server tính. Shop lấy từ JWT + user/shop ACTIVE trong database; chặn đọc/ghi chéo shop và token role cũ.
+- PENDING → CONFIRMED → PROCESSING (đóng gói) → SHIPPING (bàn giao) → DELIVERED (ghi nhận thủ công). VNPAY chỉ đóng gói/giao sau PAID. Hủy trước SHIPPING chỉ khi chưa thanh toán/phiên thanh toán đã hết hạn; không hủy đơn PAID hay RETURNED để tránh giả hoàn tiền. Ghi trạng thái không tự đổi paymentStatus.
+- Khóa order và kiểm tra expectedStatus khi ghi; request trùng bước hiện tại idempotent, request cũ sau bước khác trả 409. Dùng lifecycle/hoàn kho/cache sẵn có, áp dụng cùng policy cho route status cũ để không bypass.
+- Frontend `/seller/orders`: danh sách, bộ lọc/phân trang, chi tiết snapshot hàng/giá/địa chỉ/ghi chú/thanh toán, nút thao tác theo server, lỗi/tải lại/xác nhận thao tác và chống response cũ khi đổi tài khoản. Nối menu shop/header/sản phẩm, giữ theme hiện có.
+- Kiểm chứng API/DB/quyền/validation/thanh toán/concurrency/idempotency/cache, frontend tests/build, E2E seller và customer trên Docker thật; kiểm tra Problems sau clean. Cập nhật docs, commit/push, PR và merge main trước bàn giao.
+
+Đã triển khai luồng trên; IPN nay cập nhật tiền mà không tự đóng gói, callback muộn sau hủy vẫn ghi nhận PAID để đối soát và không mở lại đơn. Kiểm chứng: **183 backend tests pass + 1 schema MySQL dev skip; 45 frontend tests/build pass; 18 browser E2E pass**, gồm bốn ca mới. IDE No Problems/Ready sau clean, không cần nạp lại cache. [Bàn giao](docs/sprints/seller-order-fulfillment.md).
+
 ## Ổn định Java IDE — 16/11/2026
 
 Nhánh `fix/java-build-output-isolation`: profile m2e tự động đưa class/generated sources của IDE sang `.ide-build`, CLI/CI/Docker giữ `target`. Bỏ ignore incomplete classpath/autoUpdate sai scope; dùng Release mới nhất với auto update, không pin. Kiểm chứng `clean test` 168 pass + 1 skip khi IDE mở; hash class/mapper IDE giữ nguyên, Problems 0. Thêm file/package tạm: 1 lỗi cố ý → sửa tự hết → clean test-compile vẫn 0 → xóa probe. Bàn giao PR vào main. [Chi tiết](docs/sprints/java-build-output-isolation.md).
@@ -44,6 +56,7 @@ Theo yêu cầu ngày 13/11/2026: mỗi chức năng có nhánh riêng, kiểm t
 | E2E và CI | `test/browser-checkout-and-ci` | [PR #10](https://github.com/vass05/ShopBanHangOnline/pull/10); 7/7 browser E2E pass trên cụm thật; 152 backend tests, 31 frontend tests/build pass; workflow 3 jobs |
 | Mở gian hàng | `feat/seller-shop-onboarding` | GET/POST shop của mình, đăng ký/đăng nhập seller → `/seller/shop`; 157 backend tests pass, 1 test MySQL dev skip; 35 frontend tests/TypeScript/build pass; 11/11 browser E2E pass (4 ca mới trên MySQL thật). Bàn giao qua PR riêng; phần seller tiếp theo chờ yêu cầu. |
 | Sản phẩm/SKU seller | `feat/seller-product-sku-management` | Tạo nguyên tử sản phẩm/SKU, sửa giá/kho theo version, ẩn bán; 168 backend tests pass + 1 skip, frontend 40 tests/build và 14 browser E2E pass; bàn giao PR riêng vào main. |
+| Seller xử lý đơn | `feat/seller-order-fulfillment` | Danh sách/chi tiết riêng shop, xác nhận/đóng gói/bàn giao/đã giao, payment gate và expectedStatus; 183 backend pass + 1 skip, frontend 45 tests/build và 18 browser E2E pass; PR riêng vào main. |
 
 ## 1. Kết luận và phạm vi kiểm chứng
 

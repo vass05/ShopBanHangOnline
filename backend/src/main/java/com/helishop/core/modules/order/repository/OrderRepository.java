@@ -9,7 +9,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Order> {
+
+    @Override
+    @EntityGraph(attributePaths = {"customer", "shop"})
+    org.springframework.data.domain.Page<Order> findAll(org.springframework.data.jpa.domain.Specification<Order> specification, org.springframework.data.domain.Pageable pageable);
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select o from Order o where o.id = :id")

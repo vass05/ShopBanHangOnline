@@ -153,7 +153,7 @@ public class PaymentService {
         paymentTransactionRepository.save(transaction);
         order.setPaymentStatus(target);
         boolean closed = order.getOrderStatus() == OrderStatus.CANCELLED || order.getOrderStatus() == OrderStatus.RETURNED;
-        if (success && !closed && (order.getOrderStatus() == OrderStatus.PENDING || order.getOrderStatus() == OrderStatus.CONFIRMED)) order.setOrderStatus(OrderStatus.PROCESSING);
+        // Payment confirmation does not confirm or pack a seller's order.
         orderRepository.save(order);
         if (success && !closed) fireOrderPaidEvent(order, txCode, paidAt);
         if (success && closed) log.warn("Thanh toán đến sau khi đóng đơn {}; cần đối soát/hoàn tiền, không kích hoạt lại đơn", orderCode);
