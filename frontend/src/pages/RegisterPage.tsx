@@ -1,340 +1,174 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { isAxiosError } from "axios";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useAuthStore, User } from "@/store/useAuthStore";
+import { AuthDivider, AuthLayout } from "@/components/AuthLayout";
 import { GoogleSignIn } from "@/components/GoogleSignIn";
-import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Lock,
-  Mail,
-  Store,
-  ShoppingBag,
-  AlertCircle,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  X,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/useAuthStore";
+import type { User } from "@/store/useAuthStore";
 
-type RoleType = "ROLE_CUSTOMER" | "ROLE_SELLER";
+type Role = "ROLE_CUSTOMER" | "ROLE_SELLER";
 
-export const RegisterPage: React.FC = () => {
+interface RegistrationSession {
+  userId: number;
+  email: string;
+  fullName: string;
+  role: Role;
+  accessToken: string;
+  refreshToken: string;
+}
+
+function registrationError(error: unknown, fallback: string) {
+  if (isAxiosError(error)) {
+    if (error.response?.status === 503) {
+      return "Tạm thời chưa gửi được mã qua email. Bạn có thể thử lại sau hoặc tiếp tục với Google.";
+    }
+    return error.response?.data?.message || fallback;
+  }
+  return fallback;
+}
+
+export function RegisterPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { setAuth } = useAuthStore();
-
-  const [role, setRole] = useState<RoleType>(() => searchParams.get("role") === "seller" ? "ROLE_SELLER" : "ROLE_CUSTOMER");
-  const [account, setAccount] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const [params] = useSearchParams();
+  const setAuth = useAuthStore(state => state.setAuth);
+  const initialRole = params.get("role") === "seller" ? "ROLE_SELLER" : "ROLE_CUSTOMER";
+  const [role, setRole] = useState<Role>(initialRole);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [email, setEmail] = useState("");
+  const [emailWithCode, setEmailWithCode] = useState("");
   const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [otpMessage, setOtpMessage] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const busy = sending || registering;
 
-  const sendOtp = async () => {
-    setErrorMessage(null);
-    setSendingOtp(true);
+  async function sendCode(address: string) {
+    if (busy) return;
+    setError("");
+    setNotice("");
+    if (!/^[^\s@]+@gmail\.com$/.test(address)) {
+      setError("Vui lòng nhập địa chỉ @gmail.com hợp lệ.");
+      return;
+    }
+
+    setSending(true);
     try {
-      const response = await api.post("/auth/register/otp", { email: account.trim().toLowerCase() });
-      setOtpSent(true);
-      setOtpMessage(response.data.message);
-    } catch (err: any) {
-      setErrorMessage(err.response?.data?.message || "Không gửi được OTP. Vui lòng thử lại.");
-    } finally { setSendingOtp(false); }
-  };
-
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-
-    const rawAccount = account.trim().toLowerCase();
-    if (!/^[^\s@]+@gmail\.com$/.test(rawAccount)) {
-      setErrorMessage("Vui lòng nhập địa chỉ @gmail.com");
-      return;
-    }
-    if (!otpSent || !/^[0-9]{6}$/.test(otp)) {
-      setErrorMessage("Hãy lấy OTP gửi về Gmail và nhập đủ 6 chữ số");
-      return;
-    }
-
-    if (password.length < 6) {
-      setErrorMessage("Mật khẩu phải có tối thiểu 6 ký tự");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setErrorMessage("Mật khẩu xác nhận không khớp với mật khẩu đã nhập");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await api.post("/auth/register", {
-        email: rawAccount,
-        otp,
-        password,
-        role,
-      });
-
-      const data = response.data.data as any;
-      const user: User = data.user || {
-        id: data.userId || 1,
-        fullName: data.fullName || rawAccount.split("@")[0],
-        email: data.email || rawAccount,
-        role: data.role || role,
-        status: "ACTIVE",
-      };
-
-      setAuth({ user, accessToken: data.accessToken, refreshToken: data.refreshToken });
-
-      // Seller onboarding continues by opening a persisted shop.
-      if (user.role === "ROLE_SELLER") {
-        navigate("/seller/shop");
-      } else {
-        navigate("/");
-      }
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        "Đăng ký tài khoản thất bại. Vui lòng kiểm tra lại thông tin!";
-      setErrorMessage(msg);
+      await api.post("/auth/register/otp", { email: address });
+      setEmailWithCode(address);
+      setOtp("");
+      setNotice("Mã xác nhận đã được gửi. Kiểm tra hộp thư và thư rác.");
+    } catch (error) {
+      setError(registrationError(error, "Chưa gửi được mã xác nhận. Vui lòng thử lại."));
     } finally {
-      setLoading(false);
+      setSending(false);
     }
-  };
+  }
+
+  function changeEmail() {
+    setEmailWithCode("");
+    setOtp("");
+    setPassword("");
+    setConfirmation("");
+    setNotice("");
+    setError("");
+  }
+
+  async function register(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || !emailWithCode) return;
+    setError("");
+
+    if (password !== confirmation) {
+      setError("Mật khẩu xác nhận không khớp.");
+      return;
+    }
+
+    setRegistering(true);
+    try {
+      const response = await api.post<{ data: RegistrationSession }>("/auth/register", {
+        email: emailWithCode, otp, password, role,
+      });
+      const { userId, fullName, email, role: accountRole, accessToken, refreshToken } = response.data.data;
+      const user: User = { id: userId, fullName, email, role: accountRole, status: "ACTIVE" };
+      setAuth({ user, accessToken, refreshToken, rememberMe });
+      navigate(accountRole === "ROLE_SELLER" ? "/seller/shop" : "/");
+    } catch (error) {
+      setError(registrationError(error, "Chưa đăng ký được tài khoản. Vui lòng thử lại."));
+    } finally {
+      setRegistering(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-sky-50/40 to-slate-100 p-4 py-10">
-      <div className="w-full max-w-lg">
-        {/* Brand Header */}
-        <div className="text-center mb-6">
-          <Link to="/" className="inline-block hover:scale-105 transition-transform">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-white shadow-xl shadow-sky-500/20 p-2 ring-2 ring-sky-100 mb-2">
-              <img src="/images/logo.png" alt="HeliShop Logo" className="w-full h-full object-cover rounded-2xl" />
-            </div>
-          </Link>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Tạo Tài Khoản Heli<span className="text-[#0284C7]">Shop</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            Gia nhập cộng đồng mua sắm và kinh doanh trực tuyến hàng đầu
-          </p>
-        </div>
+    <AuthLayout title="Đăng ký">
+      {error && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+      {notice && <p role="status" className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
 
-        {/* Error Alert */}
-        {errorMessage && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-800 text-xs shadow-sm">
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-sm">Lỗi đăng ký</p>
-              <p className="mt-0.5">{errorMessage}</p>
-            </div>
+      {emailWithCode ? (
+        <form onSubmit={register} className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span className="min-w-0 break-all font-medium">{emailWithCode}</span>
+            <button type="button" disabled={busy} onClick={changeEmail} className="font-medium text-sky-700 hover:underline">
+              Đổi Gmail
+            </button>
           </div>
-        )}
-
-        <Card className="border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm relative overflow-hidden">
-          {/* Exit / Close button to go home */}
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all cursor-pointer z-10"
-            title="Thoát về Trang Chủ"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <CardHeader className="space-y-1 pb-4 pr-12">
-            <CardTitle className="text-xl font-bold">Đăng ký thành viên</CardTitle>
-            <CardDescription className="text-xs">
-              Chọn vai trò của bạn trên sàn và điền các thông tin dưới đây
-            </CardDescription>
-          </CardHeader>
-
-          <div className="px-6 pb-4"><GoogleSignIn initialRole={role} /></div>
-          <details className="group">
-          <summary className="cursor-pointer px-6 pb-4 text-sm font-medium text-sky-700">Đăng ký bằng Gmail và mật khẩu</summary>
-          <form onSubmit={handleRegister}>
-            <CardContent className="space-y-4">
-              {/* Role Selection */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-                  <span>Bạn tham gia với vai trò gì?</span>
-                  <span className="text-[11px] text-[#0284C7] font-normal lowercase">Bắt buộc</span>
-                </label>
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  {/* Customer Card */}
-                  <div
-                    onClick={() => setRole("ROLE_CUSTOMER")}
-                    className={cn(
-                      "p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between relative",
-                      role === "ROLE_CUSTOMER"
-                        ? "border-[#0284C7] bg-sky-50/60 shadow-md shadow-sky-500/10 ring-1 ring-[#0284C7]/20"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
-                    )}
-                  >
-                    {role === "ROLE_CUSTOMER" && (
-                      <CheckCircle2 className="w-4 h-4 text-[#0284C7] absolute top-2.5 right-2.5" />
-                    )}
-                    <div className="p-2 w-9 h-9 rounded-lg bg-sky-100 text-[#0284C7] flex items-center justify-center mb-2">
-                      <ShoppingBag className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">Người Mua Hàng</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                        Khám phá triệu sản phẩm, voucher và deal Flash Sale
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Seller Card */}
-                  <div
-                    onClick={() => setRole("ROLE_SELLER")}
-                    className={cn(
-                      "p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between relative",
-                      role === "ROLE_SELLER"
-                        ? "border-[#0284C7] bg-sky-50/60 shadow-md shadow-sky-500/10 ring-1 ring-[#0284C7]/20"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
-                    )}
-                  >
-                    {role === "ROLE_SELLER" && (
-                      <CheckCircle2 className="w-4 h-4 text-[#0284C7] absolute top-2.5 right-2.5" />
-                    )}
-                    <div className="p-2 w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mb-2">
-                      <Store className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">Người Bán Hàng</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                        Mở gian hàng, đăng bán sản phẩm và quản lý đơn hàng
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Account (Gmail or Phone) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Địa chỉ Gmail
-                </label>
-                <Input
-                  type="email"
-                  aria-label="Địa chỉ Gmail"
-                  maxLength={150}
-                  icon={<Mail className="w-4 h-4" />}
-                  value={account}
-                  onChange={(e) => { setAccount(e.target.value); setOtpSent(false); setOtp(""); setOtpMessage(""); }}
-                  autoComplete="username"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Button type="button" variant="outline" onClick={sendOtp} isLoading={sendingOtp} disabled={loading || !account.trim()}>
-                  {otpSent ? "Gửi lại OTP" : "Gửi OTP về Gmail"}
-                </Button>
-                {otpMessage && <p role="status" className="text-xs text-emerald-700">{otpMessage}</p>}
-                <label htmlFor="registration-otp" className="block text-xs font-semibold text-slate-700">Mã OTP đăng ký (6 số)</label>
-                <Input id="registration-otp" inputMode="numeric" autoComplete="one-time-code" value={otp}
-                  onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} maxLength={6} required />
-                <p className="text-xs text-slate-500">Số điện thoại được nhập trong địa chỉ nhận hàng để shipper liên lạc.</p>
-              </div>
-
-              {/* Password */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Mật khẩu
-                </label>
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  icon={<Lock className="w-4 h-4" />}
-                  rightElement={
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer"
-                      title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4 text-[#0284C7]" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  }
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <p className="text-[11px] text-slate-400 pt-0.5">
-                  Tối thiểu 6 ký tự
-                </p>
-              </div>
-
-              {/* Confirm Password */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Xác nhận mật khẩu
-                </label>
-                <Input
-                  type={showConfirmPassword ? "text" : "password"}
-                  icon={<Lock className="w-4 h-4" />}
-                  rightElement={
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer"
-                      title={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                      tabIndex={-1}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="w-4 h-4 text-[#0284C7]" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  }
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex flex-col gap-3 pt-2">
-              <Button
-                type="submit"
-                variant="default"
-                className="w-full text-sm py-5 bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md shadow-sky-600/20 cursor-pointer font-bold"
-                isLoading={loading}
-                disabled={!otpSent || sendingOtp}
-              >
-                {role === "ROLE_SELLER" ? "Đăng Ký Mở Gian Hàng" : "Đăng Ký Tài Khoản"}
-              </Button>
-
-              <p className="text-xs text-center text-slate-500">
-                Đã có tài khoản?{" "}
-                <Link to="/login" className="text-[#0284C7] font-semibold hover:underline">
-                  Đăng nhập ngay
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
-          </details>
-        </Card>
-      </div>
-    </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="register-otp" className="text-sm font-medium">Mã OTP đăng ký (6 số)</label>
+              <button type="button" disabled={busy} onClick={() => void sendCode(emailWithCode)} className="text-sm font-medium text-sky-700 hover:underline">
+                Gửi lại mã
+              </button>
+            </div>
+            <Input id="register-otp" value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, ""))}
+              inputMode="numeric" autoComplete="one-time-code" minLength={6} maxLength={6} pattern="[0-9]{6}" required />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="register-password" className="text-sm font-medium">Mật khẩu</label>
+            <Input id="register-password" type="password" autoComplete="new-password" value={password}
+              onChange={event => setPassword(event.target.value)} minLength={6} required />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="register-confirmation" className="text-sm font-medium">Nhập lại mật khẩu</label>
+            <Input id="register-confirmation" type="password" autoComplete="new-password" value={confirmation}
+              onChange={event => setConfirmation(event.target.value)} minLength={6} required />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="register-role" className="text-sm font-medium">Vai trò tài khoản</label>
+            <select id="register-role" value={role} onChange={event => setRole(event.target.value as Role)}
+              className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm">
+              <option value="ROLE_CUSTOMER">Người mua hàng</option>
+              <option value="ROLE_SELLER">Người bán hàng</option>
+            </select>
+          </div>
+          <Button type="submit" className="h-11 w-full" isLoading={registering} disabled={sending}>Tạo tài khoản</Button>
+        </form>
+      ) : (
+        <form onSubmit={event => { event.preventDefault(); void sendCode(email.trim().toLowerCase()); }} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="register-email" className="text-sm font-medium">Địa chỉ Gmail</label>
+            <Input id="register-email" type="email" autoComplete="email" placeholder="ban@gmail.com"
+              value={email} disabled={sending} onChange={event => setEmail(event.target.value)} className="h-11" required />
+          </div>
+          <Button type="submit" className="h-11 w-full" isLoading={sending}>Tiếp tục</Button>
+        </form>
+      )}
+      <label className="mt-4 flex items-center gap-2 text-sm text-slate-700">
+        <input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)}
+          className="h-4 w-4 accent-sky-700" />
+        Duy trì đăng nhập
+      </label>
+      <AuthDivider />
+      <GoogleSignIn initialRole={initialRole} rememberMe={rememberMe} />
+      <p className="mt-6 text-center text-sm text-slate-600">
+        Đã có tài khoản? <Link to="/login" className="font-semibold text-sky-700 hover:underline">Đăng nhập</Link>
+      </p>
+    </AuthLayout>
   );
-};
+}

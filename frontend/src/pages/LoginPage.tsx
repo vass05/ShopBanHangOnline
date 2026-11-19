@@ -5,7 +5,7 @@ import { GoogleSignIn } from "@/components/GoogleSignIn";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthDivider, AuthLayout } from "@/components/AuthLayout";
 import {
   Lock,
   Mail,
@@ -220,209 +220,59 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-sky-50/40 to-slate-100 p-4">
-      <div className="w-full max-w-md">
-
-        {/* HeliShop Brand Header */}
-        <div className="text-center mb-6">
-          <Link to="/" className="inline-block hover:scale-105 transition-transform">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-xl shadow-sky-500/20 p-2 ring-2 ring-sky-100 mb-3">
-              <img src="/images/logo.png" alt="HeliShop Logo" className="w-full h-full object-cover rounded-2xl" />
-            </div>
-          </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            Heli<span className="text-[#0284C7]">Shop</span> Core
-          </h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">
-            Sàn Thương Mại Điện Tử HeliShop - Trải Nghiệm Mua Sắm Số 1
-          </p>
-        </div>
-
-        {/* Expired Notification Alert with Dismiss button */}
+    <>
+      <AuthLayout title="Đăng nhập">
         {isExpired && !dismissExpired && (
-          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start justify-between gap-3 text-amber-800 text-sm shadow-sm animate-in fade-in">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Phiên làm việc đã hết hạn!</p>
-                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                  Phiên đăng nhập cũ đã được thu hồi. Vui lòng đăng nhập lại tài khoản để tiếp tục.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setDismissExpired(true)}
-              className="p-1 text-amber-600 hover:text-amber-800 rounded-md hover:bg-amber-100 transition-colors shrink-0 cursor-pointer"
-              title="Đóng thông báo"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          <div role="status" className="mb-4 flex items-center justify-between gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+            Phiên đã hết hạn. Vui lòng đăng nhập lại.
+            <button type="button" aria-label="Đóng thông báo" onClick={() => setDismissExpired(true)}><X size={16} /></button>
           </div>
         )}
+        {errorMessage && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{errorMessage}</p>}
+        {successMessage && <p role="status" className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{successMessage}</p>}
 
-        {/* Success Alert */}
-        {successMessage && (
-          <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-3 text-emerald-800 text-sm shadow-sm">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">Thành công</p>
-              <p className="text-xs text-emerald-700 mt-0.5">{successMessage}</p>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="login-email" className="text-sm font-medium">Email</label>
+              {hasRememberedAccount && email && (
+                <button type="button" onClick={handleClearRememberedAccount} className="text-xs font-medium text-sky-700">
+                  Đổi tài khoản
+                </button>
+              )}
             </div>
+            <Input id="login-email" type="email" ref={emailInputRef} value={email}
+              onChange={event => setEmail(event.target.value)} autoComplete="username"
+              placeholder="ban@gmail.com" className="h-11" required />
           </div>
-        )}
-
-        {/* Error Alert */}
-        {errorMessage && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-800 text-sm shadow-sm">
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">Lỗi xác thực</p>
-              <p className="text-xs text-red-700 mt-0.5">{errorMessage}</p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="login-password" className="text-sm font-medium">Mật khẩu</label>
+              <button type="button" className="text-sm font-medium text-sky-700 hover:underline"
+                onClick={() => { setForgotEmail(email); setShowForgotModal(true); }}>Quên mật khẩu?</button>
             </div>
+            <Input id="login-password" ref={passwordInputRef} type={showPassword ? "text" : "password"}
+              value={password} onChange={event => setPassword(event.target.value)}
+              autoComplete="current-password" className="h-11" required
+              rightElement={<button type="button" onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>} />
           </div>
-        )}
+          <Button type="submit" className="h-11 w-full" isLoading={loading}>Đăng Nhập</Button>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" checked={rememberMe} onChange={event => handleRememberMeToggle(event.target.checked)}
+              className="h-4 w-4 accent-sky-700" />
+            Duy trì đăng nhập
+          </label>
+        </form>
+        <AuthDivider />
+        <GoogleSignIn rememberMe={rememberMe} />
+        <p className="mt-6 text-center text-sm text-slate-600">
+          Chưa có tài khoản? <Link to="/register" className="font-semibold text-sky-700 hover:underline">Đăng ký</Link>
+        </p>
+      </AuthLayout>
 
-        <Card className="border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm relative overflow-hidden">
-          {/* Exit / Close button to go home */}
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all cursor-pointer z-10"
-            title="Thoát về Trang Chủ"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <CardHeader className="space-y-1 pb-4 pr-12">
-            <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
-            <CardDescription>
-              Nhập Email / Gmail để truy cập tài khoản mua sắm
-            </CardDescription>
-          </CardHeader>
-
-          <div className="px-6 pb-4"><GoogleSignIn rememberMe={rememberMe} /></div>
-          <p className="px-6 pb-3 text-xs text-slate-500">Hoặc đăng nhập bằng mật khẩu HeliShop đã có</p>
-          <form onSubmit={handleLogin}>
-            <CardContent className="space-y-4">
-              {/* Email Input */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                    Email / Gmail
-                  </label>
-                  {hasRememberedAccount && email && (
-                    <button
-                      type="button"
-                      onClick={handleClearRememberedAccount}
-                      className="text-[11px] text-[#0284C7] hover:underline font-medium cursor-pointer"
-                      title="Xóa tài khoản đã nhớ để đăng nhập bằng tài khoản khác"
-                    >
-                      Đổi tài khoản khác
-                    </button>
-                  )}
-                </div>
-                <Input
-                  ref={emailInputRef}
-                  type="email"
-                  icon={<Mail className="w-4 h-4" />}
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (!e.target.value.trim()) {
-                      setHasRememberedAccount(false);
-                    }
-                  }}
-                  autoComplete="username"
-                  required
-                />
-                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
-                  <span>Có thể đăng nhập bằng Gmail và mật khẩu</span>
-                  {hasRememberedAccount && email && (
-                    <span className="text-emerald-600 font-medium flex items-center gap-1 shrink-0">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Đã nhớ trên máy này
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Password Input with Show/Hide Toggle */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                    Mật khẩu
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForgotEmail(email);
-                      setShowForgotModal(true);
-                    }}
-                    className="text-xs text-[#0284C7] hover:underline font-medium cursor-pointer"
-                  >
-                    Quên mật khẩu?
-                  </button>
-                </div>
-                <Input
-                  ref={passwordInputRef}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  icon={<Lock className="w-4 h-4" />}
-                  rightElement={
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer"
-                      title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4 text-[#0284C7]" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  }
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                />
-              </div>
-
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 select-none hover:text-slate-900">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => handleRememberMeToggle(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-[#0284C7] focus:ring-[#0284C7] accent-[#0284C7] cursor-pointer"
-                  />
-                  <span>Ghi nhớ tài khoản trên thiết bị này</span>
-                </label>
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex flex-col gap-3 pt-2">
-              <Button
-                type="submit"
-                variant="default"
-                className="w-full text-base py-5 bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md shadow-sky-600/20 cursor-pointer"
-                isLoading={loading}
-              >
-                Đăng Nhập
-              </Button>
-              <p className="text-xs text-center text-slate-500">
-                Chưa có tài khoản?{" "}
-                <Link to="/register" className="text-[#0284C7] font-semibold hover:underline">
-                  Đăng ký ngay
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
-        </Card>
-      </div>
 
       {/* Forgot Password Modal */}
       {showForgotModal && (
@@ -641,6 +491,6 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

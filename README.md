@@ -207,7 +207,7 @@ Giữ SMTP host `smtp.gmail.com`, cổng `587`, auth/STARTTLS `true`. Bật xác
 
 Backend nạp cấu hình mới. Google Sign-In không cần cấu hình SMTP. SMTP dùng cho hóa đơn và cách đăng ký Gmail + mật khẩu dự phòng; chưa có SMTP thì luồng đăng ký dự phòng này không hoàn tất được. Không có Mailpit trong cụm chính, không có đường bỏ qua OTP. [Thông số SMTP chính thức](https://developers.google.com/workspace/gmail/imap/imap-smtp).
 
-Đăng ký bằng mật khẩu dự phòng: mở phần **Đăng ký bằng Gmail và mật khẩu**, chọn người mua hoặc người bán, nhập `@gmail.com`, chọn **Gửi OTP về Gmail**, nhập 6 số và mật khẩu/xác nhận, rồi đăng ký. Mã có hiệu lực 10 phút, dùng một lần; chờ 60 giây gửi lại. Email cũ tiếp tục đăng nhập được, không dùng số điện thoại. Số điện thoại được nhập trong **Sổ địa chỉ/địa chỉ nhận hàng**, để shipper liên lạc.
+Đăng ký Gmail: nhập địa chỉ `@gmail.com` rồi chọn **Tiếp tục** để nhận mã. Nhập OTP, mật khẩu và chọn vai trò. Mã có hiệu lực 10 phút, dùng một lần và chờ 60 giây để gửi lại. Số điện thoại được nhập trong **Sổ địa chỉ/địa chỉ nhận hàng** để shipper liên lạc.
 
 Admin đăng nhập được chuyển tới `/admin/users`, hoặc mở menu tài khoản → **Quản lý tài khoản** để tìm/lọc, khóa/mở khóa buyer/seller. Database cũ trên máy có admin; không tạo thêm quyền admin qua đăng ký công khai. Khóa thu hồi phiên hiện tại và giữ dữ liệu đơn/shop; mở khóa phải đăng nhập lại.
 

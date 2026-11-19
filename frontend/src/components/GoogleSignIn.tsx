@@ -69,7 +69,8 @@ export function GoogleSignIn({ rememberMe = true, initialRole = "ROLE_CUSTOMER" 
             finally { if (valid()) { inFlight.current = false; setBusy(false); } }
           } });
         host.current.replaceChildren();
-        sdk.renderButton(host.current, { type: "standard", theme: "outline", size: "large", text: "continue_with", width: Math.min(400, host.current.clientWidth || 300), locale: "vi" });
+        const buttonWidth = Math.min(400, host.current.parentElement?.clientWidth || 250);
+        sdk.renderButton(host.current, { type: "standard", theme: "outline", size: "large", text: "continue_with", width: buttonWidth, locale: "vi" });
         setReady(true);
       } catch (err) { if (valid()) setError(errorText(err)); }
       finally { if (valid()) setLoading(false); }
@@ -94,10 +95,8 @@ export function GoogleSignIn({ rememberMe = true, initialRole = "ROLE_CUSTOMER" 
     finally { if (valid()) { inFlight.current = false; setBusy(false); } }
   }
 
-  return <section className="rounded-xl border border-sky-100 bg-sky-50/40 p-4 space-y-3" aria-label="Đăng nhập bằng Google">
-    <p className="font-semibold text-slate-800">Tiếp tục với Google</p>
-    <p className="text-xs text-slate-600">Dùng Gmail của bạn, không cần tạo mật khẩu mới hoặc nhập OTP riêng.</p>
-    <div ref={host} className={pending || busy ? "hidden" : "flex justify-center"} />
+  return <section className="space-y-3" aria-label="Đăng nhập bằng Google">
+    <div ref={host} className={pending || busy || !ready ? "hidden" : "flex justify-center"} />
     {!ready && <button type="button" disabled className="w-full border rounded-lg bg-white px-4 py-2 text-slate-500">{loading ? "Đang chuẩn bị Google…" : "Tiếp tục với Google"}</button>}
     {busy && <p role="status" className="text-sm text-sky-700">Đang xác thực tài khoản…</p>}
     {error && <div className="space-y-2"><p role="alert" className="text-sm text-red-700">{error}</p>
