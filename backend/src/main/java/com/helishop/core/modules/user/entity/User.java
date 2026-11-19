@@ -40,8 +40,11 @@ public class User extends BaseEntity {
     @Column(name = "email", nullable = false, unique = true, length = 150)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
+
+    @Column(name = "google_subject", unique = true, length = 255)
+    private String googleSubject;
 
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;

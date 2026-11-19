@@ -21,12 +21,13 @@ try {
         if ($hostname -notmatch '^[a-zA-Z0-9_-]+$') { throw 'Unexpected RabbitMQ hostname; inspect existing container before proceeding.' }
         [IO.File]::WriteAllText($config, "JWT_SECRET=$jwt`nRABBITMQ_HOSTNAME=$hostname`n", [Text.UTF8Encoding]::new($false))
     }
+    if (-not (Test-Path -LiteralPath '.env.google.local')) { Copy-Item -LiteralPath '.env.google.example' -Destination '.env.google.local' }
     $gmail = Join-Path $root '.env.gmail.local'
     if (-not (Test-Path -LiteralPath $gmail)) { Copy-Item -LiteralPath '.env.gmail.example' -Destination $gmail }
     # Print only configuration readiness, never passwords or the rendered Compose config.
     $mailConfig = [IO.File]::ReadAllText($gmail)
     if ($mailConfig -notmatch '(?m)^SMTP_USERNAME=\S+@gmail\.com\s*$' -or $mailConfig -notmatch '(?m)^SMTP_PASSWORD=\S+\s*$') {
-        Write-Warning 'Fill SMTP_USERNAME and SMTP_PASSWORD (Google App Password) in .env.gmail.local to deliver real registration OTP. Re-run with -NoBuild after saving.'
+        Write-Host 'Email OTP/invoices need SMTP_USERNAME and SMTP_PASSWORD in .env.gmail.local. Google sign-in uses GOOGLE_CLIENT_ID in .env.google.local and does not require SMTP.'
     }
     $others = @(& docker ps --filter 'label=com.docker.compose.project=helishop-integration' --format '{{.ID}}')
     if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the integration project.' }

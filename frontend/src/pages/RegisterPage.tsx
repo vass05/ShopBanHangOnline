@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore, User } from "@/store/useAuthStore";
+import { GoogleSignIn } from "@/components/GoogleSignIn";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,6 +161,9 @@ export const RegisterPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
 
+          <div className="px-6 pb-4"><GoogleSignIn initialRole={role} /></div>
+          <details className="group">
+          <summary className="cursor-pointer px-6 pb-4 text-sm font-medium text-sky-700">Đăng ký bằng Gmail và mật khẩu</summary>
           <form onSubmit={handleRegister}>
             <CardContent className="space-y-4">
               {/* Role Selection */}
@@ -328,6 +332,7 @@ export const RegisterPage: React.FC = () => {
               </p>
             </CardFooter>
           </form>
+          </details>
         </Card>
       </div>
     </div>

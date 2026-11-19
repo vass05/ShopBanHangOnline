@@ -10,7 +10,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?style=flat-square&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-202_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
+[![Tests](https://img.shields.io/badge/Tests-224_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
 
 **Hệ thống Thương mại Điện tử Đa Nhà bán hàng (Multi-vendor Shopee Mall) chuẩn Doanh nghiệp.**  
 *Tối ưu xử lý tải cao, giỏ hàng phân tán tốc độ cao, chống âm kho Flash Sale và tích hợp thanh toán trực tuyến.*
@@ -28,6 +28,14 @@
 - **Frontend Shopee Mall UI**: React 18, Vite, Tailwind CSS (theme Ocean Blue), Zustand, TanStack Query, Axios Silent Refresh Token.
 - **Tối Ưu Truy Vấn & Cache**: Triệt tiêu lỗi N+1 Query với `@EntityGraph`, áp dụng Redis Cache-Aside cho danh mục và sản phẩm.
 - **Mở Gian Hàng**: Đăng ký tài khoản người bán, mở và xem shop đã lưu tại `/seller/shop`; một shop cho mỗi seller, kiểm tra quyền sở hữu và chống tạo trùng đồng thời.
+
+## Đăng nhập Google và tài khoản admin
+
+**Tiếp tục với Google** là cách đăng ký/đăng nhập chính: Google xác minh Gmail, HeliShop không gửi OTP riêng. Người mới chọn người mua/người bán sau xác minh. Tài khoản email cũ xác nhận mật khẩu một lần để liên kết và giữ toàn bộ dữ liệu; lần sau chỉ bấm Google. Tài khoản cũ vẫn đăng nhập bằng mật khẩu được.
+
+Điền Web Client ID vào `.env.google.local`, khai báo origins localhost/localhost:5173 tại Google Cloud, rồi chạy `Start-Local.ps1 -NoBuild`. Hướng dẫn từng bước: [thiết lập Google Sign-In](docs/google-sign-in-setup.md). Chưa có Client ID thì Google tạm chưa khả dụng; backend không giả lập xác thực.
+
+Admin local có sẵn: `admin.helishop@gmail.com` / `Password123!` (nếu chưa đổi mật khẩu). Đăng nhập bằng form mật khẩu để vào `/admin/users`; không cần sở hữu Gmail mẫu này. Không tạo quyền admin qua đăng ký công khai. Số điện thoại chỉ dùng trong địa chỉ nhận hàng.
 
 ## Sử dụng chức năng mở gian hàng
 
@@ -182,7 +190,7 @@ Script build và bật **một project `webbnhngonline`**: frontend, backend, My
 - Backend/Swagger: http://localhost:8080/swagger-ui/index.html
 - Frontend khi sửa code: trong `frontend`, chạy `npm ci` (lần đầu), rồi `npm run dev` → http://localhost:5173. Vite gọi cùng backend 8080; bỏ override cũ `DEV_API_PROXY_TARGET=http://127.0.0.1:18080` trong `.env.development.local` hoặc đổi về `http://127.0.0.1:8080`.
 
-### Gmail OTP và quản lý tài khoản
+### Email dự phòng và quản lý tài khoản
 
 Mở `.env.gmail.local` do script tạo và điền:
 
@@ -197,9 +205,9 @@ Giữ SMTP host `smtp.gmail.com`, cổng `587`, auth/STARTTLS `true`. Bật xác
 .\scripts\Start-Local.ps1 -NoBuild
 ```
 
-Backend nạp cấu hình mới. Khi chưa cấu hình SMTP thật, đọc catalog/đăng nhập tài khoản cũ vẫn dùng được; đăng ký mới không thể hoàn tất vì cần OTP gửi Gmail. Không có Mailpit trong cụm chính, không có đường bỏ qua OTP. [Thông số SMTP chính thức](https://developers.google.com/workspace/gmail/imap/imap-smtp).
+Backend nạp cấu hình mới. Google Sign-In không cần cấu hình SMTP. SMTP dùng cho hóa đơn và cách đăng ký Gmail + mật khẩu dự phòng; chưa có SMTP thì luồng đăng ký dự phòng này không hoàn tất được. Không có Mailpit trong cụm chính, không có đường bỏ qua OTP. [Thông số SMTP chính thức](https://developers.google.com/workspace/gmail/imap/imap-smtp).
 
-Đăng ký mới: chọn người mua hoặc người bán, nhập `@gmail.com`, chọn **Gửi OTP về Gmail**, nhập 6 số và mật khẩu/xác nhận, rồi đăng ký. Mã có hiệu lực 10 phút, dùng một lần; chờ 60 giây gửi lại. Email cũ tiếp tục đăng nhập được, không dùng số điện thoại. Số điện thoại được nhập trong **Sổ địa chỉ/địa chỉ nhận hàng**, để shipper liên lạc.
+Đăng ký bằng mật khẩu dự phòng: mở phần **Đăng ký bằng Gmail và mật khẩu**, chọn người mua hoặc người bán, nhập `@gmail.com`, chọn **Gửi OTP về Gmail**, nhập 6 số và mật khẩu/xác nhận, rồi đăng ký. Mã có hiệu lực 10 phút, dùng một lần; chờ 60 giây gửi lại. Email cũ tiếp tục đăng nhập được, không dùng số điện thoại. Số điện thoại được nhập trong **Sổ địa chỉ/địa chỉ nhận hàng**, để shipper liên lạc.
 
 Admin đăng nhập được chuyển tới `/admin/users`, hoặc mở menu tài khoản → **Quản lý tài khoản** để tìm/lọc, khóa/mở khóa buyer/seller. Database cũ trên máy có admin; không tạo thêm quyền admin qua đăng ký công khai. Khóa thu hồi phiên hiện tại và giữ dữ liệu đơn/shop; mở khóa phải đăng nhập lại.
 

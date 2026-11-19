@@ -15,6 +15,7 @@ public interface UserMapper {
 
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "authVersion", ignore = true)
+    @Mapping(target = "googleSubject", ignore = true)
     @Mapping(target = "addresses", ignore = true)
     @Mapping(target = "shop", ignore = true)
     User toEntity(UserRequest request);
