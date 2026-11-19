@@ -35,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class ResourceOwnershipIntegrationTest {
+    @MockBean com.helishop.core.modules.user.repository.UserRepository users;
     @Autowired MockMvc mvc;
     @Autowired JwtUtils jwt;
     @MockBean OrderRepository orderRepository;
@@ -70,6 +71,9 @@ class ResourceOwnershipIntegrationTest {
     }
 
     private String token(long id, String role) {
+        var user = User.builder().email("user" + id + "@test.com").role(com.helishop.core.common.constants.UserRole.valueOf("ROLE_" + role)).status(com.helishop.core.common.constants.UserStatus.ACTIVE).build();
+        user.setId(id);
+        when(users.findById(id)).thenReturn(Optional.of(user));
         return "Bearer " + jwt.generateAccessToken("user" + id + "@test.com", id, "ROLE_" + role, "Test");
     }
 

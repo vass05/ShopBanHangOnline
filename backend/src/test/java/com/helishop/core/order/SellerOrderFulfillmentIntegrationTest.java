@@ -153,7 +153,7 @@ class SellerOrderFulfillmentIntegrationTest {
         seller.setRole(UserRole.ROLE_CUSTOMER); users.saveAndFlush(seller);
         mvc.perform(get("/api/v1/seller/orders").header("Authorization",oldToken)).andExpect(status().isForbidden());
         seller.setRole(UserRole.ROLE_SELLER); seller.setStatus(UserStatus.BLOCKED); users.saveAndFlush(seller);
-        mvc.perform(get("/api/v1/seller/orders/"+order.getId()).header("Authorization",oldToken)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/seller/orders/"+order.getId()).header("Authorization",oldToken)).andExpect(status().isUnauthorized());
         seller.setStatus(UserStatus.ACTIVE); users.saveAndFlush(seller); shop.setStatus(ShopStatus.BANNED); shops.saveAndFlush(shop);
         mvc.perform(patch("/api/v1/seller/orders/"+order.getId()+"/status").header("Authorization",oldToken).contentType(MediaType.APPLICATION_JSON).content(body(OrderStatus.PENDING,OrderStatus.CONFIRMED))).andExpect(status().isForbidden());
         mvc.perform(patch("/api/v1/orders/"+order.getId()+"/status").param("status","CONFIRMED").header("Authorization",oldToken)).andExpect(status().isForbidden());

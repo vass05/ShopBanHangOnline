@@ -80,7 +80,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("test@gmail.com")).thenReturn(false);
         when(passwordEncoder.encode("plain_password")).thenReturn("hashed_password_xyz");
         when(userRepository.save(any(User.class))).thenReturn(sampleUser);
-        when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString())).thenReturn("mock_access_token");
+        when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString(), anyLong())).thenReturn("mock_access_token");
         when(jwtUtils.generateRefreshToken()).thenReturn("mock_refresh_token");
         when(jwtUtils.getAccessTokenExpirationMs()).thenReturn(900000L);
 
@@ -104,7 +104,7 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(sampleUser));
         when(passwordEncoder.matches("correct_pass", "hashed_password_xyz")).thenReturn(true);
-        when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString())).thenReturn("mock_access_token");
+        when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString(), anyLong())).thenReturn("mock_access_token");
         when(jwtUtils.generateRefreshToken()).thenReturn("mock_refresh_token");
         when(jwtUtils.getAccessTokenExpirationMs()).thenReturn(900000L);
 
@@ -139,7 +139,7 @@ class AuthServiceTest {
 
         when(refreshTokenService.getEmailFromRefreshToken("valid_refresh_token_123")).thenReturn("test@gmail.com");
         when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(sampleUser));
-        when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString())).thenReturn("new_access_token");
+        when(jwtUtils.generateAccessToken(anyString(), anyLong(), anyString(), anyString(), anyLong())).thenReturn("new_access_token");
         when(jwtUtils.getAccessTokenExpirationMs()).thenReturn(900000L);
 
         AuthResponse response = authService.refreshToken(request);

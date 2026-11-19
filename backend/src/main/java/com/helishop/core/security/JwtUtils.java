@@ -42,7 +42,12 @@ public class JwtUtils {
      * Sinh Access Token tiêu chuẩn với thông tin người dùng và quyền hạn
      */
     public String generateAccessToken(String username, Long userId, String role, String fullName) {
+        return generateAccessToken(username, userId, role, fullName, 0L);
+    }
+
+    public String generateAccessToken(String username, Long userId, String role, String fullName, long authVersion) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("authVersion", authVersion);
         if (userId != null) claims.put("userId", userId);
         if (role != null) claims.put("role", role);
         if (fullName != null) claims.put("fullName", fullName);
@@ -93,6 +98,11 @@ public class JwtUtils {
             return number.longValue();
         }
         return null;
+    }
+
+    public long getAuthVersionFromJwtToken(String token) {
+        Object value = parseClaims(token).get("authVersion");
+        return value instanceof Number number ? number.longValue() : 0L;
     }
 
     public String getRoleFromJwtToken(String token) {

@@ -30,7 +30,7 @@ export async function login(page, user, remember = true, origin) {
   const response = page.waitForResponse(result => result.url().endsWith('/auth/login') && result.request().method() === 'POST');
   await page.getByRole('button', { name: 'Đăng Nhập', exact: true }).click();
   expect((await response).status()).toBe(200);
-  await expect(page).toHaveURL(user.role === 'ROLE_SELLER' ? /\/seller\/shop$/ : /\/$/);
+  await expect(page).toHaveURL(user.role === 'ROLE_ADMIN' ? /\/admin\/users$/ : user.role === 'ROLE_SELLER' ? /\/seller\/shop$/ : /\/$/);
 }
 export async function browserUser(page) {
   return page.evaluate(() => JSON.parse(sessionStorage.getItem('helishop-session-v3') || localStorage.getItem('helishop-session-v3')));

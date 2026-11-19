@@ -68,7 +68,7 @@ export const LoginPage: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated && !isExpired) {
       const redirect = searchParams.get("redirect");
-      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : user?.role === "ROLE_SELLER" ? "/seller/shop" : "/");
+      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : user?.role === "ROLE_ADMIN" ? "/admin/users" : user?.role === "ROLE_SELLER" ? "/seller/shop" : "/");
     }
   }, [isAuthenticated, isExpired, navigate, searchParams, user?.role]);
 
@@ -136,7 +136,7 @@ export const LoginPage: React.FC = () => {
 
       setAuth({ user, accessToken, refreshToken, rememberMe });
       const redirect = searchParams.get("redirect");
-      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : user.role === "ROLE_SELLER" ? "/seller/shop" : "/");
+      navigate(redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : user.role === "ROLE_ADMIN" ? "/admin/users" : user.role === "ROLE_SELLER" ? "/seller/shop" : "/");
     } catch (err: any) {
       const msg = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
       setErrorMessage(msg);

@@ -87,9 +87,9 @@ class ShopOnboardingIntegrationTest {
             User blocked = user(UserRole.ROLE_SELLER);
             String token = token(blocked);
             blocked.setStatus(status); users.saveAndFlush(blocked);
-            mvc.perform(get("/api/v1/shops/me").header("Authorization", token)).andExpect(status().isForbidden());
+            mvc.perform(get("/api/v1/shops/me").header("Authorization", token)).andExpect(status().isUnauthorized());
             mvc.perform(post("/api/v1/shops/me").header("Authorization", token).contentType(MediaType.APPLICATION_JSON).content(body(name())))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isUnauthorized());
         }
     }
 

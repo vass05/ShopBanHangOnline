@@ -103,7 +103,7 @@ class SellerProductIntegrationTest {
         seller.setRole(UserRole.ROLE_CUSTOMER); users.saveAndFlush(seller);
         mvc.perform(get("/api/v1/seller/products").header("Authorization",oldToken)).andExpect(status().isForbidden());
         seller.setRole(UserRole.ROLE_SELLER); seller.setStatus(UserStatus.BLOCKED); users.saveAndFlush(seller);
-        mvc.perform(get("/api/v1/seller/products").header("Authorization",oldToken)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/seller/products").header("Authorization",oldToken)).andExpect(status().isUnauthorized());
         seller.setStatus(UserStatus.ACTIVE); users.saveAndFlush(seller);
         shop.setStatus(ShopStatus.BANNED); shops.saveAndFlush(shop);
         mvc.perform(get("/api/v1/seller/products").header("Authorization",oldToken)).andExpect(status().isForbidden());

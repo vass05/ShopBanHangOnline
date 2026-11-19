@@ -165,6 +165,9 @@ export const Header: React.FC = () => {
                       <Package className="w-4 h-4 text-sky-600" />
                       <span>Đơn mua của tôi</span>
                     </Link>
+                    {user?.role === "ROLE_ADMIN" && <Link to="/admin/users" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 px-3 py-2 hover:bg-sky-50 hover:text-sky-600">
+                      <Store className="w-4 h-4 text-sky-600" /><span>Quản lý tài khoản</span>
+                    </Link>}
                     {user?.role === "ROLE_SELLER" && <Link to="/seller/shop" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 px-3 py-2 hover:bg-sky-50 hover:text-sky-600">
                       <Store className="w-4 h-4 text-sky-600" /><span>Gian hàng của tôi</span>
                     </Link>}

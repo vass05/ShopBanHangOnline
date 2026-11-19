@@ -1,3 +1,7 @@
+## Admin quản lý tài khoản — 19/11/2026
+
+PR #17 Gmail OTP đã merge, CI 3/3 gồm 20 browser tests. Tiếp tục `feat/admin-account-management`: màn `/admin/users`, tìm/lọc/phân trang, khóa/mở khóa buyer/seller; API kiểm tra admin thực trong DB, giữ nguyên shop/đơn. Thêm auth_version/JWT để vô hiệu phiên cũ ngay khi khóa và không hồi sinh sau mở khóa. Không tạo/xóa admin hay đổi role qua API công khai. [Bàn giao](sprints/admin-account-management.md).
+
 ## Gmail OTP, admin và một môi trường Docker — 19/11/2026
 
 Theo yêu cầu: Gmail + mật khẩu; đăng ký bắt buộc OTP gửi Gmail; số điện thoại chỉ dùng trong địa chỉ nhận hàng. Triển khai lần lượt theo nhánh/PR: (1) `feat/gmail-registration-otp`, (2) quản lý tài khoản buyer/seller cho admin, (3) thống nhất một cụm Docker chính dùng volume dữ liệu cũ. Giữ dữ liệu integration, chỉ dùng khi kiểm thử. Chạy kiểm thử, cập nhật tài liệu, push và merge từng phần vào main.
