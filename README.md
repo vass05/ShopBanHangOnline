@@ -10,7 +10,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?style=flat-square&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-184_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
+[![Tests](https://img.shields.io/badge/Tests-202_Backend-brightgreen?style=flat-square&logo=junit5&logoColor=white)]()
 
 **Hệ thống Thương mại Điện tử Đa Nhà bán hàng (Multi-vendor Shopee Mall) chuẩn Doanh nghiệp.**  
 *Tối ưu xử lý tải cao, giỏ hàng phân tán tốc độ cao, chống âm kho Flash Sale và tích hợp thanh toán trực tuyến.*
@@ -168,70 +168,59 @@ WebMall/
 
 ---
 
-## Hướng Dẫn Khởi Chạy (Quick Start)
+## Hướng Dẫn Khởi Chạy (một cụm Docker chính)
 
-### Cách 1: Chạy toàn bộ bằng Docker
-
-Lần đầu, bật Docker Desktop và tạo file cấu hình riêng (mật khẩu được sinh ngẫu nhiên, không commit):
+Bật Docker Desktop, rồi tại thư mục gốc:
 
 ```powershell
-.\scripts\Initialize-Environment.ps1
-docker compose --env-file .env.production -f docker-compose.production.yml up -d --build --wait
-docker compose --env-file .env.production -f docker-compose.production.yml ps
+.\scripts\Start-Local.ps1
 ```
 
-Frontend: http://localhost — API và ảnh `/uploads` đi qua cùng Nginx. Swagger: http://localhost/swagger-ui/index.html. Có thể truy cập giao diện bằng IP máy chủ từ máy khác. Đổi `FRONTEND_PORT` và URL callback trong `.env.production` nếu cần.
+Script build và bật **một project `webbnhngonline`**: frontend, backend, MySQL, Redis, RabbitMQ. Tái sử dụng đúng các volume `webbnhngonline_*` cũ và thư mục `backend/uploads`; không chạy seed, không xóa dữ liệu. Script dừng các container `helishop-integration` nếu đang chạy và giữ nguyên volume kiểm thử. Nhiều service nằm trong một project Docker là bình thường.
 
-Những lần sau, bật Docker Desktop rồi chạy lại lệnh `up -d --wait`; thêm `--build` khi có thay đổi mã nguồn. `restart: unless-stopped` giúp container tự bật lại nếu trước đó chưa bị dừng thủ công. Chỉ bật Docker Desktop chưa bảo đảm cụm đã được tạo và đang healthy.
+- Frontend Docker: http://localhost
+- Backend/Swagger: http://localhost:8080/swagger-ui/index.html
+- Frontend khi sửa code: trong `frontend`, chạy `npm ci` (lần đầu), rồi `npm run dev` → http://localhost:5173. Vite gọi cùng backend 8080; bỏ override cũ `DEV_API_PROXY_TARGET=http://127.0.0.1:18080` trong `.env.development.local` hoặc đổi về `http://127.0.0.1:8080`.
+
+### Gmail OTP và quản lý tài khoản
+
+Mở `.env.gmail.local` do script tạo và điền:
+
+```dotenv
+SMTP_USERNAME=your-sender@gmail.com
+SMTP_PASSWORD=your-google-app-password
+```
+
+Giữ SMTP host `smtp.gmail.com`, cổng `587`, auth/STARTTLS `true`. Bật xác minh hai bước và tạo [Google App Password](https://support.google.com/accounts/answer/185833); điền mã App Password không có khoảng trắng, không dùng mật khẩu đăng nhập Google. Tệp này và `.env` chứa JWT secret không được commit. Sau khi điền/chỉnh mail, chạy:
 
 ```powershell
-# Dừng, giữ dữ liệu và ảnh upload
-docker compose --env-file .env.production -f docker-compose.production.yml down
-# Xem lỗi khởi động
-docker compose --env-file .env.production -f docker-compose.production.yml logs --tail 100 backend frontend
+.\scripts\Start-Local.ps1 -NoBuild
 ```
 
-MySQL/Redis/RabbitMQ production dùng cổng riêng `13307/16379/15673/15674` trong file mẫu, tránh xung đột với môi trường dev. Backend và các cổng quản trị chỉ bind localhost; Nginx mở cổng web. Các named volume giữ MySQL, Redis, RabbitMQ và ảnh đại diện qua lần tạo lại container. Giữ nguyên mật khẩu khi dùng lại volume cũ; thay mật khẩu trong file không tự đổi tài khoản đã có trong database/broker.
+Backend nạp cấu hình mới. Khi chưa cấu hình SMTP thật, đọc catalog/đăng nhập tài khoản cũ vẫn dùng được; đăng ký mới không thể hoàn tất vì cần OTP gửi Gmail. Không có Mailpit trong cụm chính, không có đường bỏ qua OTP. [Thông số SMTP chính thức](https://developers.google.com/workspace/gmail/imap/imap-smtp).
 
-Database mới ban đầu chưa có hàng hóa. Chỉ nạp dữ liệu demo vào database thử nghiệm trống; `seed-data.sql` có cập nhật tài khoản và giá cố định, không chạy trên dữ liệu người dùng thật:
+Đăng ký mới: chọn người mua hoặc người bán, nhập `@gmail.com`, chọn **Gửi OTP về Gmail**, nhập 6 số và mật khẩu/xác nhận, rồi đăng ký. Mã có hiệu lực 10 phút, dùng một lần; chờ 60 giây gửi lại. Email cũ tiếp tục đăng nhập được, không dùng số điện thoại. Số điện thoại được nhập trong **Sổ địa chỉ/địa chỉ nhận hàng**, để shipper liên lạc.
+
+Admin đăng nhập được chuyển tới `/admin/users`, hoặc mở menu tài khoản → **Quản lý tài khoản** để tìm/lọc, khóa/mở khóa buyer/seller. Database cũ trên máy có admin; không tạo thêm quyền admin qua đăng ký công khai. Khóa thu hồi phiên hiện tại và giữ dữ liệu đơn/shop; mở khóa phải đăng nhập lại.
+
+### Những lần chạy sau
 
 ```powershell
-Get-Content -Raw -Encoding UTF8 backend/src/main/resources/seed-data.sql | docker compose --env-file .env.production -f docker-compose.production.yml exec -T mysql sh -c 'exec mysql --default-character-set=utf8mb4 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
+docker compose up -d --wait          # cấu hình không đổi, không cần build lại
+docker compose up -d --build --wait  # sau khi sửa code
+# hoặc .\scripts\Start-Local.ps1 (tự dừng cụm integration)
+docker compose ps
+docker compose logs --tail 80 backend
+docker compose stop                 # dừng, giữ container và toàn bộ dữ liệu
 ```
 
-Cấu hình SMTP thật trước khi dùng OTP/email. VNPAY mặc định bị khóa (`VNP_DISABLED=true`): chỉ chuyển thành `false` sau khi đặt mã merchant, hash secret và các callback HTTPS công khai; Return trỏ `/payment-result`, IPN trỏ `/api/v1/payments/vnpay-ipn`. Chưa có merchant thì dùng COD. Upload ảnh sản phẩm qua Cloudinary cần cấu hình ba biến Cloudinary. Ảnh đại diện lưu trong volume cục bộ, tối đa 5 MB JPEG/PNG/WEBP.
+Các service có `restart: unless-stopped`: bật Docker Desktop có thể tự khởi động lại nếu trước đó chưa Stop thủ công. Nếu đã Stop, chạy lại lệnh khởi động. Không chạy thêm `mvnw spring-boot:run` khi backend Docker đang chiếm 8080.
 
-`VITE_API_BASE_URL` là cấu hình **lúc build** (mặc định `/api/v1`), đổi biến này cần build lại frontend. Khi đưa ra Internet, đặt HTTPS/reverse proxy và hostname thực tế; cấu hình trên là cụm tự vận hành cục bộ, chưa thay thế quy trình migration/backup production.
+Cấu hình gốc là môi trường local với thông tin kết nối volume cũ và cổng chỉ bind loopback. VNPAY chưa được cấu hình trong cụm local, dùng COD. Để vận hành máy chủ riêng với credentials/ngân hàng/hostname riêng, dùng `Initialize-Environment.ps1` + `docker-compose.production.yml`; đây là lựa chọn triển khai riêng, không phải cụm thứ hai cần bật hằng ngày. Không nạp lại `seed-data.sql` vào database hiện có; script seed không phải migration bảo toàn dữ liệu.
 
----
-### Cách 2: Chạy Môi Trường Phát Triển (Local Dev)
+### Kiểm thử tích hợp
 
-**1. Khởi động MySQL, Redis, RabbitMQ:**
-```powershell
-docker compose up -d mysql redis rabbitmq
-```
-
-**2. Nạp dữ liệu mẫu ban đầu (Seed Data):**
-```powershell
-Get-Content backend\src\main\resources\seed-data.sql | docker exec -i eshop_mysql mysql -ueshop_user -peshop_secret eshop_db
-```
-
-**3. Khởi chạy Backend:**
-```powershell
-cd backend
-.\mvnw.cmd spring-boot:run
-```
-*(Backend sẵn sàng tại `http://localhost:8080`)*
-
-**4. Khởi chạy Frontend:**
-```powershell
-cd frontend
-npm ci
-npm run dev
-```
-*(Frontend sẵn sàng tại `http://localhost:5173`)*
-
-Vite mặc định chuyển `/api` và `/uploads` tới `127.0.0.1:8080`. Nếu đang dùng backend của cụm Docker integration ở **18080**, không cần chạy thêm backend 8080: trong thư mục frontend, sao chép `.env.development.local.example` thành `.env.development.local`, rồi chạy `npm run dev`. File local đặt `DEV_API_PROXY_TARGET=http://127.0.0.1:18080` và được gitignore. Khi quay lại backend 8080, đổi giá trị đó về `http://127.0.0.1:8080` hoặc bỏ override. Giữ `VITE_API_BASE_URL=/api/v1` để API/ảnh cùng origin với frontend. Chi tiết tại [README frontend](frontend/README.md).
+CI tự tạo môi trường mới `helishop-integration` với MySQL/Redis/RabbitMQ/Mailpit riêng; không dùng database chính. Local chỉ bật khi chủ động chạy E2E, dừng lại sau kiểm thử. Mailpit giữ email thử, không gửi tới Gmail thật, dù dữ liệu ca thử dùng địa chỉ có đuôi `@gmail.com`. Không chạy test E2E trỏ vào dữ liệu chính. Chi tiết [frontend/README.md](frontend/README.md).
 
 ---
 

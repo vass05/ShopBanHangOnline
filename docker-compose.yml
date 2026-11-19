@@ -1,10 +1,27 @@
+# One daily local project, retaining the original MySQL/Redis/RabbitMQ volumes.
+name: webbnhngonline
 services:
+  frontend:
+    build: ./frontend
+    container_name: eshop_frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [eshop_network]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
   mysql:
     image: mysql:8.0
     container_name: eshop_mysql
     restart: unless-stopped
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3307:3306"
     environment:
       MYSQL_DATABASE: eshop_db
       MYSQL_USER: eshop_user
@@ -32,7 +49,7 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -46,10 +63,11 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: eshop_rabbitmq
+    hostname: ${RABBITMQ_HOSTNAME:-rabbitmq}
     restart: unless-stopped
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -70,8 +88,16 @@ services:
     container_name: eshop_backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
+    env_file:
+      - path: .env.gmail.local
+        required: false
     environment:
+      - JWT_SECRET=${JWT_SECRET:?Run scripts/Start-Local.ps1 first}
+      - APP_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost,http://127.0.0.1:5173,http://127.0.0.1
+      - SPRING_JPA_SHOW_SQL=false
+      - LOGGING_LEVEL_ORG_HIBERNATE_SQL=INFO
+      - APP_VNPAY_DISABLED=true
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eshop_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&characterEncoding=UTF-8
       - SPRING_DATASOURCE_USERNAME=eshop_user
       - SPRING_DATASOURCE_PASSWORD=eshop_secret
@@ -81,6 +107,14 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
+    volumes:
+      - ./backend/uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://127.0.0.1:8080/v3/api-docs"]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 15
     depends_on:
       mysql:
         condition: service_healthy
@@ -93,12 +127,16 @@ services:
 
 networks:
   eshop_network:
+    name: webbnhngonline_eshop_network
     driver: bridge
 
 volumes:
   mysql_data:
+    name: webbnhngonline_mysql_data
     driver: local
   redis_data:
+    name: webbnhngonline_redis_data
     driver: local
   rabbitmq_data:
+    name: webbnhngonline_rabbitmq_data
     driver: local

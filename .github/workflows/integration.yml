@@ -69,6 +69,10 @@ jobs:
       - name: Build isolated Docker stack and test fixtures
         shell: pwsh
         run: ./scripts/Prepare-Integration.ps1
+      - name: Validate daily local Compose configuration without starting it
+        env:
+          JWT_SECRET: ci-compose-validation-only-not-a-runtime-secret
+        run: docker compose -f docker-compose.yml config --quiet
       - name: Browser, real database, Redis, RabbitMQ and captured SMTP
         working-directory: frontend
         run: npm run test:e2e
