@@ -1,3 +1,7 @@
+## Giao diện đăng nhập và đăng ký — 19/11/2026
+
+Nhánh `feat/streamlined-auth-layout` dùng khung HeliShop gọn cho login/register, tách đăng ký Gmail thành bước gửi mã và bước xác nhận. Giữ Google, duy trì đăng nhập, tài khoản cũ và lựa chọn buyer/seller. Dọn tệp Vite trùng mặc định và gỡ container integration local, giữ volume. Kiểm tra TypeScript, backend/frontend, browser và CI trước khi merge. [Bàn giao](sprints/streamlined-auth-layout.md).
+
 ## Google Sign-In — 19/11/2026
 
 Triển khai `feat/google-sign-in`: Google là cách chính, xác minh Gmail qua token Google, bỏ OTP riêng cho luồng Google. Người mới xác minh xong chọn buyer/seller; người cũ xác nhận mật khẩu một lần để liên kết và giữ dữ liệu/quyền. Không tạo hoặc tự nâng admin. Giữ một cụm Docker và form mật khẩu dự phòng. Client ID chính chủ đang chờ người dùng tạo, đã có `.env.google.local` và hướng dẫn. Local đã qua 224 backend tests, 55 frontend tests/build và 11 Chrome cases Google/seller/admin; PR sẽ chạy đầy đủ CI trước merge. Google thật vẫn chờ Client ID chính chủ. [Bàn giao](sprints/google-sign-in.md).
