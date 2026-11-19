@@ -231,6 +231,8 @@ npm run dev
 ```
 *(Frontend sẵn sàng tại `http://localhost:5173`)*
 
+Vite mặc định chuyển `/api` và `/uploads` tới `127.0.0.1:8080`. Nếu đang dùng backend của cụm Docker integration ở **18080**, không cần chạy thêm backend 8080: trong thư mục frontend, sao chép `.env.development.local.example` thành `.env.development.local`, rồi chạy `npm run dev`. File local đặt `DEV_API_PROXY_TARGET=http://127.0.0.1:18080` và được gitignore. Khi quay lại backend 8080, đổi giá trị đó về `http://127.0.0.1:8080` hoặc bỏ override. Giữ `VITE_API_BASE_URL=/api/v1` để API/ảnh cùng origin với frontend. Chi tiết tại [README frontend](frontend/README.md).
+
 ---
 
 ### Java trong VS Code

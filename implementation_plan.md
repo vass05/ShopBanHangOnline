@@ -1,5 +1,11 @@
 # Kế hoạch đồng bộ frontend và backend HeliShop
 
+## Sửa kết nối Vite/frontend dev — 19/11/2026
+
+Nhánh `fix/frontend-dev-backend-proxy`, baseline `3860291` (PR #15). Frontend 5173 trả 500 do proxy hardcode 8080 trong khi backend hoạt động tại 18080; bản Docker 18000 vẫn gọi API 200. Vite nay đọc server-only `DEV_API_PROXY_TARGET`, mặc định 127.0.0.1:8080, cấu hình local của máy hiện tại trỏ 18080. `/api` và `/uploads` giữ Host frontend, tránh POST bị Spring coi là cross-origin; không nới CORS. Giữ cổng 5173 cố định và API browser `/api/v1`.
+
+Kiểm chứng: **46 frontend tests/build pass**, kiểm thử Vite proxy thật trên cổng ngẫu nhiên cho API/POST Origin/upload; Chrome thật tại 5173 đăng ký 201, đăng nhập/catalog/profile 200, không failed API. Backend 183 pass + 1 schema dev skip. Env local không commit, có template và hướng dẫn đổi giữa 8080/18080. Bàn giao PR → main. [Chi tiết](docs/sprints/frontend-dev-backend-proxy.md).
+
 ## Seller xử lý đơn — 19/11/2026
 
 Nhánh `feat/seller-order-fulfillment`, baseline `3cc17cc` (PR #14). Chỉ xử lý đơn bán của shop hiện tại; chưa tích hợp hãng vận chuyển, thu hộ/đối soát COD, hoàn tiền hay dashboard admin.

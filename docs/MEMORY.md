@@ -1,5 +1,12 @@
 # BỘ NHỚ TRẠNG THÁI HỆ THỐNG: HELISHOP CORE
 
+## Sửa kết nối frontend 5173 — 19/11/2026
+
+- Nhánh `fix/frontend-dev-backend-proxy`, bàn giao PR → main. Nguyên nhân đã tái hiện: HTML frontend 5173 trả 200 nhưng API trả 500; Vite hardcode backend localhost:8080 trong khi chỉ backend integration 127.0.0.1:18080 đang chạy. API qua Nginx 18000 vẫn hoạt động.
+- `vite.config.ts` đọc `DEV_API_PROXY_TARGET` bằng loadEnv, mặc định 127.0.0.1:8080. Máy này có frontend/.env.development.local trỏ 18080, gitignored; template .example được commit. Giữ API browser /api/v1, proxy cả /api và /uploads, strictPort 5173. Khi đổi backend phải đổi override local.
+- Proxy giữ Host giống Nginx (changeOrigin false), để POST cùng origin của frontend không bị Spring đánh giá là cross-origin tới cổng backend. Không sửa/widen CORS backend hoặc trỏ browser trực tiếp tới 18080. Docker/prod vẫn dùng Nginx nội bộ.
+- Kiểm chứng: 46 frontend tests + production build pass; test Vite thật với backend tạm kiểm tra API, POST Origin/Host/body và bytes ảnh. Chrome tại localhost:5173 đăng ký 201, đăng nhập/catalog/profile 200, 0 failed API; chỉ tạo tài khoản example.test riêng trên integration. Backend 183 pass + 1 schema MySQL dev skip. [Bàn giao](sprints/frontend-dev-backend-proxy.md).
+
 ## Seller xử lý đơn — 19/11/2026
 
 - Nhánh `feat/seller-order-fulfillment`, bàn giao PR → main. Trang `/seller/orders` nối shop/header/sản phẩm; tìm mã, lọc trạng thái/thanh toán, phân trang và chi tiết snapshot hàng/giá/người nhận/ghi chú. API GET list/detail và PATCH status dưới `/api/v1/seller/orders`, user/shop ACTIVE và owner từ JWT/database; chặn chéo shop/caller CUSTOMER/ADMIN/token role cũ.

@@ -7,7 +7,18 @@ npm ci
 npm run dev
 ```
 
-Web dev: http://localhost:5173. Vite chuyển tiếp `/api` và `/uploads` sang backend 8080. `VITE_API_BASE_URL` mặc định `/api/v1`; Docker dùng build arg cùng tên, đổi giá trị cần build lại image.
+Web dev: http://localhost:5173. Vite chuyển tiếp `/api` và `/uploads` sang `http://127.0.0.1:8080` mặc định, giữ Host frontend để Spring xử lý đúng các POST cùng origin. `VITE_API_BASE_URL` giữ `/api/v1`; không cần trỏ trình duyệt trực tiếp sang cổng backend.
+
+Nếu backend đang chạy trong cụm `helishop-integration` ở cổng **18080**, tạo cấu hình local trước khi chạy dev:
+
+```powershell
+Copy-Item .env.development.local.example .env.development.local
+npm run dev
+```
+
+File `.env.development.local` được gitignore, có thể đổi `DEV_API_PROXY_TARGET` theo cổng backend trên máy bạn. Với backend local 8080, bỏ override hoặc đặt `http://127.0.0.1:8080`. Sau khi đổi file env, khởi động lại Vite nếu nó chưa tự nạp lại. Cổng 5173 bị chiếm sẽ báo lỗi rõ ràng thay vì tự nhảy sang cổng khác.
+
+`DEV_API_PROXY_TARGET` chỉ dành cho server Vite, không nhúng vào JavaScript trình duyệt. Docker vẫn dùng Nginx nội bộ; `VITE_API_BASE_URL` trong image là build arg, đổi giá trị đó cần build lại image.
 
 ```powershell
 npm test
